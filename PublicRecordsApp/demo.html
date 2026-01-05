@@ -117,14 +117,19 @@
 
     .hero-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      grid-template-columns: 1fr;
       gap: 2rem;
       align-items: center;
+      justify-items: center;
     }
 
     .hero-copy {
       display: grid;
       gap: 1rem;
+      text-align: center;
+      justify-items: center;
+      max-width: 640px;
+      margin: 0 auto;
     }
 
     .hero-kicker {
@@ -146,6 +151,8 @@
       margin: 0;
       color: rgba(255, 255, 255, 0.78);
       max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     .hero-metrics {
@@ -200,6 +207,41 @@
       margin: 0.5rem 0 0;
       color: var(--slate);
       max-width: 75ch;
+    }
+
+    .demo-note {
+      margin-top: 1.1rem;
+      padding: 0.9rem 1.1rem;
+      border-radius: 14px;
+      background: var(--fog);
+      border: 1px solid rgba(15, 22, 32, 0.08);
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .demo-note-title {
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--teal);
+      font-weight: 700;
+    }
+
+    .demo-note-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0;
+    }
+
+    .demo-note-tags span {
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(15, 22, 32, 0.12);
+      background: #ffffff;
+      color: var(--ink-soft);
+      font-size: 0.82rem;
     }
 
     .tools {
@@ -439,10 +481,6 @@
       font-size: 0.9rem;
     }
 
-    @media (max-width: 900px) {
-      .hero-grid { grid-template-columns: 1fr; }
-    }
-
     @media (max-width: 720px) {
       .header-shell { padding: 2.1rem 1.4rem 2.8rem; }
       main { padding: 2rem 1.2rem 3rem; }
@@ -472,20 +510,6 @@
           <h1 class="hero-title">Search the sample archive</h1>
           <p class="hero-lede">Try the filters, keyword search, and record previews below. This demo uses a sample set of documents.</p>
         </div>
-        <div class="hero-metrics">
-          <div class="metric">
-            <h4>Live Search</h4>
-            <p>Instant filtering as you type or change the year.</p>
-          </div>
-          <div class="metric">
-            <h4>Preview Docs</h4>
-            <p>Open records in a built-in viewer without leaving.</p>
-          </div>
-          <div class="metric">
-            <h4>Download Ready</h4>
-            <p>Grab the source file with a single click.</p>
-          </div>
-        </div>
       </div>
     </div>
   </header>
@@ -495,6 +519,19 @@
       <div class="section-head">
         <h1>Public Records Database</h1>
         <p>Demonstration of searchable indexing, previews, and downloads.</p>
+      </div>
+      <div class="demo-note">
+        <p class="demo-note-title">Try these keywords</p>
+        <div class="demo-note-tags">
+          <span>budget</span>
+          <span>grant</span>
+          <span>zoning</span>
+          <span>river cleanup</span>
+          <span>main street</span>
+          <span>broadband</span>
+          <span>ordinance 2023-10</span>
+          <span>pine street</span>
+        </div>
       </div>
 
       <div class="archive-details">
