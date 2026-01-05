@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bly Oregon</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body.bly-page {
+      background:
+        radial-gradient(900px 520px at 12% -10%, rgba(34, 197, 94, 0.16), transparent 60%),
+        radial-gradient(900px 520px at 95% 8%, rgba(59, 130, 246, 0.18), transparent 62%),
+        #0b0f14;
+      color: #f5f5f5;
+    }
+
+    .bly-stage {
+      padding: 18px 0 56px;
+    }
+
+    /* ===== Bly Section ===== */
+    .bly-wrap {
+      padding: 70px 20px 50px;
+      background: transparent;
+      color: inherit;
+      font-family: var(--font-body);
+    }
+
+    .bly-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    /* Headings */
+    .bly-title {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: clamp(34px, 6vw, 50px);
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .bly-sub {
+      margin: 0 0 34px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+    }
+
+    /* Grid Layout */
+    .bly-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 26px;
+    }
+
+    @media (max-width: 820px) {
+      .bly-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Cards */
+    .bly-card {
+      background: rgba(11, 15, 20, 0.44);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: left;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Photos */
+    .bly-card-media {
+      width: 100%;
+      padding-top: 56.25%;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .bly-rorc-img {
+      background-image: url("https://images.pixieset.com/40350449/14fa777b178e143ac7ee5b8ef7426cc2-xxlarge.jpg");
+    }
+
+    .bly-gearhart-img {
+      background-image: url("https://images.pixieset.com/40350449/1098f0d8d2416abe013a7314dc3b1cbe-xxlarge.jpg");
+    }
+
+    .bly-card-body {
+      padding: 18px 18px 20px;
+    }
+
+    /* Text */
+    .bly-card-title {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: 22px;
+      color: #ffffff;
+    }
+
+    .bly-card-text {
+      margin: 0 0 16px;
+      font-size: 14.5px;
+      line-height: 1.7;
+      color: rgba(245, 245, 245, 0.78);
+    }
+
+    /* Button */
+    .bly-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.06);
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .bly-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.14);
+    }
+  </style>
+</head>
+
+<body class="bly-page">
+  <nav class="site-nav" aria-label="Site">
+    <a href="/index.html">Home</a>
+    <a href="/photography/">Photography</a>
+    <a href="/blyoregon/">Bly Oregon</a>
+    <a href="/blog/">Blog</a>
+    <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
+    <a href="/contact/">Contact</a>
+  </nav>
+
+  <main class="bly-stage">
+    <!-- ============ Bly, Oregon · Feature Section ============ -->
+    <section class="bly-wrap" id="bly-oregon">
+      <div class="bly-inner">
+
+        <!-- Heading -->
+        <header class="bly-head">
+          <h2 class="bly-title">Bly, Oregon</h2>
+          <p class="bly-sub">Projects Maintained by Quentin Nichols</p>
+        </header>
+
+        <!-- Feature Cards -->
+        <div class="bly-grid">
+
+          <!-- RORC Card -->
+          <article class="bly-card">
+            <div class="bly-card-media bly-rorc-img"></div>
+
+            <div class="bly-card-body">
+              <h3 class="bly-card-title">Ruth Obenchain Recreation Center</h3>
+              <p class="bly-card-text">
+                A once-quiet community gym brought back to life. Memberships, open gym nights, and more.
+              </p>
+              <a href="https://ruthobenchainrc.com" class="bly-btn">
+                View RORC Page
+              </a>
+            </div>
+          </article>
+
+          <!-- Gearhart Card -->
+          <article class="bly-card">
+            <div class="bly-card-media bly-gearhart-img"></div>
+
+            <div class="bly-card-body">
+              <h3 class="bly-card-title">Gearhart Mountain</h3>
+              <p class="bly-card-text">
+                A mountain that's always meant home — photos, stories, and ongoing exploration.
+              </p>
+              <a href="https://www.quentinnichols.com/gearhart-mountain/" class="bly-btn">
+                Learn About Gearhart
+              </a>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

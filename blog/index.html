@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thoughts & Reflections</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="blog-page">
+  <nav class="site-nav" aria-label="Site">
+    <a href="/index.html">Home</a>
+    <a href="/photography/">Photography</a>
+    <a href="/blyoregon/">Bly Oregon</a>
+    <a href="/blog/">Blog</a>
+    <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
+    <a href="/contact/">Contact</a>
+  </nav>
+
+  <main class="blog-main">
+    <section class="blog-hero" aria-labelledby="blog-title">
+      <div class="blog-inner">
+        <p class="blog-kicker">Blog</p>
+        <h1 id="blog-title" class="blog-title">Thoughts & Reflections</h1>
+        <p class="blog-body">
+          This blog is where I share more than just my photos - reflections on my journey, the lessons I am learning,
+          and the ideas shaping how I see the world.
+        </p>
+        <p class="blog-body">
+          For deeper context behind these posts, explore my
+          <a class="blog-inline-link" href="recent-reads/">Recent Reads & Reflections</a>,
+          where I share key takeaways from the books and concepts informing my perspective.
+        </p>
+
+        <div class="blog-callout">
+          <div>
+            <h2 class="blog-callout-title">Recent Reads & Reflections</h2>
+            <p class="blog-callout-text">
+              A growing shelf of the books and ideas shaping how I think, learn, and create.
+            </p>
+          </div>
+          <a class="blog-btn" href="recent-reads/">Explore</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="blog-posts" aria-labelledby="blog-posts-title">
+      <div class="blog-inner">
+        <h2 id="blog-posts-title" class="blog-posts-title">Latest Posts</h2>
+        <div class="blog-filters" data-blog-filters></div>
+        <div class="blog-posts-grid" data-blog-posts></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const categories = [
+        { label: "All", slug: "all" },
+        { label: "Book Reflections", slug: "book-reflections" },
+        { label: "Faith & Scripture", slug: "faith-scripture" },
+        { label: "Life Journeys & Growth", slug: "life-journeys-growth" },
+        { label: "Media Reflections", slug: "media-reflections" },
+        { label: "Mind & Awareness", slug: "mind-awareness" },
+        { label: "Moments & Encounters", slug: "moments-encounters" },
+        { label: "Spiritual Explorations", slug: "spiritual-explorations" },
+        { label: "Story Behind The Photos", slug: "story-behind-the-photos" }
+      ];
+
+      const posts = [
+        {
+          title: "A Journey of Care and Connection: What Homer Taught Me About Life",
+          category: "Life Journeys & Growth",
+          slug: "life-journeys-growth",
+          date: "July 29, 2024",
+          url: "/blog/post/a-journey-of-care-and-connection-what-homer-taught-me-about-life.html"
+        },
+        {
+          title: "Leaving Bly: The Start of an Unforgettable Journey",
+          category: "Life Journeys & Growth",
+          slug: "life-journeys-growth",
+          date: "August 18, 2024",
+          url: "/blog/post/leaving-bly-the-start-of-an-unforgettable-journey.html"
+        }
+      ];
+
+      const filtersEl = document.querySelector("[data-blog-filters]");
+      const postsEl = document.querySelector("[data-blog-posts]");
+      if (!filtersEl || !postsEl) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get("category") || "all";
+      const active = categories.some((cat) => cat.slug === requested) ? requested : "all";
+
+      filtersEl.innerHTML = categories
+        .map((cat) => {
+          const isActive = cat.slug === active;
+          const href = cat.slug === "all"
+            ? window.location.pathname
+            : `${window.location.pathname}?category=${cat.slug}`;
+          return `<a class="blog-filter-pill${isActive ? " is-active" : ""}" href="${href}">${cat.label}</a>`;
+        })
+        .join("");
+
+      const filtered = active === "all"
+        ? posts
+        : posts.filter((post) => post.slug === active);
+
+      if (filtered.length === 0) {
+        postsEl.innerHTML = "<p class=\"blog-empty\">No posts yet in this category.</p>";
+        return;
+      }
+
+      postsEl.innerHTML = filtered
+        .map((post) => `
+          <a class="blog-post-card" href="${post.url}">
+            <p class="blog-post-tag">${post.category}</p>
+            <h3 class="blog-post-title">${post.title}</h3>
+            <p class="blog-post-meta">${post.date}</p>
+          </a>
+        `)
+        .join("");
+    })();
+  </script>
+</body>
+</html>

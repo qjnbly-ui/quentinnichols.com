@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quentin Nichols — Links</title>
+
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    :root{
+      --bg:#0b0f14;
+
+      /* MORE TRANSPARENT / "belongs on Pixieset" */
+      --panel: rgba(255,255,255,.02);
+      --stroke: rgba(255,255,255,.10);
+      --text:#eef2f7;
+      --muted: rgba(238,242,247,.70);
+
+      /* rows: glassy */
+      --row: rgba(255,255,255,.03);
+      --rowHover: rgba(255,255,255,.055);
+
+      --shadow: 0 18px 55px rgba(0,0,0,.45);
+      --blur: blur(14px);
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 900px at 20% -10%, rgba(110,231,183,.08), transparent 60%),
+        radial-gradient(1200px 900px at 100% 0%, rgba(59,130,246,.08), transparent 55%),
+        radial-gradient(1000px 800px at 80% 115%, rgba(168,85,247,.08), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .page{
+      min-height:100vh;
+      display:flex;
+      justify-content:center;
+      padding: 18px 12px 22px;
+    }
+
+    .wrap{ width:min(720px, 100%); }
+
+    .panel{
+      background: var(--panel);
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+    }
+
+    .top{
+      padding: 14px 14px 12px;
+      display:flex;
+      gap:12px;
+      align-items:center;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.02);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+    }
+
+    .avatar{
+      width:56px;
+      height:56px;
+      border-radius: 16px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.03);
+      flex: 0 0 auto;
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    }
+
+    .avatar img{
+      width:100%;
+      height:100%;
+      object-fit: cover;
+      object-position: 50% 18%;
+      display:block;
+    }
+
+    .title h1{
+      margin:0;
+      font-size: 18px;
+      letter-spacing: .2px;
+      line-height:1.15;
+    }
+
+    .title .tag{
+      margin-top:4px;
+      font-size: 11px;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .content{ padding: 10px 10px 14px; }
+
+    .section{ margin: 10px 0 12px; }
+
+    .sectionHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 6px 6px 8px;
+      color: rgba(238,242,247,.92);
+    }
+
+    .sectionHead .name{
+      font-weight: 760;
+      letter-spacing: .2px;
+      font-size: 13px;
+    }
+
+    .sectionHead .hint{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding: 0 4px;
+    }
+
+    a.row, button.rowBtn{
+      text-decoration:none;
+      color: inherit;
+      display:flex;
+      align-items:center;
+      gap: 12px;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: var(--row);
+      transition: transform .08s ease, border-color .18s ease, background .18s ease;
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+    }
+
+    a.row:hover, button.rowBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,.22);
+      background: var(--rowHover);
+    }
+
+    /* icon */
+    .icon{
+      width:44px;
+      height:44px;
+      border-radius: 999px;
+      display:grid;
+      place-items:center;
+      flex: 0 0 auto;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      backdrop-filter: var(--blur);
+      -webkit-backdrop-filter: var(--blur);
+    }
+
+    .icon img, .icon svg{
+      width:22px;
+      height:22px;
+      display:block;
+      filter: drop-shadow(0 3px 12px rgba(0,0,0,.30));
+    }
+
+    .iconMail{
+      background: radial-gradient(26px 26px at 30% 25%, rgba(96,165,250,.22), rgba(255,255,255,.03));
+      border: 1px solid rgba(96,165,250,.18);
+    }
+
+    .iconPhone{
+      background: radial-gradient(26px 26px at 30% 25%, rgba(34,197,94,.20), rgba(255,255,255,.03));
+      border: 1px solid rgba(34,197,94,.16);
+    }
+
+    .meta{ min-width:0; flex: 1 1 auto; }
+    .meta .label{
+      margin:0;
+      font-size: 15px;
+      font-weight: 760;
+      line-height:1.1;
+    }
+    .meta .sub{
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .chev{
+      opacity:.65;
+      font-size: 18px;
+      padding: 0 4px;
+      flex:0 0 auto;
+    }
+
+    /* Download row = special */
+    .downloadRow{
+      justify-content:center;
+      gap:10px;
+      text-align:center;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+    .downloadRow .dlText{
+      font-size: 15px;
+      font-weight: 820;
+    }
+    .downloadRow .icon{
+      width:40px;
+      height:40px;
+      background: rgba(255,255,255,.04);
+    }
+
+    button.rowBtn{
+      width:100%;
+      cursor:pointer;
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
+    /* subtle divider between personal + org */
+    .divider{
+      margin: 14px 6px 6px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      opacity:.9;
+    }
+
+    /* tighten on small phones */
+    @media (max-width: 420px){
+      .page{ padding: 14px 10px 18px; }
+      .content{ padding: 8px 8px 12px; }
+      .top{ padding: 12px 12px 10px; }
+      .avatar{ width:52px; height:52px; border-radius: 15px; }
+      .title h1{ font-size: 17px; }
+      a.row, button.rowBtn{ padding: 11px 11px; border-radius: 15px; }
+      .icon{ width:42px; height:42px; }
+      .meta .label{ font-size: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  <nav class="site-nav" aria-label="Site">
+    <a href="/index.html">Home</a>
+    <a href="/photography/">Photography</a>
+    <a href="/blyoregon/">Bly Oregon</a>
+    <a href="/blog/">Blog</a>
+    <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
+    <a href="/contact/">Contact</a>
+  </nav>
+  <div class="page">
+    <main class="wrap">
+      <section class="panel">
+        <header class="top">
+          <div class="avatar" aria-hidden="true">
+            <img
+              src="https://images.pixieset.com/40350449/3360fb6235c38e99dd0ff6655457d302-xxlarge.jpg"
+              alt="Quentin Nichols"
+              loading="eager"
+            />
+          </div>
+          <div class="title">
+            <h1>Quentin Nichols</h1>
+            <div class="tag">OUT COLLECTING MOMENTS</div>
+          </div>
+        </header>
+
+        <div class="content">
+
+          <!-- CONTACT CARD DOWNLOAD -->
+          <section class="section">
+            <div class="sectionHead"></div>
+            <div class="list">
+              <button class="rowBtn downloadRow" id="downloadVcfBtn" type="button">
+                <span class="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 3v10" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
+                    <path d="M8.5 10.5 12 13.9l3.5-3.4" stroke="white" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M4.5 17.5c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2" stroke="white" stroke-width="1.7" stroke-linecap="round"/>
+                  </svg>
+                </span>
+                <span class="dlText">Download Contact Info</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- PERSONAL: WEBSITE -->
+          <section class="section">
+            <div class="sectionHead">
+              <div class="name">Website</div>
+              <div class="hint">Main</div>
+            </div>
+            <div class="list">
+              <a class="row" href="https://www.quentinnichols.com" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Website" src="https://cdn.simpleicons.org/safari/FFFFFF" />
+                </span>
+                <span class="meta">
+                  <p class="label">Website</p>
+                  <p class="sub">quentinnichols.com</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+            </div>
+          </section>
+
+          <!-- PERSONAL: EMAIL -->
+          <section class="section">
+            <div class="sectionHead">
+              <div class="name">Email</div>
+              <div class="hint">Personal</div>
+            </div>
+            <div class="list">
+              <a class="row" href="mailto:quentin@quentinnichols.com" rel="noopener">
+                <span class="icon iconMail" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4.5 7.5h15c.828 0 1.5.672 1.5 1.5v9c0 .828-.672 1.5-1.5 1.5h-15C3.672 19.5 3 18.828 3 18V9c0-.828.672-1.5 1.5-1.5Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+                    <path d="M4.2 9.1 12 13.8l7.8-4.7" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <p class="label">Personal Email</p>
+                  <p class="sub">quentin@quentinnichols.com</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+            </div>
+          </section>
+
+          <!-- PERSONAL: PHONE (YOUR NUMBER FIRST) -->
+          <section class="section">
+            <div class="sectionHead">
+              <div class="name">Phone</div>
+              <div class="hint">calls only&nbsp;</div>
+            </div>
+
+            <div class="list">
+              <a class="row" href="tel:+15419040421" rel="noopener">
+                <span class="icon iconPhone" aria-hidden="true">
+                  <!-- SAME PHONE SVG YOU SAID IS GOOD -->
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8.6 4.5 6.9 6.2c-.6.6-.8 1.5-.5 2.3 1 2.6 2.8 5.2 5.3 7.7s5.1 4.3 7.7 5.3c.8.3 1.7.1 2.3-.5l1.7-1.7c.6-.6.6-1.6 0-2.2l-2-2c-.6-.6-1.6-.6-2.2 0l-.7.7c-.3.3-.7.4-1.1.3-1.4-.5-3-1.6-4.6-3.2s-2.7-3.2-3.2-4.6c-.1-.4 0-.8.3-1.1l.7-.7c.6-.6.6-1.6 0-2.2l-2-2c-.6-.6-1.6-.6-2.2 0Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <p class="label">Personal Line</p>
+                  <p class="sub">(541) 904-0421</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+            </div>
+          </section>
+
+          <!-- PERSONAL: SOCIAL -->
+          <section class="section">
+            <div class="sectionHead">
+              <div class="name">Social</div>
+              <div class="hint">Personal</div>
+            </div>
+
+            <div class="list">
+              <a class="row" href="https://www.instagram.com/qnichols11?igsh=MW4xZHlwZW5jYndmcg==" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Instagram" src="https://cdn.simpleicons.org/instagram/E4405F" />
+                </span>
+                <span class="meta">
+                  <p class="label">Instagram</p>
+                  <p class="sub">@qnichols11</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://www.instagram.com/qjnphotography?igsh=YXprMWszMWx3Y3g0" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Instagram" src="https://cdn.simpleicons.org/instagram/E4405F" />
+                </span>
+                <span class="meta">
+                  <p class="label">Instagram (Photography)</p>
+                  <p class="sub">@qjnphotography</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://x.com/qnichols11" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="X" src="https://cdn.simpleicons.org/x/FFFFFF" />
+                </span>
+                <span class="meta">
+                  <p class="label">X</p>
+                  <p class="sub">@qnichols11</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://www.snapchat.com/add/qnichols11?share_id=m9uvhUrxVnE&locale=en-US" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Snapchat" src="https://cdn.simpleicons.org/snapchat/FFFC00" />
+                </span>
+                <span class="meta">
+                  <p class="label">Snapchat</p>
+                  <p class="sub">snapchat.com/add/qnichols11</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://www.facebook.com/quentin.nichols.96?mibextid=qi2Omg&rdid=fAIz68NLLXtcMfvj&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2FKmhi3QX6659qp6b5%2F%3Fmibextid%3Dqi2Omg" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Facebook" src="https://cdn.simpleicons.org/facebook/1877F2" />
+                </span>
+                <span class="meta">
+                  <p class="label">Facebook</p>
+                  <p class="sub">facebook.com/quentin.nichols.96</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://www.linkedin.com/in/quentin-nichols-679927218" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path fill="#0A66C2" d="M22.225 0H1.771C.792 0 0 .774 0 1.727v20.545C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.273V1.727C24 .774 23.2 0 22.222 0h.003zM7.09 20.452H3.56V9h3.53v11.452zM5.325 7.433c-1.13 0-2.048-.928-2.048-2.067 0-1.138.918-2.063 2.048-2.063 1.132 0 2.05.925 2.05 2.063 0 1.139-.918 2.067-2.05 2.067zM20.452 20.452h-3.553v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.357V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.265 2.37 4.265 5.455v6.286z"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <p class="label">LinkedIn</p>
+                  <p class="sub">linkedin.com/in/quentin-nichols-679927218</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://www.tiktok.com/@quentin.j.nichols" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="TikTok" src="https://cdn.simpleicons.org/tiktok/FFFFFF" />
+                </span>
+                <span class="meta">
+                  <p class="label">TikTok</p>
+                  <p class="sub">@quentin.j.nichols</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://www.youtube.com/@quentin.j.nichols" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="YouTube" src="https://cdn.simpleicons.org/youtube/FF0000" />
+                </span>
+                <span class="meta">
+                  <p class="label">YouTube</p>
+                  <p class="sub">youtube.com/@quentin.j.nichols</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+				
+				<a class="row" href="https://soundcloud.com/quentin-nichols-435968637?utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing" target="_blank" rel="noopener">
+  <span class="icon" aria-hidden="true">
+    <img alt="SoundCloud" src="https://cdn.simpleicons.org/soundcloud/FF5500" />
+  </span>
+  <span class="meta">
+    <p class="label">SoundCloud</p>
+    <p class="sub">soundcloud.com/quentin-nichols-435968637</p>
+  </span>
+  <span class="chev">›</span>
+</a>
+				
+            </div>
+          </section>
+
+          <!-- PAYMENTS (MOVED UP BEFORE ORGANIZATION) -->
+          <section class="section">
+            <div class="sectionHead">
+              <div class="name">Payments</div>
+              <div class="hint">Tip / pay</div>
+            </div>
+
+            <div class="list">
+              <a class="row" href="https://venmo.com/code?user_id=2308148140441600677&created=1766202970" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Venmo" src="https://cdn.simpleicons.org/venmo/3D95CE" />
+                </span>
+                <span class="meta">
+                  <p class="label">Venmo</p>
+                  <p class="sub">venmo.com</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://cash.app/$qnichols11" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Cash App" src="https://cdn.simpleicons.org/cashapp/00C244" />
+                </span>
+                <span class="meta">
+                  <p class="label">Cash App</p>
+                  <p class="sub">cash.app/$qnichols11</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+            </div>
+          </section>
+
+          <div class="divider"></div>
+
+          <!-- ORG: CONTACT (BOTTOM) -->
+          <section class="section">
+            <div class="sectionHead">
+              <div class="name">Organization</div>
+              <div class="hint">RORC / Bly Fire</div>
+            </div>
+
+            <div class="list">
+              <!-- RORC PHONE -->
+              <a class="row" href="tel:+15419040428" rel="noopener">
+                <span class="icon iconPhone" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8.6 4.5 6.9 6.2c-.6.6-.8 1.5-.5 2.3 1 2.6 2.8 5.2 5.3 7.7s5.1 4.3 7.7 5.3c.8.3 1.7.1 2.3-.5l1.7-1.7c.6-.6.6-1.6 0-2.2l-2-2c-.6-.6-1.6-.6-2.2 0l-.7.7c-.3.3-.7.4-1.1.3-1.4-.5-3-1.6-4.6-3.2s-2.7-3.2-3.2-4.6c-.1-.4 0-.8.3-1.1l.7-.7c.6-.6.6-1.6 0-2.2l-2-2c-.6-.6-1.6-.6-2.2 0Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <p class="label">Ruth Obenchain Recreation Center</p>
+                  <p class="sub">(541) 904-0428</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <!-- BLY FIRE PHONE -->
+              <a class="row" href="tel:+15412059260" rel="noopener">
+                <span class="icon iconPhone" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M8.6 4.5 6.9 6.2c-.6.6-.8 1.5-.5 2.3 1 2.6 2.8 5.2 5.3 7.7s5.1 4.3 7.7 5.3c.8.3 1.7.1 2.3-.5l1.7-1.7c.6-.6.6-1.6 0-2.2l-2-2c-.6-.6-1.6-.6-2.2 0l-.7.7c-.3.3-.7.4-1.1.3-1.4-.5-3-1.6-4.6-3.2s-2.7-3.2-3.2-4.6c-.1-.4 0-.8.3-1.1l.7-.7c.6-.6.6-1.6 0-2.2l-2-2c-.6-.6-1.6-.6-2.2 0Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <p class="label">Bly Fire</p>
+                  <p class="sub">(541) 205-9260</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <!-- RORC EMAIL -->
+              <a class="row" href="mailto:quentin.nichols@ruthobenchainrc.com" rel="noopener">
+                <span class="icon iconMail" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4.5 7.5h15c.828 0 1.5.672 1.5 1.5v9c0 .828-.672 1.5-1.5 1.5h-15C3.672 19.5 3 18.828 3 18V9c0-.828.672-1.5 1.5-1.5Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+                    <path d="M4.2 9.1 12 13.8l7.8-4.7" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <p class="label">RORC — Email</p>
+                  <p class="sub">quentin.nichols@ruthobenchainrc.com</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <!-- BLY FIRE EMAIL -->
+              <a class="row" href="mailto:quentin.nichols@blyrfpd.com" rel="noopener">
+                <span class="icon iconMail" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4.5 7.5h15c.828 0 1.5.672 1.5 1.5v9c0 .828-.672 1.5-1.5 1.5h-15C3.672 19.5 3 18.828 3 18V9c0-.828.672-1.5 1.5-1.5Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+                    <path d="M4.2 9.1 12 13.8l7.8-4.7" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </span>
+                <span class="meta">
+                  <p class="label">Bly Fire — Email</p>
+                  <p class="sub">quentin.nichols@blyrfpd.com</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+            </div>
+          </section>
+
+          <!-- ORG: RORC SOCIALS (BOTTOM) -->
+          <section class="section">
+            <div class="sectionHead">
+              <div class="name">RORC</div>
+              <div class="hint">Social</div>
+            </div>
+
+            <div class="list">
+              <a class="row" href="https://www.facebook.com/ruthobenchainrc/" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Facebook" src="https://cdn.simpleicons.org/facebook/1877F2" />
+                </span>
+                <span class="meta">
+                  <p class="label">RORC Facebook</p>
+                  <p class="sub">facebook.com/ruthobenchainrc</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+
+              <a class="row" href="https://www.instagram.com/ruthobenchainrc?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener">
+                <span class="icon" aria-hidden="true">
+                  <img alt="Instagram" src="https://cdn.simpleicons.org/instagram/E4405F" />
+                </span>
+                <span class="meta">
+                  <p class="label">RORC Instagram</p>
+                  <p class="sub">@ruthobenchainrc</p>
+                </span>
+                <span class="chev">›</span>
+              </a>
+            </div>
+          </section>
+
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Generates a real .vcf file in-browser (no hosting needed)
+    (function(){
+      const btn = document.getElementById("downloadVcfBtn");
+      if(!btn) return;
+
+      btn.addEventListener("click", function(){
+        const vcf =
+
+  "BEGIN:VCARD\r\n" +
+  "VERSION:3.0\r\n" +
+  "N:Nichols;Quentin;;;\r\n" +
+  "FN:Quentin Nichols\r\n" +
+  "ORG:Quentin Nichols\r\n" +
+  "TITLE:Photographer | RORC Manager | Bly Fire Lieutenant\r\n" +
+
+  // Website
+  "URL:https://www.quentinnichols.com\r\n" +
+
+  // Emails
+  "EMAIL;TYPE=HOME:quentin@quentinnichols.com\r\n" +
+  "EMAIL;TYPE=WORK:quentin.nichols@ruthobenchainrc.com\r\n" +
+  "EMAIL;TYPE=WORK:quentin.nichols@blyrfpd.com\r\n" +
+
+  // Phones
+  "TEL;TYPE=CELL,VOICE:+15419040421\r\n" +        // Quentin (Direct)
+  "TEL;TYPE=WORK,VOICE:+15419040428\r\n" +        // RORC (Auto Attendant)
+  "TEL;TYPE=WORK,VOICE:+15412059260\r\n" +        // Bly Fire
+
+  // Payments (as URLs)
+  "URL;TYPE=PAYMENT:https://cash.app/$qnichols11\r\n" +
+  "URL;TYPE=PAYMENT:https://venmo.com/code?user_id=2308148140441600677&created=1766202970\r\n" +
+
+  // Personal Social (as URLs)
+  "URL;TYPE=SOCIAL:https://www.instagram.com/qnichols11\r\n" +
+  "URL;TYPE=SOCIAL:https://www.instagram.com/qjnphotography\r\n" +
+  "URL;TYPE=SOCIAL:https://x.com/qnichols11\r\n" +
+  "URL;TYPE=SOCIAL:https://www.snapchat.com/add/qnichols11\r\n" +
+  "URL;TYPE=SOCIAL:https://www.facebook.com/quentin.nichols.96\r\n" +
+  "URL;TYPE=SOCIAL:https://www.linkedin.com/in/quentin-nichols-679927218\r\n" +
+  "URL;TYPE=SOCIAL:https://www.tiktok.com/@quentin.j.nichols\r\n" +
+  "URL;TYPE=SOCIAL:https://www.youtube.com/@quentin.j.nichols\r\n" +
+
+  // RORC Social (as URLs)
+  "URL;TYPE=SOCIAL:https://www.facebook.com/ruthobenchainrc/\r\n" +
+  "URL;TYPE=SOCIAL:https://www.instagram.com/ruthobenchainrc\r\n" +
+
+  // Notes (phones only)
+  "NOTE:Direct Cell: (541) 904-0421 | RORC: (541) 904-0428 | Bly Fire: (541) 205-9260\r\n" +
+
+  "END:VCARD\r\n";
+
+        const blob = new Blob([vcf], { type: "text/vcard;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "Quentin-Nichols.vcf";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 800);
+      });
+    })();
+  </script>
+</body>
+</html>

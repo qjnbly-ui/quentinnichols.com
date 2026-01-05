@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quentin's TikTok Showcase</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="tiktok-page">
+  <nav class="site-nav" aria-label="Site">
+    <a href="/index.html">Home</a>
+    <a href="/photography/">Photography</a>
+    <a href="/blyoregon/">Bly Oregon</a>
+    <a href="/blog/">Blog</a>
+    <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
+    <a href="/contact/">Contact</a>
+  </nav>
+
+  <main class="tiktok-main">
+    <section class="tiktok-hero" aria-labelledby="tiktok-title">
+      <div class="tiktok-hero-inner">
+        <p class="tiktok-kicker">TikTok Shop</p>
+        <h1 id="tiktok-title" class="tiktok-title">Quentin's TikTok Showcase</h1>
+        <p class="tiktok-subtitle">Best deals on ALL products — curated picks, creator favorites, and limited drops.</p>
+        <div class="tiktok-stats">
+          <div class="tiktok-stat">
+            <span class="tiktok-stat-value">Live</span>
+            <span class="tiktok-stat-label">Prices update on TikTok</span>
+          </div>
+          <div class="tiktok-stat">
+            <span class="tiktok-stat-value">Curated</span>
+            <span class="tiktok-stat-label">Only products worth sharing</span>
+          </div>
+          <div class="tiktok-stat">
+            <span class="tiktok-stat-value">Fast</span>
+            <span class="tiktok-stat-label">Tap to see current deals</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tiktok-products" aria-labelledby="tiktok-products-title">
+      <div class="tiktok-hero-inner">
+        <div class="tiktok-products-header">
+          <h2 id="tiktok-products-title" class="tiktok-products-title">Featured Deals</h2>
+          <p class="tiktok-products-note">Prices shown here are for reference; final price is shown on TikTok Shop.</p>
+        </div>
+        <div class="tiktok-grid" data-tt-products>
+          <div class="tiktok-card tiktok-card--loading">Loading products…</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      const grid = document.querySelector('[data-tt-products]');
+      if (!grid) return;
+
+      fetch('/Tiktok/products.json')
+        .then((response) => response.json())
+        .then((items) => {
+          if (!items || !items.length) {
+            grid.innerHTML = '<div class="tiktok-card tiktok-card--loading">No products yet.</div>';
+            return;
+          }
+
+          grid.innerHTML = items.map((item) => {
+            const price = item.price ? `$${item.price}` : 'Check price';
+            const note = item.priceNote || 'Live price on TikTok';
+            return `
+              <a class="tiktok-card" href="${item.url}" target="_blank" rel="noopener">
+                <div class="tiktok-card-media" style="background-image:url('${item.image}')"></div>
+                <div class="tiktok-card-body">
+                  <span class="tiktok-chip">${item.tagline || 'Featured'}</span>
+                  <h3 class="tiktok-card-title">${item.title}</h3>
+                  <div class="tiktok-card-price">${price}</div>
+                  <p class="tiktok-card-note">${note}</p>
+                </div>
+              </a>
+            `;
+          }).join('');
+        })
+        .catch(() => {
+          grid.innerHTML = '<div class="tiktok-card tiktok-card--loading">Unable to load products.</div>';
+        });
+    })();
+  </script>
+</body>
+</html>
