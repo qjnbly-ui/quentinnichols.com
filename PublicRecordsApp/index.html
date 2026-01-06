@@ -251,6 +251,21 @@
       gap: 1.2rem;
     }
 
+    .section-title {
+      margin: 0;
+      font-family: "Fraunces", "Times New Roman", serif;
+      font-size: clamp(1.5rem, 2.4vw, 2rem);
+      color: var(--ink);
+      text-align: center;
+    }
+
+    .section-lede {
+      margin: 0.4rem auto 0;
+      color: var(--slate);
+      text-align: center;
+      max-width: 70ch;
+    }
+
     .card {
       background: #ffffff;
       border-radius: var(--radius-md);
@@ -287,6 +302,59 @@
     .card p {
       margin: 0;
       color: var(--slate);
+    }
+
+    .card .price {
+      font-weight: 700;
+      color: var(--ink);
+      margin-top: 0.2rem;
+    }
+
+    .card .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-pill);
+      background: var(--fog);
+      border: 1px solid rgba(15, 22, 32, 0.1);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--teal);
+      font-weight: 700;
+    }
+
+    .story-panel {
+      background: linear-gradient(135deg, rgba(26, 124, 114, 0.08), rgba(241, 164, 75, 0.08));
+      border-radius: var(--radius-lg);
+      padding: 2rem 2.4rem;
+      border: 1px solid rgba(15, 22, 32, 0.08);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .story-panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(260px 180px at 90% 20%, rgba(191, 230, 221, 0.4), transparent 70%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .story-panel .section-title,
+    .story-panel .section-lede {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .story-panel .section-lede {
+      max-width: 78ch;
     }
 
     footer {
@@ -452,6 +520,12 @@
       <p class="page-subtitle">Preview a live public records site and return here anytime.</p>
     </section>
 
+    <section class="story-panel">
+      <h2 class="section-title">Why I built it</h2>
+      <p class="section-lede">I built this to solve a real problem for our Community Action Team: making minutes easy for the public to access while giving board members fast context from past meetings.</p>
+      <p class="section-lede">It is live on blyoregon.com (see the public example above), and after sharing it, another board member asked about using the same approach for their organization. This page is the productized version of that solution.</p>
+    </section>
+
     <section class="grid">
       <article class="card">
         <h3>Instant Search</h3>
@@ -469,6 +543,62 @@
         <h3>Branded for You</h3>
         <p>Custom colors, logos, and labels for each organization.</p>
       </article>
+    </section>
+
+    <section>
+      <h2 class="section-title">Options that fit your setup</h2>
+      <p class="section-lede">Pick the level of help you want, from a DIY embed to a fully hosted portal.</p>
+      <div class="grid" style="margin-top: 1.2rem;">
+        <article class="card">
+          <span class="tag">DIY</span>
+          <h3>Embed Pack</h3>
+          <p>Static files + instructions to drop into your existing site. You handle data prep.</p>
+          <p class="price">$200–$1,000 one-time</p>
+        </article>
+        <article class="card">
+          <span class="tag">Done-for-you</span>
+          <h3>Setup + Cleanup</h3>
+          <p>I organize and clean your records, then launch your portal for you.</p>
+          <p class="price">$1,000–$5,000 setup</p>
+        </article>
+        <article class="card">
+          <span class="tag">Hosted</span>
+          <h3>Multi-user Portal</h3>
+          <p>Custom login, per-organization data, uploads, and ongoing support.</p>
+          <p class="price">$50–$300 per month</p>
+        </article>
+        <article class="card">
+          <span class="tag">Pilot offer</span>
+          <h3>Case Study Launch</h3>
+          <p>I'll set you up for $500 and $75/month if we can use your site as a case study.</p>
+          <p class="price">Less than $1,000 for the first year</p>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">Deployment options</h2>
+      <p class="section-lede">Choose a public portal, a private secure login, or a static internal install.</p>
+      <div class="grid" style="margin-top: 1.2rem;">
+        <article class="card">
+          <span class="tag">Public</span>
+          <h3>Public Records Portal</h3>
+          <p>Hosted online with a branded domain and a clean public index for search and downloads.</p>
+          <p class="price">Domain + /yourfiles structure</p>
+        </article>
+        <article class="card">
+          <span class="tag">Private</span>
+          <h3>Secure Login Portal</h3>
+          <p>Private access with user logins, roles, and separate archives per organization.</p>
+          <p class="price">Hosted online with access control</p>
+        </article>
+        <article class="card">
+          <span class="tag">Offline</span>
+          <h3>Internal Static Install</h3>
+          <p>Run a static copy on a local device or internal network with no public exposure.</p>
+          <p class="price">No internet required</p>
+        </article>
+      </div>
     </section>
   </main>
 

@@ -361,10 +361,24 @@
       font-weight: 700;
       color: var(--ink);
       padding: 0.55rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     details.archive-panel summary::-webkit-details-marker {
       display: none;
+    }
+
+    details.archive-panel summary::after {
+      content: "▾";
+      font-size: 0.9rem;
+      color: var(--slate);
+      transition: transform 0.2s ease;
+    }
+
+    details.archive-panel[open] summary::after {
+      transform: rotate(180deg);
     }
 
     details.archive-panel[open] {
@@ -545,18 +559,18 @@
         <p class="demo-note-title">Try these keywords</p>
         <div class="demo-note-tags">
           <span>budget</span>
+          <span>broadband</span>
           <span>grant</span>
           <span>zoning</span>
           <span>river cleanup</span>
           <span>main street</span>
-          <span>broadband</span>
-          <span>ordinance 2023-10</span>
-          <span>pine street</span>
+          <span>parking study</span>
+          <span>trailhead</span>
         </div>
       </div>
 
       <div class="archive-details">
-        <details class="archive-panel" open>
+        <details class="archive-panel">
           <summary>Recent minutes</summary>
           <div class="minute-grid" data-recent-list></div>
         </details>
@@ -786,7 +800,10 @@
         }
       });
 
-      fetch('/PublicRecordsApp/DocumentsStorageLocation/index-search.json')
+      const indexUrl = new URL('DocumentsStorageLocation/index-search.json', window.location.href);
+      indexUrl.searchParams.set('v', '2');
+
+      fetch(indexUrl.toString())
         .then((response) => {
           if (!response.ok) throw new Error('Minutes index not available');
           return response.json();
