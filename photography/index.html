@@ -34,7 +34,13 @@
              href="https://gallery.quentinnichols.com/"
              aria-label="Open Quentin Nichols gallery"
              target="_blank" rel="noopener">
-            <div class="qjn-card-media"></div>
+            <img
+              class="qjn-card-media"
+              src="/photography/images/ClientGalleries.jpg"
+              alt="Client gallery previews"
+              loading="lazy"
+              decoding="async"
+            />
             <div class="qjn-card-body">
               <span class="qjn-card-tag">Pixieset Gallery</span>
               <h2 class="qjn-card-title">Client Galleries &amp; Albums</h2>
@@ -49,7 +55,13 @@
              href="https://qjnphotography.pixieset.com/highlightsforsale/store/"
              aria-label="Open Highlights for Sale store"
              target="_blank" rel="noopener">
-            <div class="qjn-card-media"></div>
+            <img
+              class="qjn-card-media"
+              src="/photography/images/HighlightsForSalePhoto.jpg"
+              alt="Fine art print highlights"
+              loading="lazy"
+              decoding="async"
+            />
             <div class="qjn-card-body">
               <span class="qjn-card-tag">Fine Prints</span>
               <h2 class="qjn-card-title">Highlights for Sale</h2>
@@ -64,7 +76,13 @@
              href="https://qjnphotography.pixieset.com/booking/"
              aria-label="Open Photography Booking"
              target="_blank" rel="noopener">
-            <div class="qjn-card-media"></div>
+            <img
+              class="qjn-card-media"
+              src="/photography/images/Photographybooking.jpg"
+              alt="Photography booking preview"
+              loading="lazy"
+              decoding="async"
+            />
             <div class="qjn-card-body">
               <span class="qjn-card-tag">Live Availability</span>
               <h2 class="qjn-card-title">Photography Booking</h2>
@@ -79,76 +97,5 @@
     </section>
   </main>
 
-  <div class="qjn-preview-modal" id="qjn-preview" role="dialog" aria-modal="true" hidden>
-    <div class="qjn-preview-backdrop" data-close></div>
-    <div class="qjn-preview-dialog" role="document" aria-labelledby="qjn-preview-title">
-      <header class="qjn-preview-header">
-        <h3 id="qjn-preview-title">Preview</h3>
-        <div class="qjn-preview-actions">
-          <a class="qjn-open-new" href="#" target="_blank" rel="noopener">Open in new tab</a>
-          <button class="qjn-close" type="button" aria-label="Close preview" data-close>&times;</button>
-        </div>
-      </header>
-      <iframe class="qjn-frame" title="Preview" src="about:blank" loading="eager"></iframe>
-    </div>
-  </div>
-
-  <script>
-    (function(){
-      const modal = document.getElementById('qjn-preview');
-      const frame = modal.querySelector('.qjn-frame');
-      const openNew = modal.querySelector('.qjn-open-new');
-      const titleEl = modal.querySelector('#qjn-preview-title');
-
-      function openPreview(url, title){
-        if(!url) return;
-
-        frame.src = url;
-        openNew.href = url;
-        titleEl.textContent = title || 'Preview';
-
-        modal.hidden = false;
-        document.body.style.overflow = 'hidden';
-
-        const fallback = setTimeout(()=>{
-          try{
-            const d = frame.contentDocument;
-            if(!d || !d.body) throw 0;
-          }catch(e){
-            window.open(url, '_blank', 'noopener');
-          }
-        }, 1200);
-
-        frame.addEventListener('load', ()=>clearTimeout(fallback), {once:true});
-      }
-
-      function closePreview(){
-        modal.hidden = true;
-        document.body.style.overflow = '';
-        frame.src = 'about:blank';
-      }
-
-      document.querySelectorAll('.qjn-preview').forEach(link=>{
-        link.addEventListener('click',(e)=>{
-          if(e.metaKey || e.ctrlKey || e.button !== 0) return;
-          e.preventDefault();
-          const url = link.getAttribute('data-preview') || link.getAttribute('href');
-          const ttl = link.querySelector('.qjn-card-title')?.textContent?.trim() || 'Preview';
-          openPreview(url, ttl);
-        });
-      });
-
-      modal.addEventListener('click',(e)=>{
-        if(e.target.matches('[data-close]') ||
-           e.target.classList.contains('qjn-preview-backdrop')){
-          closePreview();
-        }
-      });
-
-      document.addEventListener('keydown',(e)=>{
-        if(e.key === 'Escape' && !modal.hidden) closePreview();
-      });
-    })();
-  </script>
 </body>
 </html>

@@ -10,6 +10,7 @@
   --accent-deep: #1a7c72;
   --nav-bg: rgba(255, 255, 255, 0.82);
   --nav-border: rgba(15, 20, 30, 0.08);
+  --nav-content-pad: clamp(36px, 6vw, 60px);
 }
 
 * { box-sizing: border-box; }
@@ -115,7 +116,7 @@ iframe {
 }
 
 .photo-main {
-  padding: 34px 0 80px;
+  padding: var(--nav-content-pad) 0 80px;
 }
 
 .qjn-shell {
@@ -285,30 +286,11 @@ iframe {
 }
 
 .qjn-card-media {
-  padding-top: 62%;
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
-
-.qjn-collection-card--land .qjn-card-media {
-  background-image: url("https://images-pw.pixieset.com/elementfield/122241913/PSX_20220116_215027_1-05795291.jpg");
-}
-
-.qjn-collection-card--port .qjn-card-media {
-  background-image: url("https://images-pw.pixieset.com/elementfield/YnlbJR0/RayButcherPhotos-20-c0ff65c1-1000.jpg");
-}
-
-.qjn-collection-card--store .qjn-card-media {
-  background-image: url("/photography/images/HighlightsForSalePhoto.jpg");
-}
-
-.qjn-collection-card--gallery .qjn-card-media {
-  background-image: url("/photography/images/ClientGalleries.jpg");
-}
-
-.qjn-collection-card--booking .qjn-card-media {
-  background-image: url("/photography/images/Photographybooking.jpg");
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
 }
 
 .qjn-card-body {
@@ -402,98 +384,6 @@ iframe {
   background: var(--q-elev);
 }
 
-.qjn-preview-modal[hidden] {
-  display: none !important;
-}
-
-.qjn-preview-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: grid;
-  place-items: center;
-}
-
-.qjn-preview-backdrop {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: saturate(110%) blur(2px);
-}
-
-.qjn-preview-dialog {
-  position: relative;
-  width: min(1200px, 96vw);
-  height: min(86vh, 880px);
-  background: #ffffff;
-  color: var(--text);
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid var(--q-stroke);
-  box-shadow: 0 28px 80px rgba(29, 34, 48, 0.22);
-  transform: translateY(10px) scale(0.985);
-  opacity: 0;
-  animation: qjn-in 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
-}
-
-@keyframes qjn-in {
-  to {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-.qjn-preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  background: #f2efe9;
-  border-bottom: 1px solid var(--q-stroke);
-}
-
-.qjn-preview-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.qjn-open-new {
-  display: inline-block;
-  padding: 6px 10px;
-  font-size: 12.5px;
-  color: var(--text);
-  border: 1px solid var(--q-stroke);
-  border-radius: 8px;
-  background: #ffffff;
-  text-decoration: none;
-}
-
-.qjn-open-new:hover {
-  border-color: var(--q-stroke-strong);
-}
-
-.qjn-close {
-  width: 36px;
-  height: 32px;
-  border-radius: 8px;
-  background: #ffffff;
-  color: var(--text);
-  border: 1px solid var(--q-stroke);
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.qjn-close:hover {
-  background: #f2efe9;
-}
-
-.qjn-frame {
-  width: 100%;
-  height: calc(100% - 46px);
-  border: 0;
-  background: #ffffff;
-}
 
 @media (max-width: 980px) {
   .qjn-collection-grid {
@@ -509,6 +399,12 @@ iframe {
   .qjn-booking-strip {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 820px) {
+  .photography-page .qjn-collection-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -540,7 +436,7 @@ iframe {
 
 .qjn-hero-simple{
   background: transparent;
-  padding: 60px 20px 50px;
+  padding: var(--nav-content-pad) 20px 50px;
   color: var(--text);
 }
 
@@ -772,7 +668,7 @@ iframe {
 }
 
 .blog-main {
-  padding: 60px 20px 90px;
+  padding: var(--nav-content-pad) 20px 90px;
 }
 
 .blog-hero {
@@ -978,7 +874,7 @@ iframe {
 }
 
 .reads-main {
-  padding: 60px 20px 90px;
+  padding: var(--nav-content-pad) 20px 90px;
 }
 
 .reads-inner {
@@ -1132,7 +1028,7 @@ iframe {
 }
 
 .post-main {
-  padding: 60px 20px 90px;
+  padding: var(--nav-content-pad) 20px 90px;
 }
 
 .post-inner {
@@ -1173,7 +1069,7 @@ iframe {
 }
 
 .tiktok-main {
-  padding: 60px 20px 90px;
+  padding: var(--nav-content-pad) 20px 90px;
 }
 
 .tiktok-hero-inner {
