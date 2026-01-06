@@ -51,8 +51,7 @@ iframe {
 }
 
 .site-nav {
-  position: sticky;
-  top: 16px;
+  position: relative;
   z-index: 20;
   display: flex;
   flex-wrap: wrap;
@@ -97,7 +96,6 @@ iframe {
 
 @media (max-width: 640px) {
   .site-nav {
-    top: 10px;
     width: calc(100% - 20px);
     border-radius: 22px;
   }
