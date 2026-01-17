@@ -7,10 +7,7 @@
   <link rel="stylesheet" href="/style.css" />
   <style>
     body.bly-page {
-      background:
-        radial-gradient(900px 520px at 12% -10%, rgba(240, 101, 67, 0.14), transparent 60%),
-        radial-gradient(900px 520px at 95% 8%, rgba(26, 124, 114, 0.16), transparent 62%),
-        #f7f4ef;
+      background: #000000;
       color: var(--text);
     }
 
@@ -62,12 +59,12 @@
 
     /* Cards */
     .bly-card {
-      background: #ffffff;
+      background: #121212;
       border-radius: 18px;
-      border: 1px solid rgba(29, 34, 48, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       text-align: left;
       overflow: hidden;
-      box-shadow: 0 20px 50px rgba(29, 34, 48, 0.16);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     }
 
     /* Photos */
@@ -117,33 +114,48 @@
       gap: 8px;
       padding: 10px 22px;
       border-radius: 999px;
-      border: 1px solid rgba(29, 34, 48, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       color: var(--text);
       text-decoration: none;
       font-size: 11px;
       letter-spacing: 0.22em;
       text-transform: uppercase;
-      background: #ffffff;
+      background: #1a1a1a;
       transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
     }
 
     .bly-btn:hover {
       transform: translateY(-2px);
-      border-color: rgba(29, 34, 48, 0.55);
-      background: #f2efe9;
+      border-color: rgba(255, 255, 255, 0.55);
+      background: #232323;
     }
   </style>
 </head>
 
 <body class="bly-page">
   <nav class="site-nav" aria-label="Site">
-    <a href="/index.html">Home</a>
-    <a href="/photography/">Photography</a>
-    <a href="/projects/">Projects</a>
-    <a href="/blog/">Blog</a>
-    <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
-    <a href="/contact/">Contact</a>
-  </nav>
+  <div class="nav-shell">
+    <details class="nav-menu">
+      <summary aria-label="Open menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </summary>
+      <div class="nav-menu-panel">
+        <a href="/index.html">Home</a>
+        <a href="/photography/">Photography</a>
+        <a href="/projects/">Projects</a>
+        <a href="/blog/">Blog</a>
+        <a href="/contact/">Contact</a>
+        <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
+      </div>
+    </details>
+    <a class="nav-logo" href="/index.html">
+      <img src="/assets/Watermark (1) copy.png" alt="Bly Quentin Nichols Oregon">
+    </a>
+    <div class="nav-spacer" aria-hidden="true"></div>
+  </div>
+</nav>
 
   <main class="bly-stage">
     <!-- ============ Bly, Oregon · Feature Section ============ -->

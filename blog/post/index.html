@@ -8,13 +8,28 @@
 </head>
 <body class="blog-page">
   <nav class="site-nav" aria-label="Site">
-    <a href="/index.html">Home</a>
-    <a href="/photography/">Photography</a>
-    <a href="/projects/">Projects</a>
-    <a href="/blog/">Blog</a>
-    <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
-    <a href="/contact/">Contact</a>
-  </nav>
+  <div class="nav-shell">
+    <details class="nav-menu">
+      <summary aria-label="Open menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </summary>
+      <div class="nav-menu-panel">
+        <a href="/index.html">Home</a>
+        <a href="/photography/">Photography</a>
+        <a href="/projects/">Projects</a>
+        <a href="/blog/">Blog</a>
+        <a href="/contact/">Contact</a>
+        <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
+      </div>
+    </details>
+    <a class="nav-logo" href="/index.html">
+      <img src="/assets/Watermark (1) copy.png" alt="Bly Quentin Nichols Oregon">
+    </a>
+    <div class="nav-spacer" aria-hidden="true"></div>
+  </div>
+</nav>
 
   <main class="blog-main">
     <section class="blog-hero" aria-labelledby="posts-title">
@@ -51,6 +66,13 @@
       ];
 
       const posts = [
+        {
+          title: "Reflections on Zealot by Reza Aslan",
+          category: "Book Reflections",
+          slug: "book-reflections",
+          date: "January 17, 2026",
+          url: "/blog/post/reflections-on-zealot-by-reza-aslan.html"
+        },
         {
           title: "A Journey of Care and Connection: What Homer Taught Me About Life",
           category: "Life Journeys & Growth",
