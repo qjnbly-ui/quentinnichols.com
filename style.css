@@ -10,7 +10,7 @@
   --accent-deep: #d8c7a6;
   --nav-bg: rgba(255, 255, 255, 0.82);
   --nav-border: rgba(15, 20, 30, 0.08);
-  --nav-content-pad: clamp(36px, 6vw, 60px);
+  --nav-content-pad: clamp(16px, 3vw, 28px);
   --surface: #121212;
   --surface-strong: #1a1a1a;
   --surface-border: rgba(255, 255, 255, 0.12);
@@ -203,7 +203,7 @@ iframe {
 }
 
 .photo-main {
-  padding: var(--nav-content-pad) 0 80px;
+  padding: var(--nav-content-pad) 20px 80px;
 }
 
 .qjn-shell {
@@ -229,6 +229,38 @@ iframe {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
+  margin: 0;
+  padding: 0 clamp(16px, 3vw, 28px);
+}
+
+.photography-page .photo-main {
+  padding-top: 8px;
+}
+
+.photography-page .qjn-head {
+  margin-bottom: 18px;
+}
+
+.photography-page .qjn-sub {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+  margin-bottom: 26px;
+}
+
+.blog-page .qjn-sub {
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 2px;
+  margin-bottom: 26px;
 }
 
 .qjn-shell::before {
@@ -272,8 +304,8 @@ iframe {
 
 .qjn-head h1 {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 700;
+  font-size: clamp(34px, 6vw, 50px);
   line-height: 1.06;
   letter-spacing: 0.01em;
   margin: 0 0 0.35em;
@@ -853,6 +885,20 @@ iframe {
   margin-bottom: 20px;
 }
 
+.blog-filter-select {
+  display: none;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--surface-border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
 .blog-filter-pill {
   display: inline-flex;
   align-items: center;
@@ -940,6 +986,15 @@ iframe {
   }
   .blog-btn {
     width: 100%;
+  }
+  .blog-filters {
+    display: block;
+  }
+  .blog-filter-pill {
+    display: none;
+  }
+  .blog-filter-select {
+    display: block;
   }
   .blog-posts-grid {
     grid-template-columns: 1fr;
@@ -1165,6 +1220,62 @@ iframe {
   margin: 0 0 18px;
 }
 
+/* ===== Shared Page Kickers ===== */
+.blog-kicker,
+.post-kicker,
+.reads-kicker,
+.tiktok-kicker,
+.qjn-kicker,
+.bly-sub {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 34px;
+}
+
+.page-head {
+  text-align: center;
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto 30px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(34px, 6vw, 50px);
+  line-height: 1.06;
+  letter-spacing: 0.01em;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+.page-sub {
+  margin: 0 0 34px;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.page-intro {
+  margin: 0 0 22px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.blog-title,
+.post-title,
+.tiktok-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(34px, 6vw, 50px);
+  line-height: 1.06;
+  letter-spacing: 0.01em;
+}
+
 .tiktok-title {
   font-size: clamp(34px, 4.4vw, 56px);
   margin-bottom: 12px;
@@ -1313,7 +1424,6 @@ iframe {
 }
 
 .post-title {
-  font-size: clamp(30px, 4vw, 46px);
   margin-bottom: 12px;
 }
 

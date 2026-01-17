@@ -34,8 +34,9 @@
   <main class="blog-main">
     <section class="blog-hero" aria-labelledby="posts-title">
       <div class="blog-inner">
-        <p class="blog-kicker">Posts</p>
-        <h1 id="posts-title" class="blog-title">Browse Blog Posts</h1>
+        <header class="page-head">
+          <h1 id="posts-title" class="page-title">Blog</h1>
+                  </header>
         <p class="blog-body">
           Filter by category to explore the writing, reflections, and stories that live here.
         </p>
@@ -97,7 +98,11 @@
       const requested = params.get("category") || "all";
       const active = categories.some((cat) => cat.slug === requested) ? requested : "all";
 
-      filtersEl.innerHTML = categories
+      const optionsMarkup = categories
+        .map((cat) => `<option value="${cat.slug}"${cat.slug === active ? " selected" : ""}>${cat.label}</option>`)
+        .join("");
+
+      const pillsMarkup = categories
         .map((cat) => {
           const isActive = cat.slug === active;
           const href = cat.slug === "all"
@@ -106,6 +111,24 @@
           return `<a class="blog-filter-pill${isActive ? " is-active" : ""}" href="${href}">${cat.label}</a>`;
         })
         .join("");
+
+      filtersEl.innerHTML = `
+        <select class="blog-filter-select" aria-label="Filter posts by category">
+          ${optionsMarkup}
+        </select>
+        ${pillsMarkup}
+      `;
+
+      const selectEl = filtersEl.querySelector(".blog-filter-select");
+      if (selectEl) {
+        selectEl.addEventListener("change", (event) => {
+          const value = event.target.value;
+          const href = value === "all"
+            ? window.location.pathname
+            : `${window.location.pathname}?category=${value}`;
+          window.location.href = href;
+        });
+      }
 
       const filtered = active === "all"
         ? posts
