@@ -1198,6 +1198,7 @@ iframe {
 }
 
 .qjn-about-card {
+  text-align: center;
   background: #111111;
   border-radius: 18px;
   border: 1px solid var(--surface-border);
@@ -1224,6 +1225,7 @@ iframe {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: center;
 }
 
 .qjn-about-card-links a {
