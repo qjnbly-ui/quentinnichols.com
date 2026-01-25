@@ -11,6 +11,8 @@
 
     const getSlideWidth = () => track.clientWidth || carousel.clientWidth;
 
+    const interval = Number.parseInt(carousel.dataset.interval || "3500", 10);
+
     const advance = () => {
       if (document.hidden) return;
       index = (index + 1) % slides.length;
@@ -19,7 +21,7 @@
 
     const start = () => {
       stop();
-      timer = setInterval(advance, 3500);
+      timer = setInterval(advance, interval);
     };
 
     const stop = () => {
