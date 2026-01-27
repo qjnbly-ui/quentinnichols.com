@@ -2181,6 +2181,7 @@ iframe {
   font-size: 13px;
   line-height: 1.6;
   color: var(--muted);
+  text-align: center;
 }
 
 .post-video-embed--small {
