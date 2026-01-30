@@ -110,15 +110,46 @@
     const messages = loadMessages();
     render(messages);
 
-    form.addEventListener("submit", (event) => {
+    async function sendMessage(payloadMessages) {
+      const response = await fetch("/api/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: payloadMessages }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Request failed");
+      }
+
+      const data = await response.json();
+      return data.reply || "Sorry, I couldn't generate a response.";
+    }
+
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const text = input.value.trim();
       if (!text) return;
       messages.push({ role: "user", text });
+      const payloadMessages = messages.map((msg) => ({
+        role: msg.role,
+        content: msg.text,
+      }));
+      const pendingIndex = messages.push({ role: "assistant", text: "Thinking..." }) - 1;
       render(messages);
       saveMessages(messages);
       input.value = "";
       input.focus();
+
+      try {
+        const reply = await sendMessage(payloadMessages);
+        messages[pendingIndex].text = reply;
+      } catch (err) {
+        messages[pendingIndex].text = "Sorry, something went wrong. Please try again.";
+      }
+
+      render(messages);
+      saveMessages(messages);
     });
 
     clearBtn.addEventListener("click", () => {
