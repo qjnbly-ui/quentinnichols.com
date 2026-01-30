@@ -1,0 +1,90 @@
+# Over the Handlebars: Waking Up Without Yesterday
+Date: · January 29, 2026
+URL: https://www.quentinnichols.com/blog/post/over-the-handlebars-waking-up-without-yesterday/
+
+On February 12th, 2016, a Friday after school, a friend and I rode our bikes around town and watched a really
+          good sunset. It was one of those simple, forgettable-in-the-moment days that only feels important in hindsight.
+
+The next morning, February 13th, we were heading to my mom’s house to get ready for the day. We decided to race
+          our bikes down the dirt road toward her place. It wasn’t far. At some point during the ride, my sweatshirt got
+          caught in my front tire. I flew over the handlebars and hit my face on the gravel.
+
+My memory of the accident itself is fragmented. I remember waking up that morning, heading out towards my mom’s
+          and asking Anthony if he wanted to race. For a long time, I didn’t remember anything after that. As time passed,
+          some pieces came back. I now remember taking my sweatshirt off and placing it near the handlebars. I remember
+          seeing blood running down my face and feeling a headache, knowing something wasn’t right. I asked Anthony to
+          help me to my mom’s house, hoping my stepdad Kyle was home.
+
+Most of what happened next was filled in over the following month by other people. The next clear memory I have
+          is being in the hospital. Kyle was standing next to me, comforting me. Everything felt dreamlike, but my head
+          hurt badly. I remember bits of my mom being on the phone, panicked, trying to get to the hospital in Klamath
+          Falls from Bend, where she had been at my younger sister’s sports game.
+
+I later learned that Kyle called my grandma Marla to come help. They decided to drive me to the hospital rather
+          than wait for an ambulance, since that was quicker for our remote area in Bly and my grandma has the medical
+          experience to provide the same level of care I would have received on the ambulance. My grandpa drove while
+          Grandma cared for me. I still don’t remember any of this.
+
+When my mom arrived, I asked where my girlfriend Jesse was. She told me that we had recently broken up. That
+          didn’t make sense to me at all. My memory told me something different, and I couldn’t reconcile the two.
+
+After that, my memory fades again until I woke up at my grandma Marla’s house with a pounding headache. She
+          told me some friends wanted to talk to me. She handed me the phone. I could hear voices, but I didn’t recognize
+          them. They told me they were thinking of me. I asked the main speaker what his name was. He said Eddy. I told
+          him I was sorry, but I didn’t know who he was. I felt terrible saying that. Again, it all felt like a dream. I
+          knew I had been hurt and that I had a concussion, but not much beyond that.
+
+One detail I later remembered from the hospital stood out. Doctors questioned whether my injuries really came
+          from a bike accident. At the time, it felt unsettling, but I now understand that it was standard procedure to
+          make sure kids are safe at home.
+
+The recovery was long. I couldn’t shower normally for a while, and my hair became greasy. My ear was badly
+          injured, nearly torn apart, and took a long time to heal. My mom had to clean it, bandage it, and apply
+          ointment for quite some time. Eventually, I went to the orthodontist, who told me that if I hadn’t already had
+          braces, I likely would have lost most of my front teeth, both top and bottom. Because of the accident, I had
+          to wear braces for an additional six months. My braces would often catch on my injured lips, causing constant
+          discomfort.
+
+As I began to recover, I realized I had lost about two months of memory from before the accident. It took
+          roughly six weeks of looking through photos and listening to stories from friends to piece things back
+          together. I wasn’t allowed to play sports until I could pass a cognitive test. I tried multiple times before I
+          finally did.
+
+During that time, my math teacher, Richard Otto, was a huge supporter of me. He told me that after the
+          concussion, I wasn’t the same in class. I had become quieter and more reserved. I didn’t notice the change
+          myself, but I trust that he saw something real.
+
+Over time, more memories returned. I eventually remembered Anthony holding me up as we walked to my mom’s front
+          door and waiting for Kyle to help. I don’t remember much after that. I think I had just enough awareness to
+          know I needed help, and then I shut down.
+
+It was a serious experience, one I’m fortunate to have recovered from. In a strange way, I’m grateful for it.
+          It gave me insight into how disorienting and frightening head injuries can be, and it’s helped me show more
+          patience and understanding toward others who go through similar situations now that I work as an EMT in Bly.
+
+Messages That Day
+
+It's days like today that remind me how blessed we are. I know that we have amazing family and friends.
+            Quentin's most serious injury is a concussion. He has a lot of scrapes, cuts and bruising but that will
+            heal. And some very sore and loose teeth but I imagine if he didn't have braces on he would be missing a
+            few so the braces are probably a blessing although he probably doesn't think so now. And these injuries
+            were from a bicycle accident probably 100 ft. from his front door. Thanks for all the thoughts and prayers.
+
+I love you Quentin. Not fun being over 2 hours away when your kid gets hurt. Thankful for both of your
+            grandmas and the rest of the family for taking care of you while i drove home.
+
+Click to view the Facebook post I shared that afternoon (grateful for all the love and support people showed me)
+
+Recommended Reads
+
+Waimanalo Beach: A Hard Lesson
+
+Life Journeys & Growth
+
+A Morning in San Francisco: An Unexpected Encounter
+
+Moments & Encounters
+
+Retiring My Sister’s Tricycle With a Good View
+
+Story Behind The Photos

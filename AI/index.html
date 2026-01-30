@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quentin Nichols AI</title>
+  <meta name="description" content="A private, local-first chat experience grounded in Quentin Nichols' writing and work.">
+  <link rel="stylesheet" href="/style.css">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ESFM9WKBF9"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-ESFM9WKBF9');
+  </script>
+</head>
+<body class="ai-page">
+  <nav class="site-nav" aria-label="Site">
+    <div class="nav-shell">
+      <details class="nav-menu">
+        <summary aria-label="Open menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </summary>
+        <div class="nav-menu-panel">
+          <a href="/">Home</a>
+          <a href="/photography/">Photography</a>
+          <a href="/projects/">Projects</a>
+          <a href="/blog/">Blog</a>
+          <a href="/contact/">Contact</a>
+          <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
+        </div>
+      </details>
+      <a class="nav-logo" href="/">
+        <img src="/assets/Watermark (1) copy.png" alt="Quentin Nichols Oregon">
+      </a>
+      <div class="nav-spacer" aria-hidden="true"></div>
+    </div>
+  </nav>
+
+  <main class="ai-main">
+    <section class="ai-hero">
+      <div class="ai-inner">
+        <div class="ai-title-wrap">
+          <h1 class="ai-title">Quentin Nichols AI</h1>
+          <p class="ai-subtitle">
+            I built this to help connect the dots across my writing, photography, and projects—so you can explore themes,
+            ask questions, and find the pieces that resonate most.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="ai-chat" aria-label="AI chat">
+      <div class="ai-inner">
+        <div class="ai-card">
+          <div class="ai-toolbar">
+            <span class="ai-status">Memory: on device</span>
+            <button class="ai-clear" type="button" id="clear-chat">Clear chat</button>
+          </div>
+
+          <div class="ai-log" id="chat-log" aria-live="polite"></div>
+
+          <form class="ai-input" id="chat-form">
+            <label class="ai-label" for="chat-message">Message</label>
+            <div class="ai-input-row">
+              <textarea id="chat-message" rows="2" placeholder="Ask about posts, photography, or reflections..." required></textarea>
+              <button type="submit">Send</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "qjn_ai_chat";
+    const log = document.getElementById("chat-log");
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("chat-message");
+    const clearBtn = document.getElementById("clear-chat");
+
+    function render(messages) {
+      log.innerHTML = "";
+      messages.forEach((msg) => {
+        const row = document.createElement("div");
+        row.className = `ai-bubble ai-bubble--${msg.role}`;
+        row.textContent = msg.text;
+        log.appendChild(row);
+      });
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function loadMessages() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveMessages(messages) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
+
+    const messages = loadMessages();
+    render(messages);
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      messages.push({ role: "user", text });
+      render(messages);
+      saveMessages(messages);
+      input.value = "";
+      input.focus();
+    });
+
+    clearBtn.addEventListener("click", () => {
+      if (!confirm("Clear this chat from your device?")) return;
+      messages.length = 0;
+      saveMessages(messages);
+      render(messages);
+    });
+  </script>
+  <script src="/assets/nav.js"></script>
+</body>
+</html>

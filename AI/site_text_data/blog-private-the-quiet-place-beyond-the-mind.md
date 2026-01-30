@@ -1,0 +1,129 @@
+# The Quiet Place Beyond the Mind
+Date: · March 27, 2025
+URL: https://www.quentinnichols.com/blog/private/the-quiet-place-beyond-the-mind/
+
+Lately, I’ve been drawn to a bunch of different things—Ky Dickens on the Joe Rogan Experience, The Telepathy
+          Tapes, books by Robert Monroe—and the more I take in, the more everything just starts connecting. All of it.
+          Every interest I’ve had recently overlaps with something else I already knew deep down. And it’s not just
+          interesting—it’s overwhelming in the best way. Like some bigger truth is starting to take shape.
+
+I’ve never been to the “hill” like some of the kids talk about in those telepathy episodes. I don’t know that
+          place. But I’ve been to a place. A place where it felt like everything was floating around me—information,
+          feelings, knowing—but I didn’t exactly understand it. I couldn’t label it all or bring it back with me. I just
+          spent hours there. And it felt like I was barely scratching the surface. I organized a few pieces, made some
+          sense of parts of it… but mostly, I just knew that it was real. That it’s always there, waiting. And that one
+          day, I’ll be able to spend more time there and make more sense of it.
+
+But that place—that realm, or state, or whatever it is—it’s what showed me how valuable daily life really is.
+          Here, in this body, in this moment, we get to live. We get to experience all of this from a minimal, material
+          point of view. And that’s a gift. That other place isn’t going anywhere. It’ll be there again. Maybe when I
+          sleep, maybe when I pass on. But this—this human life—is where I get to feel the sun on my face, play music,
+          laugh with friends, eat something good, and see beauty in the small stuff.
+
+Most nights, I go to bed with this feeling like I didn’t quite get it all down. Like I lived something
+          beautiful—had thoughts I’ve never had before, saw something in a new light—but didn’t stop to write any of it.
+          I didn’t fully capture it. And I think that’s what leaves me a little unsettled at the end of the day. It’s not
+          regret—it’s more like I missed a chance to honor it.
+
+I don’t feel pressure to write things perfectly, but I do feel a pull to document this part of my life. Because
+          it’s happening fast. I’m changing quickly. And I know someday, I’ll want to look back and see how it all came
+          together. I want other people to be able to look at it too—not just the result, but the process. The raw, honest
+          parts. The parts where I was still figuring things out, still asking questions, still finding the words.
+
+That’s what excites me so much about The Telepathy Tapes. Hearing what these kids are going through—what they’re
+          able to access and describe—it gives a kind of credit to the experiences I’ve felt myself. Not the same, of
+          course. What they’re experiencing is uniquely their own, tied to their physiology, their brain, their way of
+          being. But it resonates. It confirms that there is something real about these deeper states of awareness, these
+          layers of consciousness that not everyone sees. And that makes me want to learn more—not just about them, but
+          about everyone. About what people feel, what they go through, and how their minds and bodies process this life.
+
+At the same time, it pushes me to go inward. To practice more meditation. To be more present. To try and meet
+          that state—not by force or imitation, but by tuning into what I’ve already been shown. I may not have been born
+          with the same access they have, but I’ve had glimpses. And I know there’s more waiting if I’m willing to sit
+          with it.
+
+This also ties back to something I’ve written about before—both in my blog post on Jeffrey Long’s books about
+          near-death experiences, and another post where I shared what Jesus said: “The kingdom of God is within you”
+          (Luke 17:21), and also, “Very truly I tell you, whoever believes in me will do the works I have been doing, and
+          they will do even greater things than these…” (John 14:12). I really believe this is what he was talking about.
+          That there’s something more living in all of us—something we’ve forgotten how to see. Jesus saw it. He lived it.
+          And I think he recognized that most people weren’t living with that same awareness, and he hoped we would.
+          Because life with that kind of connection is different. It’s clearer. It’s fuller.
+
+And that same message shows up again in near-death experiences. The people who go through those moments come
+          back changed—not just because of where they went, but because they felt what was already inside them. It
+          confirms what I’ve come to believe: there is something deeper living within us, and we don’t have to wait until
+          death to know it. We can live inside it right now.
+
+There’s so much confirmation I’ve read about that tells us this place is real. For example, I recently read
+          Nikola Tesla’s autobiography, My Inventions, and in it he talked thoroughly about practicing and training his
+          mind to enter this space. It was a place where he would “see” his intentions—design and test them all from
+          within. He spent so much of his time with his eyes closed, in a place so much greater than what we can see with
+          our eyes open. That really hit me. The more I read things like that, the more I see how vast this hidden world
+          is inside us.
+
+It makes so much sense that the people who dedicate time to write, or to create, clearly have something bigger
+          inside them—something they feel called to share. The more we open our own neural networks and allow ourselves
+          to see that, the more we’re able to go off on our own journeys within.
+
+And that’s part of what makes me feel so deeply for people. Sometimes, even if I haven’t lived their exact
+          experience, I feel like I know where they are. I’ve studied the brain a lot—different levels of consciousness,
+          brainwave frequencies, neurotransmitters, anatomy, all of it. That knowledge helped me build a kind of
+          visual—a working map of how the brain and consciousness operate. But once that template was there, I didn’t
+          just see it as information anymore. I could move through it. I could feel it.
+
+So now, when I think about someone like my dad, who’s experienced psychosis, I feel like I’m not just imagining
+          what he’s gone through—I’m actually playing through the neural network of his mind. I see it in my head. I feel
+          it as if I’ve been there, even if I haven’t fully crossed that line. I’ve had moments—like staying up too long,
+          pushing my mind too far—where I was close. And I knew that if I had kept going, I would’ve fallen into the same
+          space. But I didn’t. I stayed right at the edge. And somehow, that gave me insight.
+
+It’s not something I learned from books. It’s spiritual. It’s intuitive. I’ve tried to explain this to my
+          brother and sister before—that I just know who he is. Not through study, but through something deeper. It’s like
+          the neural map I carry lets me walk through someone else’s experience, not to diagnose it or label it, but to
+          feel it. That kind of knowing isn’t easy to explain—but it’s real. And it’s shaped how I see the world, how I
+          care for others, and why I write any of this in the first place.
+
+And sometimes I think that’s why art and music matter so much. It’s something I’ve written about before, and
+          honestly, I wish I spent more time there—more time playing guitar, piano, creating music, just being in that
+          space. Because the arts of this world, they come from a loving place. They’ve always been expressions of
+          something deeper. Joe Rogan mentioned it on one of his recent episodes, and you can hear it in so many
+          voices—biblical text, near-death experiences, the stories of people across time. That kind of love gets
+          expressed through music, painting, rhythm, beauty.
+
+Sometimes I think, instead of trying to write a book or prove all these thoughts through science and
+          explanation, maybe the simplest and most powerful thing I can do is just create. Because music literally
+          changes brainwaves. It shifts people into different states of consciousness. It’s one of the few things that
+          can reach people without explanation—just feeling. Through words and music, I can share what I’ve experienced.
+          And in that moment, they can feel it too.
+
+And I’ve also come to believe that sleep might be more than just a personal reset. It feels like everything we
+          experience in a day—our thoughts, emotions, memories—gets uploaded somewhere greater. Like we’re returning it to
+          a collective consciousness. Releasing it from just our individual experience and passing it into something that
+          belongs to all of us. And the next morning, we start new. But if we needed to, I think we could still access
+          what others have seen, what they’ve felt, what they’ve left behind in that field. That idea… it makes life feel
+          even more connected. Like we’re not learning alone—we’re learning together, even in silence.
+
+And at the end of all this, there’s a quote I’ve carried with me for over a year now. It’s been at the top of
+          my website, and if you’ve read anything I’ve written before, you might’ve seen it. But if you haven’t heard
+          it—or even if you have—I want to share it again, because everything I’ve said here really comes from this:
+
+“We are born with the gift of not knowing, to delight in learning life’s simple joys. Our bodies bear the price
+          of adventure, and sleep our return to essence.”
+
+What’s crazy is—I actually wrote that quote myself. Over a year ago. I had just come out of a deep meditation
+          when the words came to me, and I remember feeling like they didn’t just come from me—they came through me. And
+          what’s stuck with me is that it keeps meaning more. Like it said something I didn’t even fully understand yet.
+          As if it was planted in me as a reminder… for now, and for everything still to come.
+
+That’s the message. We’re not born with all the answers, and that’s the gift. We get to learn, explore, and
+          feel. We get to be surprised by beauty and find joy in the simplest things. And our bodies—they’re part of that
+          process. They grow tired. They carry the weight of everything we go through, the physical side of adventure.
+          Without that, we’d never slow down. We’d never reflect. We’d never pause long enough to find meaning.
+
+And that’s why sleep matters. It’s our return to essence. The place where we offload the day’s experience, give
+          it back to the whole, and reset. Each new day becomes another chance to start again. Another moment to live,
+          learn, and feel the depth of being alive.
+
+That quote has stayed with me because it holds so much truth in so few words. And it’s where all of this comes
+          from. If anything in this post spoke to you, just know—it’s already in you too.
