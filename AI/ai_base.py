@@ -11,7 +11,11 @@ MODEL = "llama-3.3-70b-versatile"  # or "llama-3.1-8b-instant"
 DATA_DIR = Path("AI/site_text_data")
 MAX_CONTEXT_TOKENS = 100_000  # safety cap (model supports larger)
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+API_KEY = os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY")
+if not API_KEY:
+    raise RuntimeError("Missing API key. Set GROQ_API_KEY (or OPENAI_API_KEY) in your environment.")
+
+client = Groq(api_key=API_KEY)
 
 
 def load_site_context() -> str:
