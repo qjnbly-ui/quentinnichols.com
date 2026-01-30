@@ -45,10 +45,11 @@
     <section class="ai-hero">
       <div class="ai-inner">
         <div class="ai-title-wrap">
-          <h1 class="ai-title">Quentin Nichols AI</h1>
+          <p class="ai-kicker">Quentin Nichols</p>
+          <h1 class="ai-title">AI Studio</h1>
           <p class="ai-subtitle">
-            I built this to help connect the dots across my writing, photography, and projects—so you can explore themes,
-            ask questions, and find the pieces that resonate most.
+            A private, local-first chat experience grounded in the writing, photography, and projects on this site.
+            Use it to connect themes, find stories, or revisit moments.
           </p>
         </div>
       </div>
@@ -58,18 +59,29 @@
       <div class="ai-inner">
         <div class="ai-card">
           <div class="ai-toolbar">
-            <span class="ai-status">Memory: on device</span>
+            <div class="ai-status-wrap">
+              <span class="ai-status">Memory: saved on this device</span>
+              <span class="ai-status ai-status--dot">Live answers</span>
+            </div>
             <button class="ai-clear" type="button" id="clear-chat">Clear chat</button>
+          </div>
+
+          <div class="ai-prompts" aria-label="Jumpstart prompts">
+            <button class="ai-prompt" type="button">Summarize the travel stories and their takeaways.</button>
+            <button class="ai-prompt" type="button">What photography themes show up the most?</button>
+            <button class="ai-prompt" type="button">Help me find posts about resilience and change.</button>
+            <button class="ai-prompt" type="button">What projects best reflect your values?</button>
           </div>
 
           <div class="ai-log" id="chat-log" aria-live="polite"></div>
 
           <form class="ai-input" id="chat-form">
-            <label class="ai-label" for="chat-message">Message</label>
+            <label class="ai-label" for="chat-message">Ask about posts, photography, or reflections</label>
             <div class="ai-input-row">
-              <textarea id="chat-message" rows="2" placeholder="Ask about posts, photography, or reflections..." required></textarea>
+              <textarea id="chat-message" rows="2" placeholder="What themes keep showing up in my writing?" required></textarea>
               <button type="submit">Send</button>
             </div>
+            <p class="ai-hint">Your messages stay on this device. Responses are generated on-demand.</p>
           </form>
         </div>
       </div>
@@ -125,6 +137,15 @@
       const data = await response.json();
       return data.reply || "Sorry, I couldn't generate a response.";
     }
+
+    const promptButtons = document.querySelectorAll(".ai-prompt");
+
+    promptButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        input.value = button.textContent.trim();
+        input.focus();
+      });
+    });
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
