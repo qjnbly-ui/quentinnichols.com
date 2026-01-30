@@ -154,7 +154,10 @@
 
     function cleanForSpeech(text) {
       const withoutMarkdownLinks = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)/g, "$1");
-      return withoutMarkdownLinks.replace(/\bhttps?:\/\/[^\s]+/g, "").replace(/\s+/g, " ").trim();
+      const withoutUrls = withoutMarkdownLinks.replace(/\bhttps?:\/\/[^\s]+/g, "");
+      const expandAges = withoutUrls.replace(/\b(\d+)-year-old\b/gi, "$1 year old");
+      const softHyphens = expandAges.replace(/(\d)-(\d)/g, "$1 to $2");
+      return softHyphens.replace(/\s+/g, " ").trim();
     }
 
     function render(messages) {
@@ -262,6 +265,76 @@
       return URL.createObjectURL(blob);
     }
 
+    async function playSpeechQueue(text) {
+      const cleaned = cleanForSpeech(text);
+      if (!cleaned) return;
+      const maxChunk = 1100;
+      const sentences = cleaned.match(/[^.!?]+[.!?]*/g) || [cleaned];
+      const chunks = [];
+      let buffer = "";
+
+      function flushBuffer(nextText) {
+        if ((buffer + nextText).length <= maxChunk) {
+          buffer += nextText;
+          return;
+        }
+        if (buffer) chunks.push(buffer.trim());
+        buffer = nextText;
+      }
+
+      function splitByComma(sentence) {
+        const parts = sentence.split(/(,\s+|;\s+|:\s+)/);
+        let acc = "";
+        for (let i = 0; i < parts.length; i += 2) {
+          const segment = parts[i] || "";
+          const punctuation = parts[i + 1] || "";
+          const piece = `${segment}${punctuation}`;
+          if (!piece.trim()) continue;
+          if (piece.length > maxChunk) {
+            const words = piece.split(/\s+/);
+            let wordBuf = "";
+            words.forEach((word) => {
+              const next = wordBuf ? `${wordBuf} ${word}` : word;
+              if (next.length > maxChunk) {
+                if (wordBuf) chunks.push(wordBuf.trim());
+                wordBuf = word;
+              } else {
+                wordBuf = next;
+              }
+            });
+            if (wordBuf) chunks.push(wordBuf.trim());
+          } else {
+            flushBuffer(piece);
+          }
+        }
+      }
+
+      sentences.forEach((sentence) => {
+        if (sentence.length > maxChunk) {
+          splitByComma(sentence);
+        } else {
+          flushBuffer(sentence);
+        }
+      });
+      if (buffer) chunks.push(buffer.trim());
+
+      for (const chunk of chunks) {
+        const audioUrl = await requestSpeech(chunk);
+        await new Promise((resolve, reject) => {
+          const audio = new Audio(audioUrl);
+          audio.addEventListener("ended", () => {
+            URL.revokeObjectURL(audioUrl);
+            resolve();
+          });
+          audio.addEventListener("error", () => {
+            URL.revokeObjectURL(audioUrl);
+            reject(new Error("Audio playback failed"));
+          });
+          audio.play().catch(reject);
+        });
+      }
+    }
+
     log.addEventListener("click", async (event) => {
       const btn = event.target.closest(".ai-tts");
       if (!btn) return;
@@ -272,13 +345,8 @@
       btn.disabled = true;
       btn.textContent = "Loading...";
       try {
-        const audioUrl = await requestSpeech(msg.text);
-        const audio = new Audio(audioUrl);
-        audio.addEventListener("ended", () => {
-          URL.revokeObjectURL(audioUrl);
-        });
-        audio.play();
-        btn.textContent = "Playing";
+        await playSpeechQueue(msg.text);
+        btn.textContent = "Listen";
       } catch (err) {
         btn.textContent = "Listen";
       } finally {
