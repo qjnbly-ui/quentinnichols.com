@@ -97,68 +97,64 @@
     const input = document.getElementById("chat-message");
     const clearBtn = document.getElementById("clear-chat");
 
-    const LINK_MAP = {
-      home: "/",
-      photography: "/photography/",
-      projects: "/projects/",
-      blog: "/blog/",
-      contact: "/contact/",
-      shop: "https://shop.quentinnichols.com/",
-    };
-
-    function splitWord(word) {
-      const match = word.match(/^([("']*)(.*?)([)"'.,!?;:]*)$/);
-      return match ? { lead: match[1], core: match[2], trail: match[3] } : { lead: "", core: word, trail: "" };
-    }
-
     function createLinkedText(text) {
       const container = document.createElement("span");
-      const tokens = text.split(/\s+/);
+      const markdownLink = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)/g;
+      const urlPattern = /\bhttps?:\/\/[^\s]+/g;
 
-      tokens.forEach((token, index) => {
-        const { lead, core, trail } = splitWord(token);
-        const lower = core.toLowerCase();
-        const isUrl = /^https?:\/\/\S+$/i.test(core);
-        const internalMatch = core.match(/^\/([a-z-]+)\/?$/i);
+      let lastIndex = 0;
+      let match;
 
-        if (lead) container.appendChild(document.createTextNode(lead));
-
-        if (isUrl) {
-          const link = document.createElement("a");
-          link.href = core;
-          link.textContent = "link";
-          link.rel = "noopener";
-          link.target = "_blank";
-          container.appendChild(link);
-        } else if (core === "/") {
-          const link = document.createElement("a");
-          link.href = LINK_MAP.home;
-          link.textContent = "home";
-          container.appendChild(link);
-        } else if (internalMatch && Object.prototype.hasOwnProperty.call(LINK_MAP, internalMatch[1].toLowerCase())) {
-          const key = internalMatch[1].toLowerCase();
-          const link = document.createElement("a");
-          link.href = LINK_MAP[key];
-          link.textContent = key;
-          container.appendChild(link);
-        } else if (Object.prototype.hasOwnProperty.call(LINK_MAP, lower)) {
-          const link = document.createElement("a");
-          link.href = LINK_MAP[lower];
-          link.textContent = core;
-          if (lower === "shop") {
-            link.rel = "noopener";
-            link.target = "_blank";
-          }
-          container.appendChild(link);
-        } else {
-          container.appendChild(document.createTextNode(core));
+      while ((match = markdownLink.exec(text)) !== null) {
+        const [full, label, href] = match;
+        if (match.index > lastIndex) {
+          container.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
         }
 
-        if (trail) container.appendChild(document.createTextNode(trail));
-        if (index < tokens.length - 1) container.appendChild(document.createTextNode(" "));
+        const link = document.createElement("a");
+        link.href = href;
+        link.textContent = label;
+        if (/^https?:\/\//i.test(href)) {
+          link.rel = "noopener";
+          link.target = "_blank";
+        }
+        container.appendChild(link);
+        lastIndex = match.index + full.length;
+      }
+
+      if (lastIndex < text.length) {
+        container.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+
+      const childNodes = Array.from(container.childNodes);
+      container.textContent = "";
+      childNodes.forEach((node) => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const parts = node.textContent.split(urlPattern);
+          const matches = node.textContent.match(urlPattern) || [];
+          parts.forEach((part, idx) => {
+            if (part) container.appendChild(document.createTextNode(part));
+            const url = matches[idx];
+            if (url) {
+              const link = document.createElement("a");
+              link.href = url;
+              link.textContent = "link";
+              link.rel = "noopener";
+              link.target = "_blank";
+              container.appendChild(link);
+            }
+          });
+        } else {
+          container.appendChild(node);
+        }
       });
 
       return container;
+    }
+
+    function cleanForSpeech(text) {
+      const withoutMarkdownLinks = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)/g, "$1");
+      return withoutMarkdownLinks.replace(/\bhttps?:\/\/[^\s]+/g, "").replace(/\s+/g, " ").trim();
     }
 
     function render(messages) {
@@ -254,7 +250,7 @@
       const response = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text: cleanForSpeech(text) }),
       });
 
       if (!response.ok) {
