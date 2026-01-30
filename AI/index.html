@@ -57,7 +57,7 @@
 
     <section class="ai-chat" aria-label="AI chat">
       <div class="ai-inner">
-        <div class="ai-mobile-intro" aria-hidden="true">
+        <div class="ai-mobile-intro">
           <p class="ai-subtitle">
             Open the AI chat for a focused, full-screen experience with your chat history and message input.
           </p>
@@ -97,12 +97,96 @@
     const input = document.getElementById("chat-message");
     const clearBtn = document.getElementById("clear-chat");
 
+    const LINK_MAP = {
+      home: "/",
+      photography: "/photography/",
+      projects: "/projects/",
+      blog: "/blog/",
+      contact: "/contact/",
+      shop: "https://shop.quentinnichols.com/",
+    };
+
+    function splitWord(word) {
+      const match = word.match(/^([("']*)(.*?)([)"'.,!?;:]*)$/);
+      return match ? { lead: match[1], core: match[2], trail: match[3] } : { lead: "", core: word, trail: "" };
+    }
+
+    function createLinkedText(text) {
+      const container = document.createElement("span");
+      const tokens = text.split(/\s+/);
+
+      tokens.forEach((token, index) => {
+        const { lead, core, trail } = splitWord(token);
+        const lower = core.toLowerCase();
+        const isUrl = /^https?:\/\/\S+$/i.test(core);
+        const internalMatch = core.match(/^\/([a-z-]+)\/?$/i);
+
+        if (lead) container.appendChild(document.createTextNode(lead));
+
+        if (isUrl) {
+          const link = document.createElement("a");
+          link.href = core;
+          link.textContent = "link";
+          link.rel = "noopener";
+          link.target = "_blank";
+          container.appendChild(link);
+        } else if (core === "/") {
+          const link = document.createElement("a");
+          link.href = LINK_MAP.home;
+          link.textContent = "home";
+          container.appendChild(link);
+        } else if (internalMatch && Object.prototype.hasOwnProperty.call(LINK_MAP, internalMatch[1].toLowerCase())) {
+          const key = internalMatch[1].toLowerCase();
+          const link = document.createElement("a");
+          link.href = LINK_MAP[key];
+          link.textContent = key;
+          container.appendChild(link);
+        } else if (Object.prototype.hasOwnProperty.call(LINK_MAP, lower)) {
+          const link = document.createElement("a");
+          link.href = LINK_MAP[lower];
+          link.textContent = core;
+          if (lower === "shop") {
+            link.rel = "noopener";
+            link.target = "_blank";
+          }
+          container.appendChild(link);
+        } else {
+          container.appendChild(document.createTextNode(core));
+        }
+
+        if (trail) container.appendChild(document.createTextNode(trail));
+        if (index < tokens.length - 1) container.appendChild(document.createTextNode(" "));
+      });
+
+      return container;
+    }
+
     function render(messages) {
       log.innerHTML = "";
-      messages.forEach((msg) => {
+      messages.forEach((msg, index) => {
         const row = document.createElement("div");
         row.className = `ai-bubble ai-bubble--${msg.role}`;
-        row.textContent = msg.text;
+        const textEl = document.createElement("p");
+        textEl.className = "ai-bubble-text";
+        if (msg.role === "assistant" && msg.text && msg.text !== "Thinking...") {
+          textEl.appendChild(createLinkedText(msg.text));
+        } else {
+          textEl.textContent = msg.text;
+        }
+        row.appendChild(textEl);
+
+        if (msg.role === "assistant" && msg.text && msg.text !== "Thinking...") {
+          const controls = document.createElement("div");
+          controls.className = "ai-bubble-controls";
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "ai-tts";
+          btn.dataset.index = String(index);
+          btn.textContent = "Listen";
+          controls.appendChild(btn);
+          row.appendChild(controls);
+        }
+
         log.appendChild(row);
       });
       log.scrollTop = log.scrollHeight;
@@ -146,7 +230,10 @@
     if (openBtn) {
       openBtn.addEventListener("click", () => {
         document.body.classList.add("ai-chat-open");
-        input.focus();
+        setTimeout(() => {
+          input.focus();
+          input.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 150);
       });
     }
 
@@ -155,6 +242,53 @@
         document.body.classList.remove("ai-chat-open");
       });
     }
+
+    input.addEventListener("focus", () => {
+      document.body.classList.add("ai-chat-open");
+      setTimeout(() => {
+        input.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 150);
+    });
+
+    async function requestSpeech(text) {
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "TTS request failed");
+      }
+
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    }
+
+    log.addEventListener("click", async (event) => {
+      const btn = event.target.closest(".ai-tts");
+      if (!btn) return;
+      const index = Number(btn.dataset.index);
+      const msg = messages[index];
+      if (!msg || msg.role !== "assistant") return;
+
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      try {
+        const audioUrl = await requestSpeech(msg.text);
+        const audio = new Audio(audioUrl);
+        audio.addEventListener("ended", () => {
+          URL.revokeObjectURL(audioUrl);
+        });
+        audio.play();
+        btn.textContent = "Playing";
+      } catch (err) {
+        btn.textContent = "Listen";
+      } finally {
+        btn.disabled = false;
+      }
+    });
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
