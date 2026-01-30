@@ -292,7 +292,8 @@
       let stopped = false;
       let currentAudio = null;
       let currentUrl = null;
-      let currentAbort = null;
+      let currentFetch = null;
+      let nextFetch = null;
 
       function flushBuffer(nextText) {
         if ((buffer + nextText).length <= maxChunk) {
@@ -341,10 +342,10 @@
 
       const stop = () => {
         stopped = true;
-        if (currentAbort) {
-          currentAbort.abort();
-          currentAbort = null;
-        }
+        if (currentFetch?.abort) currentFetch.abort();
+        if (nextFetch?.abort) nextFetch.abort();
+        currentFetch = null;
+        nextFetch = null;
         if (currentAudio) {
           currentAudio.pause();
           currentAudio.currentTime = 0;
@@ -364,15 +365,37 @@
       controls.progress.hidden = false;
 
       (async () => {
-        for (const chunk of chunks) {
-          if (stopped) break;
-          currentAbort = new AbortController();
-          const audioUrl = await requestSpeech(chunk, currentAbort.signal);
-          currentAbort = null;
+        const startFetch = (chunk) => {
+          const controller = new AbortController();
+          return {
+            abort: () => controller.abort(),
+            promise: requestSpeech(chunk, controller.signal),
+          };
+        };
+
+        let index = 0;
+        if (chunks.length > 0) {
+          currentFetch = startFetch(chunks[0]);
+        }
+
+        while (!stopped && index < chunks.length && currentFetch) {
+          let audioUrl;
+          try {
+            audioUrl = await currentFetch.promise;
+          } catch (err) {
+            if (stopped) break;
+            throw err;
+          }
+
           if (stopped) {
             URL.revokeObjectURL(audioUrl);
             break;
           }
+
+          if (index + 1 < chunks.length) {
+            nextFetch = startFetch(chunks[index + 1]);
+          }
+
           currentUrl = audioUrl;
           await new Promise((resolve, reject) => {
             const audio = new Audio(audioUrl);
@@ -400,6 +423,10 @@
             });
             audio.play().catch(reject);
           });
+
+          currentFetch = nextFetch;
+          nextFetch = null;
+          index += 1;
         }
       })()
         .catch(() => {})
