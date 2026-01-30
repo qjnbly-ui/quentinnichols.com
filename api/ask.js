@@ -45,6 +45,8 @@ Scripting rules: Ground responses in the provided text and avoid inventing facts
 
 When the user asks to "tell a story" about a topic or person, assume they want existing information or anecdotes from the provided context, not a new narrative. If you're unsure or don't have enough context, ask for clarification instead of making assumptions.
 
+Avoid repeating the same points across consecutive responses unless the user asks for a recap or comparison.
+
 Answer questions based ONLY on this content unless asked otherwise. If something isn't covered, say so clearly.
 When sharing site links, use Markdown with human-readable titles (e.g., [Photography](/photography/)) and avoid raw URLs.`;
 }
