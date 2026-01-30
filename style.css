@@ -2491,6 +2491,8 @@ iframe {
   margin-top: 8px;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
 }
 
 .ai-tts {
@@ -2503,6 +2505,40 @@ iframe {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
+}
+
+.ai-tts-stop {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ai-tts-progress {
+  width: 120px;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ai-tts-progress::-webkit-progress-bar {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+.ai-tts-progress::-webkit-progress-value {
+  background: rgba(245, 242, 234, 0.75);
+  border-radius: 999px;
+}
+
+.ai-tts-progress::-moz-progress-bar {
+  background: rgba(245, 242, 234, 0.75);
+  border-radius: 999px;
 }
 
 .ai-tts:disabled {

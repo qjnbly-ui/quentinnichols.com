@@ -182,7 +182,21 @@
           btn.className = "ai-tts";
           btn.dataset.index = String(index);
           btn.textContent = "Listen";
+          const stopBtn = document.createElement("button");
+          stopBtn.type = "button";
+          stopBtn.className = "ai-tts-stop";
+          stopBtn.dataset.index = String(index);
+          stopBtn.textContent = "Stop";
+          stopBtn.hidden = true;
+          const progress = document.createElement("progress");
+          progress.className = "ai-tts-progress";
+          progress.max = 1;
+          progress.value = 0;
+          progress.hidden = true;
+
           controls.appendChild(btn);
+          controls.appendChild(stopBtn);
+          controls.appendChild(progress);
           row.appendChild(controls);
         }
 
@@ -265,13 +279,17 @@
       return URL.createObjectURL(blob);
     }
 
-    async function playSpeechQueue(text) {
+    let activePlayback = null;
+
+    async function playSpeechQueue(text, controls) {
       const cleaned = cleanForSpeech(text);
-      if (!cleaned) return;
+      if (!cleaned) return null;
       const maxChunk = 1100;
       const sentences = cleaned.match(/[^.!?]+[.!?]*/g) || [cleaned];
       const chunks = [];
       let buffer = "";
+      let stopped = false;
+      let currentAudio = null;
 
       function flushBuffer(nextText) {
         if ((buffer + nextText).length <= maxChunk) {
@@ -318,12 +336,37 @@
       });
       if (buffer) chunks.push(buffer.trim());
 
+      const stop = () => {
+        stopped = true;
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.currentTime = 0;
+        }
+        controls.listen.textContent = "Listen";
+        controls.stop.hidden = true;
+        controls.progress.hidden = true;
+        controls.progress.value = 0;
+      };
+
+      controls.listen.textContent = "Playing";
+      controls.stop.hidden = false;
+      controls.progress.hidden = false;
+
       for (const chunk of chunks) {
+        if (stopped) break;
         const audioUrl = await requestSpeech(chunk);
         await new Promise((resolve, reject) => {
           const audio = new Audio(audioUrl);
+          currentAudio = audio;
+          const onTimeUpdate = () => {
+            if (Number.isFinite(audio.duration) && audio.duration > 0) {
+              controls.progress.value = audio.currentTime / audio.duration;
+            }
+          };
+          audio.addEventListener("timeupdate", onTimeUpdate);
           audio.addEventListener("ended", () => {
             URL.revokeObjectURL(audioUrl);
+            controls.progress.value = 0;
             resolve();
           });
           audio.addEventListener("error", () => {
@@ -333,6 +376,9 @@
           audio.play().catch(reject);
         });
       }
+
+      stop();
+      return { stop };
     }
 
     log.addEventListener("click", async (event) => {
@@ -342,15 +388,35 @@
       const msg = messages[index];
       if (!msg || msg.role !== "assistant") return;
 
+      if (activePlayback) {
+        activePlayback.stop();
+        activePlayback = null;
+      }
+
+      const controls = {
+        listen: btn,
+        stop: btn.parentElement.querySelector(".ai-tts-stop"),
+        progress: btn.parentElement.querySelector(".ai-tts-progress"),
+      };
+
       btn.disabled = true;
       btn.textContent = "Loading...";
       try {
-        await playSpeechQueue(msg.text);
-        btn.textContent = "Listen";
+        btn.textContent = "Playing";
+        activePlayback = await playSpeechQueue(msg.text, controls);
       } catch (err) {
         btn.textContent = "Listen";
       } finally {
         btn.disabled = false;
+      }
+    });
+
+    log.addEventListener("click", (event) => {
+      const stopBtn = event.target.closest(".ai-tts-stop");
+      if (!stopBtn) return;
+      if (activePlayback) {
+        activePlayback.stop();
+        activePlayback = null;
       }
     });
 
