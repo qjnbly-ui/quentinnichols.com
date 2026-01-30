@@ -263,11 +263,12 @@
       }, 150);
     });
 
-    async function requestSpeech(text) {
+    async function requestSpeech(text, signal) {
       const response = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: cleanForSpeech(text) }),
+        signal,
       });
 
       if (!response.ok) {
@@ -281,7 +282,7 @@
 
     let activePlayback = null;
 
-    async function playSpeechQueue(text, controls) {
+    function playSpeechQueue(text, controls) {
       const cleaned = cleanForSpeech(text);
       if (!cleaned) return null;
       const maxChunk = 1100;
@@ -290,6 +291,8 @@
       let buffer = "";
       let stopped = false;
       let currentAudio = null;
+      let currentUrl = null;
+      let currentAbort = null;
 
       function flushBuffer(nextText) {
         if ((buffer + nextText).length <= maxChunk) {
@@ -338,9 +341,17 @@
 
       const stop = () => {
         stopped = true;
+        if (currentAbort) {
+          currentAbort.abort();
+          currentAbort = null;
+        }
         if (currentAudio) {
           currentAudio.pause();
           currentAudio.currentTime = 0;
+        }
+        if (currentUrl) {
+          URL.revokeObjectURL(currentUrl);
+          currentUrl = null;
         }
         controls.listen.textContent = "Listen";
         controls.stop.hidden = true;
@@ -352,32 +363,50 @@
       controls.stop.hidden = false;
       controls.progress.hidden = false;
 
-      for (const chunk of chunks) {
-        if (stopped) break;
-        const audioUrl = await requestSpeech(chunk);
-        await new Promise((resolve, reject) => {
-          const audio = new Audio(audioUrl);
-          currentAudio = audio;
-          const onTimeUpdate = () => {
-            if (Number.isFinite(audio.duration) && audio.duration > 0) {
-              controls.progress.value = audio.currentTime / audio.duration;
-            }
-          };
-          audio.addEventListener("timeupdate", onTimeUpdate);
-          audio.addEventListener("ended", () => {
+      (async () => {
+        for (const chunk of chunks) {
+          if (stopped) break;
+          currentAbort = new AbortController();
+          const audioUrl = await requestSpeech(chunk, currentAbort.signal);
+          currentAbort = null;
+          if (stopped) {
             URL.revokeObjectURL(audioUrl);
-            controls.progress.value = 0;
-            resolve();
+            break;
+          }
+          currentUrl = audioUrl;
+          await new Promise((resolve, reject) => {
+            const audio = new Audio(audioUrl);
+            currentAudio = audio;
+            const onTimeUpdate = () => {
+              if (Number.isFinite(audio.duration) && audio.duration > 0) {
+                controls.progress.value = audio.currentTime / audio.duration;
+              }
+            };
+            const cleanup = () => {
+              audio.removeEventListener("timeupdate", onTimeUpdate);
+              URL.revokeObjectURL(audioUrl);
+              controls.progress.value = 0;
+              currentAudio = null;
+              currentUrl = null;
+            };
+            audio.addEventListener("timeupdate", onTimeUpdate);
+            audio.addEventListener("ended", () => {
+              cleanup();
+              resolve();
+            });
+            audio.addEventListener("error", () => {
+              cleanup();
+              reject(new Error("Audio playback failed"));
+            });
+            audio.play().catch(reject);
           });
-          audio.addEventListener("error", () => {
-            URL.revokeObjectURL(audioUrl);
-            reject(new Error("Audio playback failed"));
-          });
-          audio.play().catch(reject);
+        }
+      })()
+        .catch(() => {})
+        .finally(() => {
+          stop();
         });
-      }
 
-      stop();
       return { stop };
     }
 
@@ -403,7 +432,7 @@
       btn.textContent = "Loading...";
       try {
         btn.textContent = "Playing";
-        activePlayback = await playSpeechQueue(msg.text, controls);
+        activePlayback = playSpeechQueue(msg.text, controls);
       } catch (err) {
         btn.textContent = "Listen";
       } finally {
