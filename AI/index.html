@@ -57,20 +57,22 @@
 
     <section class="ai-chat" aria-label="AI chat">
       <div class="ai-inner">
+        <div class="ai-mobile-intro" aria-hidden="true">
+          <p class="ai-subtitle">
+            Open the AI chat for a focused, full-screen experience with your chat history and message input.
+          </p>
+          <button class="ai-open" type="button" id="open-chat">Open AI</button>
+        </div>
         <div class="ai-card">
           <div class="ai-toolbar">
             <div class="ai-status-wrap">
               <span class="ai-status">Memory: saved on this device</span>
               <span class="ai-status ai-status--dot">Live answers</span>
             </div>
-            <button class="ai-clear" type="button" id="clear-chat">Clear chat</button>
-          </div>
-
-          <div class="ai-prompts" aria-label="Jumpstart prompts">
-            <button class="ai-prompt" type="button">Summarize the travel stories and their takeaways.</button>
-            <button class="ai-prompt" type="button">What photography themes show up the most?</button>
-            <button class="ai-prompt" type="button">Help me find posts about resilience and change.</button>
-            <button class="ai-prompt" type="button">What projects best reflect your values?</button>
+            <div class="ai-toolbar-actions">
+              <button class="ai-clear" type="button" id="clear-chat">Clear chat</button>
+              <button class="ai-close" type="button" id="close-chat" aria-label="Close AI chat">Close</button>
+            </div>
           </div>
 
           <div class="ai-log" id="chat-log" aria-live="polite"></div>
@@ -138,19 +140,27 @@
       return data.reply || "Sorry, I couldn't generate a response.";
     }
 
-    const promptButtons = document.querySelectorAll(".ai-prompt");
+    const openBtn = document.getElementById("open-chat");
+    const closeBtn = document.getElementById("close-chat");
 
-    promptButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        input.value = button.textContent.trim();
+    if (openBtn) {
+      openBtn.addEventListener("click", () => {
+        document.body.classList.add("ai-chat-open");
         input.focus();
       });
-    });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", () => {
+        document.body.classList.remove("ai-chat-open");
+      });
+    }
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const text = input.value.trim();
       if (!text) return;
+      document.body.classList.add("ai-chat-open");
       messages.push({ role: "user", text });
       const payloadMessages = messages.map((msg) => ({
         role: msg.role,

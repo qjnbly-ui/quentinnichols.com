@@ -2394,6 +2394,7 @@ iframe {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
+  gap: 12px;
 }
 
 .ai-status-wrap {
@@ -2402,6 +2403,12 @@ iframe {
   align-items: center;
   flex-wrap: wrap;
   justify-content: center;
+}
+
+.ai-toolbar-actions {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .ai-status {
@@ -2435,6 +2442,19 @@ iframe {
   border-radius: 999px;
   font-size: 11px;
   letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ai-close {
+  display: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -2526,31 +2546,22 @@ iframe {
   text-align: center;
 }
 
-.ai-prompts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  margin: 4px 0 18px;
+.ai-mobile-intro {
+  display: none;
+  text-align: center;
+  margin-bottom: 18px;
 }
 
-.ai-prompt {
-  text-align: left;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--text);
-  padding: 12px 14px;
-  border-radius: 14px;
-  font-family: var(--font-body);
-  font-size: 14px;
+.ai-open {
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #ffffff;
+  color: #1a130a;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 11px;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease;
-  max-width: 260px;
-}
-
-.ai-prompt:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.25);
 }
 
 @keyframes ai-rise {
@@ -2581,6 +2592,10 @@ iframe {
     margin-bottom: 18px;
   }
 
+  .ai-mobile-intro {
+    display: block;
+  }
+
   .ai-input-row {
     grid-template-columns: 1fr;
   }
@@ -2596,6 +2611,30 @@ iframe {
 
   .ai-title {
     font-size: clamp(30px, 8vw, 42px);
+  }
+
+  body.ai-chat-open .site-nav,
+  body.ai-chat-open .ai-hero,
+  body.ai-chat-open .ai-mobile-intro {
+    display: none;
+  }
+
+  body.ai-chat-open .ai-card {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    border-radius: 0;
+    padding: 16px 16px 20px;
+    min-height: 100vh;
+    z-index: 30;
+  }
+
+  body.ai-chat-open .ai-log {
+    max-height: calc(100vh - 220px);
+  }
+
+  body.ai-chat-open .ai-close {
+    display: inline-flex;
   }
 }
 
