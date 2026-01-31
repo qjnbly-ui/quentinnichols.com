@@ -19,9 +19,9 @@ module.exports = async (req, res) => {
     const text = String(body.text || "").trim();
     const voice = String(body.voice || "troy").trim();
     const model = "canopylabs/orpheus-v1-english";
-    const speedInput = body.speed ?? process.env.TTS_SPEED ?? 1.15;
+    const speedInput = body.speed ?? process.env.TTS_SPEED ?? 1.35;
     const speedNumber = Number(speedInput);
-    const speed = Number.isFinite(speedNumber) ? Math.min(5, Math.max(0.5, speedNumber)) : 1.15;
+    const speed = Number.isFinite(speedNumber) ? Math.min(5, Math.max(0.5, speedNumber)) : 1.35;
 
     if (!text) {
       res.statusCode = 400;
