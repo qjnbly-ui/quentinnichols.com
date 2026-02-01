@@ -809,7 +809,7 @@
         }
       });
 
-      const indexUrl = new URL('DocumentsStorageLocation/index-search.json', window.location.href);
+      const indexUrl = new URL('../DocumentsStorageLocation/index-search.json', window.location.href);
       indexUrl.searchParams.set('v', '2');
 
       fetch(indexUrl.toString())
