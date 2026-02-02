@@ -2223,16 +2223,17 @@ iframe {
 }
 
 .post-quote {
-  margin: 18px auto;
+  margin: 16px 0 18px;
   max-width: 760px;
-  padding: 16px 18px;
-  border-left: 3px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.7;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: "Work Sans", var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.75;
   color: var(--text);
-  text-align: center;
+  text-align: left;
 }
 
 .post-quote footer {
