@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Music Generator</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<style>
+
+body{
+font-family:system-ui;
+background:#0f0f0f;
+color:white;
+padding:40px;
+max-width:800px;
+margin:auto;
+}
+
+input,textarea{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:6px;
+border:none;
+}
+
+button{
+padding:12px 20px;
+background:#ffffff;
+color:black;
+border:none;
+border-radius:6px;
+cursor:pointer;
+font-weight:bold;
+}
+
+#audioPlayer{
+margin-top:30px;
+display:none;
+}
+
+.status{
+margin-top:20px;
+opacity:.8;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>AI Music Generator</h1>
+
+<label>Prompt</label>
+<input id="prompt" placeholder="Funny country song about Lunchbox Lenny">
+
+<label>Tags (comma separated)</label>
+<input id="tags" placeholder="country, comedy">
+
+<label>Lyrics</label>
+<textarea id="lyrics"></textarea>
+
+<label>
+<input type="checkbox" id="instrumental"> Instrumental
+</label>
+
+<br><br>
+
+<button onclick="generateSong()">Generate Song</button>
+
+<div class="status" id="status"></div>
+
+<div id="audioPlayer">
+<h3>Your Song</h3>
+<audio controls id="player"></audio>
+</div>
+
+<script>
+
+async function generateSong(){
+
+document.getElementById("status").innerText="Sending request...";
+
+const response = await fetch("/api/generate-song",{
+method:"POST",
+headers:{ "Content-Type":"application/json"},
+body:JSON.stringify({
+prompt:document.getElementById("prompt").value,
+tags:document.getElementById("tags").value.split(","),
+lyrics:document.getElementById("lyrics").value,
+instrumental:document.getElementById("instrumental").checked
+})
+})
+
+const data = await response.json()
+
+pollStatus(data.task_id)
+
+}
+
+async function pollStatus(taskId){
+
+document.getElementById("status").innerText="Generating..."
+
+let finished=false
+
+while(!finished){
+
+await new Promise(r=>setTimeout(r,5000))
+
+const res=await fetch("/api/song-status?task_id="+taskId)
+const data=await res.json()
+
+document.getElementById("status").innerText=data.status
+
+if(data.status==="SUCCESS"){
+
+finished=true
+
+const audio=data.song_paths[0]
+
+document.getElementById("audioPlayer").style.display="block"
+document.getElementById("player").src=audio
+
+}
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
