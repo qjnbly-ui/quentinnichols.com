@@ -287,8 +287,12 @@
             </div>
 
             <div class="music-field">
-              <label for="tags">Tags (comma separated)</label>
-              <input id="tags" class="music-input" placeholder="Optional: country, comedy" />
+              <label>Style Tags</label>
+              <div id="tagChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
+              <input id="tags" type="hidden" />
+              <p style="font-size:12px;color:var(--muted);margin-top:6px;">
+                Click tags to guide the style of the song.
+              </p>
             </div>
 
             <div class="music-field">
@@ -315,6 +319,7 @@
             </div>
             <p class="result-note">Song links returned by Sonauto are temporary, so download anything you want to keep.</p>
           </div>
+          <div id="songHistory" style="margin-top:24px"></div>
         </div>
       </div>
     </section>
@@ -329,6 +334,41 @@
     const audioWrap = document.getElementById("audioPlayer");
     const player = document.getElementById("player");
     const downloadSong = document.getElementById("downloadSong");
+
+    function saveDraft(){
+      const draft = {
+        prompt: promptEl.value,
+        tags: selectedTags,
+        lyrics: lyricsEl.value,
+        instrumental: instrumentalEl.checked
+      };
+
+      localStorage.setItem("musicDraft", JSON.stringify(draft));
+    }
+
+    function loadDraft(){
+      const draft = JSON.parse(localStorage.getItem("musicDraft") || "{}");
+
+      if(draft.prompt) promptEl.value = draft.prompt;
+      if(draft.lyrics) lyricsEl.value = draft.lyrics;
+      if(draft.instrumental) instrumentalEl.checked = draft.instrumental;
+
+      if(draft.tags){
+        selectedTags = draft.tags;
+
+        document.querySelectorAll("#tagChips button").forEach(btn=>{
+          if(selectedTags.includes(btn.textContent)){
+            btn.classList.add("active");
+          }
+        });
+      }
+    }
+
+    promptEl.addEventListener("input", saveDraft);
+    lyricsEl.addEventListener("input", saveDraft);
+    instrumentalEl.addEventListener("change", saveDraft);
+
+    window.addEventListener("load", loadDraft);
 
     function updateFormState() {
       const hasTags = tagsEl.value.trim().length > 0;
@@ -373,6 +413,41 @@
       };
       return map[status] || status || "Working...";
     }
+
+    const availableTags = [
+      "country","rock","pop","folk","acoustic",
+      "ambient","cinematic","orchestral",
+      "comedy","uplifting","energetic",
+      "melancholic","lofi","piano","guitar",
+      "male vocalist","female vocalist"
+    ];
+
+    const tagContainer = document.getElementById("tagChips");
+    const hiddenTags = document.getElementById("tags");
+
+    let selectedTags = [];
+
+    availableTags.forEach(tag => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.textContent = tag;
+      chip.className = "tag-chip";
+
+      chip.onclick = () => {
+        if(selectedTags.includes(tag)){
+          selectedTags = selectedTags.filter(t=>t!==tag);
+          chip.classList.remove("active");
+        } else {
+          selectedTags.push(tag);
+          chip.classList.add("active");
+        }
+
+        hiddenTags.value = selectedTags.join(",");
+        saveDraft();
+      };
+
+      tagContainer.appendChild(chip);
+    });
 
     async function generateSong() {
       audioWrap.style.display = "none";
@@ -474,6 +549,7 @@
 
             if (data.song_paths && data.song_paths.length > 0) {
               const audio = data.song_paths[0];
+              saveSongHistory(audio, prompt);
               player.src = audio;
               downloadSong.href = audio;
               audioWrap.style.display = "block";
@@ -494,6 +570,41 @@
         }
       }
     }
+
+    function saveSongHistory(url, prompt){
+      const history = JSON.parse(localStorage.getItem("songHistory") || "[]");
+
+      history.unshift({
+        url,
+        prompt,
+        date: new Date().toISOString()
+      });
+
+      localStorage.setItem("songHistory", JSON.stringify(history.slice(0,20)));
+    }
+
+    function renderHistory(){
+      const history = JSON.parse(localStorage.getItem("songHistory") || "[]");
+
+      const container = document.getElementById("songHistory");
+      container.innerHTML = "<h3>Your Recent Songs</h3>";
+
+      history.forEach(song=>{
+        const div = document.createElement("div");
+        div.style.marginBottom="12px";
+
+        div.innerHTML = `
+          <audio controls src="${song.url}" style="width:100%"></audio>
+          <div style="font-size:12px;color:var(--muted)">
+            ${song.prompt || "Generated song"}
+          </div>
+        `;
+
+        container.appendChild(div);
+      });
+    }
+
+    window.addEventListener("load", renderHistory);
   </script>
   <script src="/assets/nav.js"></script>
 </body>
