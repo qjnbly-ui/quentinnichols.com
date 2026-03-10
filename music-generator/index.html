@@ -892,8 +892,10 @@
     }
 
     function deleteHistorySong(songId) {
-      history = history.filter(song => String(song.id) !== String(songId));
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      if (!songId || songId === "undefined") return;
+      const current = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      const updated = current.filter(song => String(song.id) !== String(songId));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
       renderHistory();
     }
 
@@ -908,6 +910,20 @@
 
     function renderHistory(){
       history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      let didNormalize = false;
+      history = history.map(song => {
+        if (!song.id) {
+          didNormalize = true;
+          return {
+            ...song,
+            id: String(Date.now() + Math.random())
+          };
+        }
+        return song;
+      });
+      if (didNormalize) {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      }
 
       const container = document.getElementById("historyContainer");
       container.innerHTML = '<h3 class="history-title">Your Recent Songs</h3>';
@@ -939,7 +955,7 @@
             <div><strong>Saved:</strong> ${savedDate}</div>
           </div>
           <div class="history-actions">
-            <button type="button" class="history-btn delete-btn" data-song-id="${song.id}">Delete</button>
+            <button type="button" class="history-btn delete-btn" data-song-id="${escapeHtml(song.id)}">Delete</button>
           </div>
         `;
 
