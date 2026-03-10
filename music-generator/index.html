@@ -912,6 +912,7 @@
           : "Saved recently";
 
         div.innerHTML = `
+          <div class="history-title">${escapeHtml(song.title || "Untitled song")}</div>
           <audio controls src="${song.url}"></audio>
           <div class="history-meta">
             <div><strong>Prompt:</strong> ${escapeHtml(song.prompt || "Generated song")}</div>
