@@ -398,6 +398,7 @@
   <script>
     const SONG_HISTORY_KEY = "songHistory";
     const SONG_DRAFT_KEY = "musicDraft";
+    const ACTIVE_TASK_KEY = "activeSongTask";
     const titleEl = document.getElementById("songTitle");
     const promptEl = document.getElementById("prompt");
     const tagsEl = document.getElementById("tags");
@@ -435,8 +436,8 @@
     promptEl.addEventListener("input", saveDraft);
     lyricsEl.addEventListener("input", saveDraft);
     instrumentalEl.addEventListener("change", saveDraft);
+    tagsEl.addEventListener("input", saveDraft);
 
-    window.addEventListener("load", loadDraft);
 
     function clearAllFields() {
       titleEl.value = "";
@@ -457,7 +458,7 @@
         lyrics: "",
         instrumental: false
       }));
-
+      localStorage.removeItem(ACTIVE_TASK_KEY);
       updateFormState();
     }
 
@@ -505,6 +506,14 @@
       return map[status] || status || "Working...";
     }
 
+    function resumeActiveTask() {
+      const activeTask = JSON.parse(localStorage.getItem(ACTIVE_TASK_KEY) || "null");
+      if (!activeTask || !activeTask.taskId) return;
+
+      statusEl.innerText = "Resuming your last song request...";
+      pollStatus(activeTask.taskId, activeTask.prompt || "", activeTask.title || "");
+    }
+
     async function generateSong() {
       audioWrap.style.display = "none";
       player.src = "";
@@ -512,7 +521,6 @@
 
       const title = titleEl.value.trim();
       const prompt = promptEl.value.trim();
-      const title = titleEl.value.trim();
       const tags = tagsEl.value.trim();
       const lyrics = lyricsEl.value.trim();
       const instrumental = instrumentalEl.checked;
@@ -582,6 +590,12 @@
           return;
         }
 
+        localStorage.setItem(ACTIVE_TASK_KEY, JSON.stringify({
+          taskId: data.task_id,
+          prompt,
+          title,
+          startedAt: new Date().toISOString()
+        }));
         pollStatus(data.task_id, prompt, title);
       } catch (error) {
         console.error(error);
@@ -616,11 +630,13 @@
 
             if (data.song_paths && data.song_paths.length > 0) {
               const audio = data.song_paths[0];
+              localStorage.removeItem(ACTIVE_TASK_KEY);
               saveSongHistory(audio, prompt, title);
               player.src = audio;
               downloadSong.href = audio;
               audioWrap.style.display = "block";
               statusEl.innerText = "Song ready!";
+              renderHistory();
             } else {
               statusEl.innerText = "The song finished, but no audio URL was returned.";
             }
@@ -628,6 +644,7 @@
 
           if (data.status === "FAILURE") {
             finished = true;
+            localStorage.removeItem(ACTIVE_TASK_KEY);
             statusEl.innerText = data?.error_message || "Generation failed.";
           }
         } catch (error) {
@@ -709,7 +726,12 @@
       });
     }
 
-    window.addEventListener("load", renderHistory);
+    window.addEventListener("load", () => {
+      loadDraft();
+      updateFormState();
+      renderHistory();
+      resumeActiveTask();
+    });
   </script>
   <script src="/assets/nav.js"></script>
 </body>
