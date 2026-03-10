@@ -142,7 +142,9 @@
       gap: 12px;
     }
 
-    .music-btn {
+    .music-btn,
+    .primary-btn,
+    .secondary-btn {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -159,10 +161,28 @@
       transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
     }
 
-    .music-btn:hover {
+    .music-btn:hover,
+    .primary-btn:hover,
+    .secondary-btn:hover {
       transform: translateY(-2px);
       border-color: rgba(255, 255, 255, 0.6);
       background: #232323;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .primary-btn {
+      border-color: rgba(255, 255, 255, 0.45);
+      background: #202020;
+    }
+
+    .secondary-btn {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(18, 18, 18, 0.6);
     }
 
     .status {
@@ -288,6 +308,133 @@
       border-color: rgba(255, 120, 120, 0.65);
       background: rgba(80, 20, 20, 0.45);
     }
+
+    .history-item {
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      background: rgba(14, 14, 14, 0.92);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    }
+
+    .history-item audio {
+      width: 100%;
+      margin-bottom: 14px;
+    }
+
+    .history-meta {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .history-title {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .history-empty {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .history-btn,
+    .primary-btn,
+    .secondary-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: #1a1a1a;
+      color: var(--text);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .history-btn:hover,
+    .primary-btn:hover,
+    .secondary-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.55);
+      background: #232323;
+    }
+
+    .primary-btn {
+      border-color: rgba(255, 255, 255, 0.45);
+      background: #202020;
+    }
+
+    .secondary-btn {
+      background: rgba(18, 18, 18, 0.6);
+      border-color: rgba(255, 255, 255, 0.18);
+      color: var(--muted);
+    }
+
+    .secondary-btn:hover {
+      color: var(--text);
+    }
+
+    .delete-btn {
+      border-color: rgba(255, 120, 120, 0.35);
+      color: #ffd0d0;
+      background: rgba(20, 10, 10, 0.6);
+    }
+
+    .delete-btn:hover {
+      border-color: rgba(255, 120, 120, 0.65);
+      background: rgba(80, 20, 20, 0.45);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+
+    .audio-shell {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(10, 10, 10, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      margin-bottom: 14px;
+    }
+
+    .audio-topline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .audio-badge {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .audio-filename {
+      font-size: 14px;
+      color: var(--muted);
+    }
   </style>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ESFM9WKBF9"></script>
@@ -373,9 +520,9 @@
             </label>
 
             <div class="music-actions">
-              <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button type="button" class="music-btn" id="generateBtn" onclick="generateSong()">Generate Song</button>
-                <button type="button" class="clear-btn" onclick="clearAllFields()">Clear All Fields</button>
+              <div class="form-actions">
+                <button type="submit" class="primary-btn" id="generateBtn">Generate Song</button>
+                <button type="button" id="clearFieldsBtn" class="secondary-btn">Clear Fields</button>
               </div>
               <div class="status" id="status">Ready to generate.</div>
             </div>
@@ -389,14 +536,20 @@
             </div>
             <p class="result-note">Song links are temporary, so download anything you want to keep.</p>
           </div>
-          <div id="songHistory" style="margin-top:24px"></div>
+        </div>
+      </div>
+    </section>
+    <section class="music-wrap" id="music-history">
+      <div class="music-inner">
+        <div class="music-panel">
+          <div id="historyContainer"></div>
         </div>
       </div>
     </section>
   </main>
 
   <script>
-    const SONG_HISTORY_KEY = "songHistory";
+    const HISTORY_KEY = "songHistory";
     const SONG_DRAFT_KEY = "musicDraft";
     const ACTIVE_TASK_KEY = "activeSongTask";
     const titleEl = document.getElementById("songTitle");
@@ -408,6 +561,8 @@
     const audioWrap = document.getElementById("audioPlayer");
     const player = document.getElementById("player");
     const downloadSong = document.getElementById("downloadSong");
+    const clearFieldsBtn = document.getElementById("clearFieldsBtn");
+    const generateBtn = document.getElementById("generateBtn");
 
     function saveDraft(){
       const draft = {
@@ -462,6 +617,16 @@
       updateFormState();
     }
 
+    clearFieldsBtn?.addEventListener("click", () => {
+      titleEl.value = "";
+      promptEl.value = "";
+      tagsEl.value = "";
+      lyricsEl.value = "";
+
+      localStorage.removeItem(SONG_DRAFT_KEY);
+      updateFormState();
+    });
+
     function updateFormState() {
       const hasTags = tagsEl.value.trim().length > 0;
       const hasLyrics = lyricsEl.value.trim().length > 0;
@@ -515,6 +680,13 @@
     }
 
     async function generateSong() {
+      if (generateBtn?.disabled) return;
+      if (generateBtn) {
+        generateBtn.disabled = true;
+        generateBtn.setAttribute("aria-busy", "true");
+        generateBtn.textContent = "Generating...";
+      }
+
       audioWrap.style.display = "none";
       player.src = "";
       downloadSong.href = "#";
@@ -527,6 +699,11 @@
 
       if (!prompt && !tags && !lyrics) {
         statusEl.innerText = "Add at least a prompt, tags, or lyrics.";
+        if (generateBtn) {
+          generateBtn.disabled = false;
+          generateBtn.removeAttribute("aria-busy");
+          generateBtn.textContent = "Generate Song";
+        }
         return;
       }
 
@@ -536,11 +713,21 @@
 
       if (instrumental && lyrics) {
         statusEl.innerText = "Instrumental songs cannot include lyrics.";
+        if (generateBtn) {
+          generateBtn.disabled = false;
+          generateBtn.removeAttribute("aria-busy");
+          generateBtn.textContent = "Generate Song";
+        }
         return;
       }
 
       if (prompt && tags && lyrics) {
         statusEl.innerText = "Use prompt + tags, or prompt + lyrics, but not all three together.";
+        if (generateBtn) {
+          generateBtn.disabled = false;
+          generateBtn.removeAttribute("aria-busy");
+          generateBtn.textContent = "Generate Song";
+        }
         return;
       }
 
@@ -582,11 +769,21 @@
             data?.message ||
             "Generation request failed.";
           statusEl.innerText = message;
+          if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.removeAttribute("aria-busy");
+            generateBtn.textContent = "Generate Song";
+          }
           return;
         }
 
         if (!data.task_id) {
           statusEl.innerText = "No task ID returned from the API.";
+          if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.removeAttribute("aria-busy");
+            generateBtn.textContent = "Generate Song";
+          }
           return;
         }
 
@@ -600,6 +797,11 @@
       } catch (error) {
         console.error(error);
         statusEl.innerText = "Request failed. Check the console.";
+        if (generateBtn) {
+          generateBtn.disabled = false;
+          generateBtn.removeAttribute("aria-busy");
+          generateBtn.textContent = "Generate Song";
+        }
       }
     }
 
@@ -620,6 +822,11 @@
               data?.error ||
               data?.message ||
               "Status request failed.";
+            if (generateBtn) {
+              generateBtn.disabled = false;
+              generateBtn.removeAttribute("aria-busy");
+              generateBtn.textContent = "Generate Song";
+            }
             return;
           }
 
@@ -650,29 +857,43 @@
         } catch (error) {
           console.error(error);
           statusEl.innerText = "Polling failed. Check the console.";
+          if (generateBtn) {
+            generateBtn.disabled = false;
+            generateBtn.removeAttribute("aria-busy");
+            generateBtn.textContent = "Generate Song";
+          }
           return;
         }
       }
+
+      if (generateBtn) {
+        generateBtn.disabled = false;
+        generateBtn.removeAttribute("aria-busy");
+        generateBtn.textContent = "Generate Song";
+      }
     }
 
+    let history = [];
+
     function saveSongHistory(url, prompt, title = ""){
-      const history = JSON.parse(localStorage.getItem(SONG_HISTORY_KEY) || "[]");
+      history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
 
-      history.unshift({
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
-        url,
-        title,
+      const historyItem = {
+        id: Date.now().toString(),
+        title: title || "Untitled song",
         prompt,
-        date: new Date().toISOString()
-      });
+        url,
+        savedAt: new Date().toISOString()
+      };
 
-      localStorage.setItem(SONG_HISTORY_KEY, JSON.stringify(history.slice(0,20)));
+      history.unshift(historyItem);
+
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0,20)));
     }
 
     function deleteHistorySong(songId) {
-      const history = JSON.parse(localStorage.getItem(SONG_HISTORY_KEY) || "[]");
-      const updated = history.filter(song => song.id !== songId);
-      localStorage.setItem(SONG_HISTORY_KEY, JSON.stringify(updated));
+      history = history.filter(song => String(song.id) !== String(songId));
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
       renderHistory();
     }
 
@@ -686,9 +907,9 @@
     }
 
     function renderHistory(){
-      const history = JSON.parse(localStorage.getItem(SONG_HISTORY_KEY) || "[]");
+      history = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
 
-      const container = document.getElementById("songHistory");
+      const container = document.getElementById("historyContainer");
       container.innerHTML = '<h3 class="history-title">Your Recent Songs</h3>';
 
       if (!history.length) {
@@ -700,12 +921,18 @@
         const div = document.createElement("div");
         div.className = "history-item";
 
-        const savedDate = song.date
-          ? new Date(song.date).toLocaleString()
+        const savedDate = song.savedAt
+          ? new Date(song.savedAt).toLocaleString()
           : "Saved recently";
 
         div.innerHTML = `
-          <audio controls src="${song.url}" style="width:100%"></audio>
+          <div class="audio-shell">
+            <div class="audio-topline">
+              <span class="audio-badge">MP3</span>
+              <span class="audio-filename">${escapeHtml(song.title || "Untitled song")}</span>
+            </div>
+            <audio controls src="${song.url}"></audio>
+          </div>
           <div class="history-meta">
             <div><strong>Title:</strong> ${escapeHtml(song.title || "Untitled song")}</div>
             <div><strong>Prompt:</strong> ${escapeHtml(song.prompt || "Generated song")}</div>
@@ -719,12 +946,19 @@
         container.appendChild(div);
       });
 
-      container.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          deleteHistorySong(btn.dataset.songId);
-        });
-      });
     }
+
+    const historyContainer = document.getElementById("historyContainer");
+
+    historyContainer?.addEventListener("click", (e) => {
+      const deleteBtn = e.target.closest(".delete-btn");
+      if (!deleteBtn) return;
+
+      const songId = deleteBtn.dataset.songId;
+      if (!songId) return;
+
+      deleteHistorySong(songId);
+    });
 
     window.addEventListener("load", () => {
       loadDraft();
