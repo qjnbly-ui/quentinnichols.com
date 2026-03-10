@@ -222,6 +222,72 @@
       font-size: 12px;
       color: var(--muted);
     }
+
+    .history-list {
+      margin-top: 16px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .history-card {
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(14, 14, 14, 0.92);
+      padding: 14px;
+    }
+
+    .history-title {
+      margin: 0 0 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .history-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .history-btn,
+    .clear-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: #181818;
+      color: var(--text);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .history-btn:hover,
+    .clear-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.5);
+      background: #232323;
+    }
+
+    .history-btn.delete-btn {
+      border-color: rgba(255, 120, 120, 0.35);
+      color: #ffd0d0;
+    }
+
+    .history-btn.delete-btn:hover {
+      border-color: rgba(255, 120, 120, 0.65);
+      background: rgba(80, 20, 20, 0.45);
+    }
   </style>
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ESFM9WKBF9"></script>
@@ -282,6 +348,11 @@
 
           <form class="music-form" onsubmit="event.preventDefault(); generateSong();">
             <div class="music-field">
+              <label for="songTitle">Title</label>
+              <input id="songTitle" class="music-input" placeholder="Optional: My Funny Work Song" />
+            </div>
+
+            <div class="music-field">
               <label for="prompt">Prompt</label>
               <input id="prompt" class="music-input" placeholder="Example: A funny upbeat country comedy song about Lunchbox Lenny hiding in the porta potty at work, catchy chorus, twangy guitars, playful vocals" />
             </div>
@@ -302,7 +373,10 @@
             </label>
 
             <div class="music-actions">
-              <button type="button" class="music-btn" onclick="generateSong()">Generate Song</button>
+              <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button type="button" class="music-btn" id="generateBtn" onclick="generateSong()">Generate Song</button>
+                <button type="button" class="clear-btn" onclick="clearAllFields()">Clear All Fields</button>
+              </div>
               <div class="status" id="status">Ready to generate.</div>
             </div>
           </form>
@@ -322,6 +396,9 @@
   </main>
 
   <script>
+    const SONG_HISTORY_KEY = "songHistory";
+    const SONG_DRAFT_KEY = "musicDraft";
+    const titleEl = document.getElementById("songTitle");
     const promptEl = document.getElementById("prompt");
     const tagsEl = document.getElementById("tags");
     const lyricsEl = document.getElementById("lyrics");
@@ -333,18 +410,20 @@
 
     function saveDraft(){
       const draft = {
+        title: titleEl.value,
         prompt: promptEl.value,
         tags: tagsEl.value,
         lyrics: lyricsEl.value,
         instrumental: instrumentalEl.checked
       };
 
-      localStorage.setItem("musicDraft", JSON.stringify(draft));
+      localStorage.setItem(SONG_DRAFT_KEY, JSON.stringify(draft));
     }
 
     function loadDraft(){
-      const draft = JSON.parse(localStorage.getItem("musicDraft") || "{}");
+      const draft = JSON.parse(localStorage.getItem(SONG_DRAFT_KEY) || "{}");
 
+      if(draft.title) titleEl.value = draft.title;
       if(draft.prompt) promptEl.value = draft.prompt;
       if(draft.lyrics) lyricsEl.value = draft.lyrics;
       if(draft.instrumental) instrumentalEl.checked = draft.instrumental;
@@ -352,11 +431,35 @@
       if(draft.tags) tagsEl.value = draft.tags;
     }
 
+    titleEl.addEventListener("input", saveDraft);
     promptEl.addEventListener("input", saveDraft);
     lyricsEl.addEventListener("input", saveDraft);
     instrumentalEl.addEventListener("change", saveDraft);
 
     window.addEventListener("load", loadDraft);
+
+    function clearAllFields() {
+      titleEl.value = "";
+      promptEl.value = "";
+      tagsEl.value = "";
+      lyricsEl.value = "";
+      instrumentalEl.checked = false;
+
+      audioWrap.style.display = "none";
+      player.src = "";
+      downloadSong.href = "#";
+      statusEl.innerText = "Fields cleared.";
+
+      localStorage.setItem(SONG_DRAFT_KEY, JSON.stringify({
+        title: "",
+        prompt: "",
+        tags: "",
+        lyrics: "",
+        instrumental: false
+      }));
+
+      updateFormState();
+    }
 
     function updateFormState() {
       const hasTags = tagsEl.value.trim().length > 0;
@@ -407,7 +510,9 @@
       player.src = "";
       downloadSong.href = "#";
 
+      const title = titleEl.value.trim();
       const prompt = promptEl.value.trim();
+      const title = titleEl.value.trim();
       const tags = tagsEl.value.trim();
       const lyrics = lyricsEl.value.trim();
       const instrumental = instrumentalEl.checked;
@@ -477,14 +582,14 @@
           return;
         }
 
-        pollStatus(data.task_id);
+        pollStatus(data.task_id, prompt, title);
       } catch (error) {
         console.error(error);
         statusEl.innerText = "Request failed. Check the console.";
       }
     }
 
-    async function pollStatus(taskId) {
+    async function pollStatus(taskId, prompt = promptEl.value.trim(), title = titleEl.value.trim()) {
       let finished = false;
 
       while (!finished) {
@@ -511,7 +616,7 @@
 
             if (data.song_paths && data.song_paths.length > 0) {
               const audio = data.song_paths[0];
-              saveSongHistory(audio, prompt);
+              saveSongHistory(audio, prompt, title);
               player.src = audio;
               downloadSong.href = audio;
               audioWrap.style.display = "block";
@@ -533,36 +638,74 @@
       }
     }
 
-    function saveSongHistory(url, prompt){
-      const history = JSON.parse(localStorage.getItem("songHistory") || "[]");
+    function saveSongHistory(url, prompt, title = ""){
+      const history = JSON.parse(localStorage.getItem(SONG_HISTORY_KEY) || "[]");
 
       history.unshift({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()),
         url,
+        title,
         prompt,
         date: new Date().toISOString()
       });
 
-      localStorage.setItem("songHistory", JSON.stringify(history.slice(0,20)));
+      localStorage.setItem(SONG_HISTORY_KEY, JSON.stringify(history.slice(0,20)));
+    }
+
+    function deleteHistorySong(songId) {
+      const history = JSON.parse(localStorage.getItem(SONG_HISTORY_KEY) || "[]");
+      const updated = history.filter(song => song.id !== songId);
+      localStorage.setItem(SONG_HISTORY_KEY, JSON.stringify(updated));
+      renderHistory();
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
     function renderHistory(){
-      const history = JSON.parse(localStorage.getItem("songHistory") || "[]");
+      const history = JSON.parse(localStorage.getItem(SONG_HISTORY_KEY) || "[]");
 
       const container = document.getElementById("songHistory");
-      container.innerHTML = "<h3>Your Recent Songs</h3>";
+      container.innerHTML = '<h3 class="history-title">Your Recent Songs</h3>';
 
-      history.forEach(song=>{
+      if (!history.length) {
+        container.innerHTML += '<p class="history-empty">No songs saved on this device yet.</p>';
+        return;
+      }
+
+      history.forEach(song => {
         const div = document.createElement("div");
-        div.style.marginBottom="12px";
+        div.className = "history-item";
+
+        const savedDate = song.date
+          ? new Date(song.date).toLocaleString()
+          : "Saved recently";
 
         div.innerHTML = `
           <audio controls src="${song.url}" style="width:100%"></audio>
-          <div style="font-size:12px;color:var(--muted)">
-            ${song.prompt || "Generated song"}
+          <div class="history-meta">
+            <div><strong>Title:</strong> ${escapeHtml(song.title || "Untitled song")}</div>
+            <div><strong>Prompt:</strong> ${escapeHtml(song.prompt || "Generated song")}</div>
+            <div><strong>Saved:</strong> ${savedDate}</div>
+          </div>
+          <div class="history-actions">
+            <button type="button" class="history-btn delete-btn" data-song-id="${song.id}">Delete</button>
           </div>
         `;
 
         container.appendChild(div);
+      });
+
+      container.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          deleteHistorySong(btn.dataset.songId);
+        });
       });
     }
 
