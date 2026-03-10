@@ -244,19 +244,29 @@
       player.removeAttribute("src");
 
       try {
+        const payload = {};
+
+        const prompt = document.getElementById("prompt").value.trim();
+        const tags = document.getElementById("tags").value.trim();
+        const lyrics = document.getElementById("lyrics").value.trim();
+
+        if (prompt) payload.prompt = prompt;
+
+        if (tags && !lyrics) {
+          payload.tags = tags.split(",").map(t => t.trim());
+        }
+
+        if (lyrics && !tags) {
+          payload.lyrics = lyrics;
+        }
+
+        payload.instrumental =
+          document.getElementById("instrumental").checked;
+
         const response = await fetch("/api/generate-song", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: document.getElementById("prompt").value,
-            tags: document
-              .getElementById("tags")
-              .value.split(",")
-              .map(tag => tag.trim())
-              .filter(Boolean),
-            lyrics: document.getElementById("lyrics").value,
-            instrumental: document.getElementById("instrumental").checked,
-          }),
+          body: JSON.stringify(payload)
         });
 
         const data = await response.json();
