@@ -53,6 +53,41 @@
       box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
     }
 
+    .helper-panel {
+      margin: 0 0 22px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(12, 12, 12, 0.92);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+    }
+
+    .helper-panel h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+    }
+
+    .helper-panel ul {
+      margin: 0 0 12px;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .helper-panel li + li {
+      margin-top: 6px;
+    }
+
+    .helper-panel strong {
+      color: var(--text);
+    }
+
+    .helper-note {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
     .music-form {
       display: grid;
       gap: 18px;
@@ -102,9 +137,9 @@
 
     .music-actions {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: flex-start;
       gap: 12px;
-      align-items: center;
     }
 
     .music-btn {
@@ -130,26 +165,62 @@
       background: #232323;
     }
 
-    .music-status {
+    .status {
       font-size: 13px;
       color: var(--muted);
       min-height: 20px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(10, 10, 10, 0.9);
+      width: 100%;
     }
 
-    .music-player {
+    #audioPlayer {
       margin-top: 26px;
-      display: none;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
       padding-top: 18px;
     }
 
-    .music-player h3 {
+    #audioPlayer h3 {
       margin: 0 0 10px;
       font-size: 18px;
     }
 
-    .music-audio {
+    #player {
       width: 100%;
+    }
+
+    .song-actions {
+      margin-top: 12px;
+    }
+
+    .song-actions a {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      background: #1a1a1a;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .song-actions a:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.55);
+      background: #232323;
+    }
+
+    .result-note {
+      margin: 12px 0 0;
+      font-size: 12px;
+      color: var(--muted);
     }
   </style>
   <!-- Google tag (gtag.js) -->
@@ -197,20 +268,32 @@
         </header>
 
         <div class="music-panel">
+          <div class="helper-panel">
+            <h2>How to get the best result</h2>
+            <ul>
+              <li><strong>Best for most people:</strong> enter a detailed prompt and leave the other fields blank.</li>
+              <li><strong>Tags:</strong> optional. Use only simple style words like country, comedy, rock, cinematic, ambient.</li>
+              <li><strong>Lyrics:</strong> only use this if you already wrote your own lyrics.</li>
+              <li><strong>Do not use prompt, tags, and lyrics all together.</strong></li>
+              <li><strong>Instrumental:</strong> check this for music only, with no singing.</li>
+            </ul>
+            <p class="helper-note">Tip: the more specific your prompt is about genre, mood, instruments, and topic, the better the result usually feels.</p>
+          </div>
+
           <form class="music-form" onsubmit="event.preventDefault(); generateSong();">
             <div class="music-field">
               <label for="prompt">Prompt</label>
-              <input id="prompt" class="music-input" placeholder="Funny country song about Lunchbox Lenny" />
+              <input id="prompt" class="music-input" placeholder="Example: A funny upbeat country comedy song about Lunchbox Lenny hiding in the porta potty at work, catchy chorus, twangy guitars, playful vocals" />
             </div>
 
             <div class="music-field">
               <label for="tags">Tags (comma separated)</label>
-              <input id="tags" class="music-input" placeholder="country, comedy" />
+              <input id="tags" class="music-input" placeholder="Optional: country, comedy" />
             </div>
 
             <div class="music-field">
               <label for="lyrics">Lyrics</label>
-              <textarea id="lyrics" class="music-textarea"></textarea>
+              <textarea id="lyrics" class="music-textarea" placeholder="Optional: paste your own lyrics here"></textarea>
             </div>
 
             <label class="music-options">
@@ -219,14 +302,18 @@
             </label>
 
             <div class="music-actions">
-              <button type="submit" class="music-btn">Generate Song</button>
-              <span class="music-status" id="status"></span>
+              <button type="button" class="music-btn" onclick="generateSong()">Generate Song</button>
+              <div class="status" id="status">Ready to generate.</div>
             </div>
           </form>
 
-          <div class="music-player" id="audioPlayer">
+          <div id="audioPlayer" style="display:none;">
             <h3>Your Song</h3>
-            <audio controls class="music-audio" id="player"></audio>
+            <audio controls id="player"></audio>
+            <div class="song-actions">
+              <a id="downloadSong" href="#" download>Download Song</a>
+            </div>
+            <p class="result-note">Song links returned by Sonauto are temporary, so download anything you want to keep.</p>
           </div>
         </div>
       </div>
@@ -234,35 +321,101 @@
   </main>
 
   <script>
-    async function generateSong() {
-      const status = document.getElementById("status");
-      const audioPlayer = document.getElementById("audioPlayer");
-      const player = document.getElementById("player");
+    const promptEl = document.getElementById("prompt");
+    const tagsEl = document.getElementById("tags");
+    const lyricsEl = document.getElementById("lyrics");
+    const instrumentalEl = document.getElementById("instrumental");
+    const statusEl = document.getElementById("status");
+    const audioWrap = document.getElementById("audioPlayer");
+    const player = document.getElementById("player");
+    const downloadSong = document.getElementById("downloadSong");
 
-      status.textContent = "Sending request...";
-      audioPlayer.style.display = "none";
-      player.removeAttribute("src");
+    function updateFormState() {
+      const hasTags = tagsEl.value.trim().length > 0;
+      const hasLyrics = lyricsEl.value.trim().length > 0;
+      const isInstrumental = instrumentalEl.checked;
+
+      if (isInstrumental) {
+        lyricsEl.value = "";
+        lyricsEl.disabled = true;
+        lyricsEl.placeholder = "Disabled for instrumental songs";
+      } else {
+        lyricsEl.disabled = false;
+        lyricsEl.placeholder = "Optional: paste your own lyrics here";
+      }
+
+      if (!isInstrumental && hasLyrics) {
+        tagsEl.disabled = true;
+        tagsEl.placeholder = "Disabled while lyrics are being used";
+      } else {
+        tagsEl.disabled = false;
+        tagsEl.placeholder = "Optional: country, comedy";
+      }
+    }
+
+    tagsEl.addEventListener("input", updateFormState);
+    lyricsEl.addEventListener("input", updateFormState);
+    instrumentalEl.addEventListener("change", updateFormState);
+
+    function prettyStatus(status) {
+      const map = {
+        RECEIVED: "Request received.",
+        PROMPT: "Building style and lyric instructions...",
+        TASK_SENT: "Sent to generation servers...",
+        GENERATE_TASK_STARTED: "Generator started...",
+        BEGINNING_GENERATION: "Beginning generation...",
+        GENERATING: "Generating your song...",
+        GENERATING_STREAMING_READY: "Streaming preview is ready...",
+        DECOMPRESSING: "Finishing audio...",
+        SAVING: "Saving your song...",
+        SUCCESS: "Song ready!",
+        FAILURE: "Generation failed."
+      };
+      return map[status] || status || "Working...";
+    }
+
+    async function generateSong() {
+      audioWrap.style.display = "none";
+      player.src = "";
+      downloadSong.href = "#";
+
+      const prompt = promptEl.value.trim();
+      const tags = tagsEl.value.trim();
+      const lyrics = lyricsEl.value.trim();
+      const instrumental = instrumentalEl.checked;
+
+      if (!prompt && !tags && !lyrics) {
+        statusEl.innerText = "Add at least a prompt, tags, or lyrics.";
+        return;
+      }
+
+      if (instrumental && lyrics) {
+        statusEl.innerText = "Instrumental songs cannot include lyrics.";
+        return;
+      }
+
+      if (prompt && tags && lyrics) {
+        statusEl.innerText = "Use prompt + tags, or prompt + lyrics, but not all three together.";
+        return;
+      }
+
+      const payload = {
+        instrumental
+      };
+
+      if (prompt) payload.prompt = prompt;
+
+      if (tags && !lyrics) {
+        payload.tags = tags.split(",").map(t => t.trim()).filter(Boolean);
+      }
+
+      if (lyrics && !tags) {
+        payload.lyrics = lyrics;
+      }
+
+      statusEl.innerText = "Sending request...";
 
       try {
-        const payload = {};
-
-        const prompt = document.getElementById("prompt").value.trim();
-        const tags = document.getElementById("tags").value.trim();
-        const lyrics = document.getElementById("lyrics").value.trim();
-
-        if (prompt) payload.prompt = prompt;
-
-        if (tags && !lyrics) {
-          payload.tags = tags.split(",").map(t => t.trim());
-        }
-
-        if (lyrics && !tags) {
-          payload.lyrics = lyrics;
-        }
-
-        payload.instrumental =
-          document.getElementById("instrumental").checked;
-
         const response = await fetch("/api/generate-song", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -273,60 +426,71 @@
         console.log("generate-song response:", data);
 
         if (!response.ok) {
-          status.textContent =
-            data.detail || data.error || data.message || "Generate request failed.";
+          const message =
+            data?.detail?.[0]?.msg ||
+            data?.error ||
+            data?.message ||
+            "Generation request failed.";
+          statusEl.innerText = message;
           return;
         }
 
         if (!data.task_id) {
-          status.textContent = "No task_id returned. Check console.";
+          statusEl.innerText = "No task ID returned from the API.";
           return;
         }
 
         pollStatus(data.task_id);
       } catch (error) {
-        status.textContent = "Network error. Please try again.";
+        console.error(error);
+        statusEl.innerText = "Request failed. Check the console.";
       }
     }
 
     async function pollStatus(taskId) {
-      const status = document.getElementById("status");
-
-      status.textContent = "Generating...";
-
       let finished = false;
 
       while (!finished) {
-        await new Promise(r => setTimeout(r, 5000));
+        await new Promise(r => setTimeout(r, 4000));
 
-        const res = await fetch(
-          "/api/song-status?task_id=" + encodeURIComponent(taskId)
-        );
-        const data = await res.json();
-        console.log("song-status response:", data);
+        try {
+          const res = await fetch("/api/song-status?task_id=" + encodeURIComponent(taskId));
+          const data = await res.json();
+          console.log("song-status response:", data);
 
-        if (!res.ok) {
-          status.textContent =
-            data.detail || data.error || data.message || "Status request failed.";
-          return;
-        }
-        status.textContent = data.status || "Processing...";
-
-        if (data.status === "SUCCESS") {
-          finished = true;
-
-          const audio = data.song_paths && data.song_paths[0];
-          if (!audio) {
-            status.textContent = "No audio returned.";
+          if (!res.ok) {
+            statusEl.innerText =
+              data?.detail?.[0]?.msg ||
+              data?.error ||
+              data?.message ||
+              "Status request failed.";
             return;
           }
 
-          document.getElementById("audioPlayer").style.display = "block";
-          document.getElementById("player").src = audio;
-        }
+          statusEl.innerText = prettyStatus(data.status);
 
-        if (data.status === "FAILED" || data.status === "ERROR") {
-          finished = true;
+          if (data.status === "SUCCESS") {
+            finished = true;
+
+            if (data.song_paths && data.song_paths.length > 0) {
+              const audio = data.song_paths[0];
+              player.src = audio;
+              downloadSong.href = audio;
+              audioWrap.style.display = "block";
+              statusEl.innerText = "Song ready!";
+            } else {
+              statusEl.innerText = "The song finished, but no audio URL was returned.";
+            }
+          }
+
+          if (data.status === "FAILURE") {
+            finished = true;
+            statusEl.innerText = data?.error_message || "Generation failed.";
+          }
+        } catch (error) {
+          console.error(error);
+          statusEl.innerText = "Polling failed. Check the console.";
+          return;
         }
       }
     }
