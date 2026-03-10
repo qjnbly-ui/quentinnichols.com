@@ -313,7 +313,7 @@
             <div class="song-actions">
               <a id="downloadSong" href="#" download>Download Song</a>
             </div>
-            <p class="result-note">Song links returned by Sonauto are temporary, so download anything you want to keep.</p>
+            <p class="result-note">Song links are temporary, so download anything you want to keep.</p>
           </div>
           <div id="songHistory" style="margin-top:24px"></div>
         </div>
@@ -417,6 +417,10 @@
         return;
       }
 
+      if (lyrics && !prompt && !tags) {
+        statusEl.innerText = "Lyrics-only mode is allowed, but this page must send an empty prompt to Sonauto. Submitting now...";
+      }
+
       if (instrumental && lyrics) {
         statusEl.innerText = "Instrumental songs cannot include lyrics.";
         return;
@@ -431,14 +435,19 @@
         instrumental
       };
 
-      if (prompt) payload.prompt = prompt;
-
-      if (tags && !lyrics) {
-        payload.tags = tags.split(",").map(t => t.trim()).filter(Boolean);
-      }
-
-      if (lyrics && !tags) {
+      if (lyrics && !prompt && !tags) {
+        payload.prompt = "";
         payload.lyrics = lyrics;
+      } else {
+        if (prompt) payload.prompt = prompt;
+
+        if (tags && !lyrics) {
+          payload.tags = tags.split(",").map(t => t.trim()).filter(Boolean);
+        }
+
+        if (lyrics && !tags) {
+          payload.lyrics = lyrics;
+        }
       }
 
       statusEl.innerText = "Sending request...";
