@@ -1,134 +1,326 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>AI Music Generator</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Music Generator</title>
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    body.music-page {
+      background: #000000;
+      color: var(--text);
+    }
 
-<style>
+    .music-stage {
+      padding: var(--nav-content-pad) 0 56px;
+    }
 
-body{
-font-family:system-ui;
-background:#0f0f0f;
-color:white;
-padding:40px;
-max-width:800px;
-margin:auto;
-}
+    .music-wrap {
+      padding: 0 20px 40px;
+      font-family: var(--font-body);
+    }
 
-input,textarea{
-width:100%;
-padding:10px;
-margin:8px 0;
-border-radius:6px;
-border:none;
-}
+    .music-inner {
+      max-width: 860px;
+      margin: 0 auto;
+    }
 
-button{
-padding:12px 20px;
-background:#ffffff;
-color:black;
-border:none;
-border-radius:6px;
-cursor:pointer;
-font-weight:bold;
-}
+    .music-head {
+      text-align: center;
+      margin-bottom: 24px;
+    }
 
-#audioPlayer{
-margin-top:30px;
-display:none;
-}
+    .music-title {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: clamp(34px, 6vw, 56px);
+      color: var(--text);
+    }
 
-.status{
-margin-top:20px;
-opacity:.8;
-}
+    .music-sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
 
-</style>
+    .music-panel {
+      background: rgba(18, 18, 18, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: clamp(18px, 3vw, 28px);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+    }
+
+    .music-form {
+      display: grid;
+      gap: 18px;
+    }
+
+    .music-field label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .music-input,
+    .music-textarea {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #101010;
+      color: var(--text);
+      padding: 12px 14px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .music-textarea {
+      min-height: 140px;
+      resize: vertical;
+    }
+
+    .music-input:focus,
+    .music-textarea:focus {
+      outline: none;
+      border-color: rgba(216, 199, 166, 0.55);
+      box-shadow: 0 0 0 3px rgba(216, 199, 166, 0.18);
+    }
+
+    .music-options {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .music-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .music-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: #1a1a1a;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .music-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.6);
+      background: #232323;
+    }
+
+    .music-status {
+      font-size: 13px;
+      color: var(--muted);
+      min-height: 20px;
+    }
+
+    .music-player {
+      margin-top: 26px;
+      display: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 18px;
+    }
+
+    .music-player h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .music-audio {
+      width: 100%;
+    }
+  </style>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ESFM9WKBF9"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} 
+    gtag('js', new Date());
+
+    gtag('config', 'G-ESFM9WKBF9');
+  </script>
 </head>
 
-<body>
+<body class="music-page">
+  <nav class="site-nav" aria-label="Site">
+    <div class="nav-shell">
+      <details class="nav-menu">
+        <summary aria-label="Open menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </summary>
+        <div class="nav-menu-panel">
+          <a href="/">Home</a>
+          <a href="/photography/">Photography</a>
+          <a href="/projects/">Projects</a>
+          <a href="/blog/">Blog</a>
+          <a href="/contact/">Contact</a>
+          <a href="https://shop.quentinnichols.com/" target="_blank" rel="noopener">Shop</a>
+        </div>
+      </details>
+      <a class="nav-logo" href="/">
+        <img src="/assets/Watermark (1) copy.png" alt="Bly Quentin Nichols Oregon">
+      </a>
+      <div class="nav-spacer" aria-hidden="true"></div>
+    </div>
+  </nav>
 
-<h1>AI Music Generator</h1>
+  <main class="music-stage">
+    <section class="music-wrap" id="music-generator">
+      <div class="music-inner">
+        <header class="music-head">
+          <h1 class="music-title">AI Music Generator</h1>
+          <p class="music-sub">Prompt, tags, and lyrics</p>
+        </header>
 
-<label>Prompt</label>
-<input id="prompt" placeholder="Funny country song about Lunchbox Lenny">
+        <div class="music-panel">
+          <form class="music-form" onsubmit="event.preventDefault(); generateSong();">
+            <div class="music-field">
+              <label for="prompt">Prompt</label>
+              <input id="prompt" class="music-input" placeholder="Funny country song about Lunchbox Lenny" />
+            </div>
 
-<label>Tags (comma separated)</label>
-<input id="tags" placeholder="country, comedy">
+            <div class="music-field">
+              <label for="tags">Tags (comma separated)</label>
+              <input id="tags" class="music-input" placeholder="country, comedy" />
+            </div>
 
-<label>Lyrics</label>
-<textarea id="lyrics"></textarea>
+            <div class="music-field">
+              <label for="lyrics">Lyrics</label>
+              <textarea id="lyrics" class="music-textarea"></textarea>
+            </div>
 
-<label>
-<input type="checkbox" id="instrumental"> Instrumental
-</label>
+            <label class="music-options">
+              <input type="checkbox" id="instrumental" />
+              Instrumental
+            </label>
 
-<br><br>
+            <div class="music-actions">
+              <button type="submit" class="music-btn">Generate Song</button>
+              <span class="music-status" id="status"></span>
+            </div>
+          </form>
 
-<button onclick="generateSong()">Generate Song</button>
+          <div class="music-player" id="audioPlayer">
+            <h3>Your Song</h3>
+            <audio controls class="music-audio" id="player"></audio>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 
-<div class="status" id="status"></div>
+  <script>
+    async function generateSong() {
+      const status = document.getElementById("status");
+      const audioPlayer = document.getElementById("audioPlayer");
+      const player = document.getElementById("player");
 
-<div id="audioPlayer">
-<h3>Your Song</h3>
-<audio controls id="player"></audio>
-</div>
+      status.textContent = "Sending request...";
+      audioPlayer.style.display = "none";
+      player.removeAttribute("src");
 
-<script>
+      try {
+        const response = await fetch("/api/generate-song", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: document.getElementById("prompt").value,
+            tags: document
+              .getElementById("tags")
+              .value.split(",")
+              .map(tag => tag.trim())
+              .filter(Boolean),
+            lyrics: document.getElementById("lyrics").value,
+            instrumental: document.getElementById("instrumental").checked,
+          }),
+        });
 
-async function generateSong(){
+        const data = await response.json();
+        console.log("generate-song response:", data);
 
-document.getElementById("status").innerText="Sending request...";
+        if (!response.ok) {
+          status.textContent =
+            data.detail || data.error || data.message || "Generate request failed.";
+          return;
+        }
 
-const response = await fetch("/api/generate-song",{
-method:"POST",
-headers:{ "Content-Type":"application/json"},
-body:JSON.stringify({
-prompt:document.getElementById("prompt").value,
-tags:document.getElementById("tags").value.split(","),
-lyrics:document.getElementById("lyrics").value,
-instrumental:document.getElementById("instrumental").checked
-})
-})
+        if (!data.task_id) {
+          status.textContent = "No task_id returned. Check console.";
+          return;
+        }
 
-const data = await response.json()
+        pollStatus(data.task_id);
+      } catch (error) {
+        status.textContent = "Network error. Please try again.";
+      }
+    }
 
-pollStatus(data.task_id)
+    async function pollStatus(taskId) {
+      const status = document.getElementById("status");
 
-}
+      status.textContent = "Generating...";
 
-async function pollStatus(taskId){
+      let finished = false;
 
-document.getElementById("status").innerText="Generating..."
+      while (!finished) {
+        await new Promise(r => setTimeout(r, 5000));
 
-let finished=false
+        const res = await fetch(
+          "/api/song-status?task_id=" + encodeURIComponent(taskId)
+        );
+        const data = await res.json();
+        console.log("song-status response:", data);
 
-while(!finished){
+        if (!res.ok) {
+          status.textContent =
+            data.detail || data.error || data.message || "Status request failed.";
+          return;
+        }
+        status.textContent = data.status || "Processing...";
 
-await new Promise(r=>setTimeout(r,5000))
+        if (data.status === "SUCCESS") {
+          finished = true;
 
-const res=await fetch("/api/song-status?task_id="+taskId)
-const data=await res.json()
+          const audio = data.song_paths && data.song_paths[0];
+          if (!audio) {
+            status.textContent = "No audio returned.";
+            return;
+          }
 
-document.getElementById("status").innerText=data.status
+          document.getElementById("audioPlayer").style.display = "block";
+          document.getElementById("player").src = audio;
+        }
 
-if(data.status==="SUCCESS"){
-
-finished=true
-
-const audio=data.song_paths[0]
-
-document.getElementById("audioPlayer").style.display="block"
-document.getElementById("player").src=audio
-
-}
-
-}
-
-}
-
-</script>
-
+        if (data.status === "FAILED" || data.status === "ERROR") {
+          finished = true;
+        }
+      }
+    }
+  </script>
+  <script src="/assets/nav.js"></script>
 </body>
 </html>
