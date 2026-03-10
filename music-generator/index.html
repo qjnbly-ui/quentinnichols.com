@@ -287,12 +287,8 @@
             </div>
 
             <div class="music-field">
-              <label>Style Tags</label>
-              <div id="tagChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
-              <input id="tags" type="hidden" />
-              <p style="font-size:12px;color:var(--muted);margin-top:6px;">
-                Click tags to guide the style of the song.
-              </p>
+              <label for="tags">Tags</label>
+              <input id="tags" class="music-input" placeholder="Optional: country, comedy" />
             </div>
 
             <div class="music-field">
@@ -338,7 +334,7 @@
     function saveDraft(){
       const draft = {
         prompt: promptEl.value,
-        tags: selectedTags,
+        tags: tagsEl.value,
         lyrics: lyricsEl.value,
         instrumental: instrumentalEl.checked
       };
@@ -353,15 +349,7 @@
       if(draft.lyrics) lyricsEl.value = draft.lyrics;
       if(draft.instrumental) instrumentalEl.checked = draft.instrumental;
 
-      if(draft.tags){
-        selectedTags = draft.tags;
-
-        document.querySelectorAll("#tagChips button").forEach(btn=>{
-          if(selectedTags.includes(btn.textContent)){
-            btn.classList.add("active");
-          }
-        });
-      }
+      if(draft.tags) tagsEl.value = draft.tags;
     }
 
     promptEl.addEventListener("input", saveDraft);
@@ -413,41 +401,6 @@
       };
       return map[status] || status || "Working...";
     }
-
-    const availableTags = [
-      "country","rock","pop","folk","acoustic",
-      "ambient","cinematic","orchestral",
-      "comedy","uplifting","energetic",
-      "melancholic","lofi","piano","guitar",
-      "male vocalist","female vocalist"
-    ];
-
-    const tagContainer = document.getElementById("tagChips");
-    const hiddenTags = document.getElementById("tags");
-
-    let selectedTags = [];
-
-    availableTags.forEach(tag => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.textContent = tag;
-      chip.className = "tag-chip";
-
-      chip.onclick = () => {
-        if(selectedTags.includes(tag)){
-          selectedTags = selectedTags.filter(t=>t!==tag);
-          chip.classList.remove("active");
-        } else {
-          selectedTags.push(tag);
-          chip.classList.add("active");
-        }
-
-        hiddenTags.value = selectedTags.join(",");
-        saveDraft();
-      };
-
-      tagContainer.appendChild(chip);
-    });
 
     async function generateSong() {
       audioWrap.style.display = "none";
