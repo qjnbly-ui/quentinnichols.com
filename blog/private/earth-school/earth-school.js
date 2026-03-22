@@ -33,8 +33,8 @@
     progressText.textContent = "Section " + (safeIndex + 1) + " of " + sections.length;
 
     prevButton.disabled = safeIndex === 0;
-    nextButton.disabled = safeIndex === sections.length - 1;
-    nextButton.textContent = safeIndex === sections.length - 1 ? "End of Guide" : "Next Section";
+    nextButton.disabled = false;
+    nextButton.textContent = safeIndex === sections.length - 1 ? "Return to Beginning" : "Next Section";
 
     if (options && options.scroll) {
       const activeSection = sections[safeIndex];
@@ -57,7 +57,10 @@
   nextButton.addEventListener("click", function () {
     if (currentIndex < sections.length - 1) {
       setActiveSection(currentIndex + 1, { scroll: true });
+      return;
     }
+
+    setActiveSection(0, { scroll: true });
   });
 
   if (startButton) {
