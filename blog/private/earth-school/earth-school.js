@@ -37,23 +37,26 @@
     nextButton.textContent = safeIndex === sections.length - 1 ? "End of Guide" : "Next Section";
 
     if (options && options.scroll) {
-      guideRoot.scrollIntoView({ behavior: "smooth", block: "start" });
+      const activeSection = sections[safeIndex];
+      if (activeSection) {
+        activeSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     }
   }
 
   chapterLinks.forEach((link, index) => {
     link.addEventListener("click", function () {
-      setActiveSection(index);
+      setActiveSection(index, { scroll: true });
     });
   });
 
   prevButton.addEventListener("click", function () {
-    setActiveSection(currentIndex - 1);
+    setActiveSection(currentIndex - 1, { scroll: true });
   });
 
   nextButton.addEventListener("click", function () {
     if (currentIndex < sections.length - 1) {
-      setActiveSection(currentIndex + 1);
+      setActiveSection(currentIndex + 1, { scroll: true });
     }
   });
 
