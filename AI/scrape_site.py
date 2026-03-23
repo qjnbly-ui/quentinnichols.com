@@ -7,6 +7,11 @@ BASE_URL = "https://www.quentinnichols.com"
 OUTPUT_DIR = "AI/site_text_data"
 
 SKIP_DIRS = {".git", ".vscode", "node_modules", "AI"}
+SKIP_OUTPUTS = {
+    "homepage.md",
+    "projects.md",
+    "music-generator.md",
+}
 
 
 def extract_page_content(soup, url):
@@ -61,6 +66,9 @@ def save_to_md(content):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     filename = url_to_filename(content["url"])
+    if filename in SKIP_OUTPUTS:
+        print(f"Skipped: {filename}")
+        return
     filepath = os.path.join(OUTPUT_DIR, filename)
 
     with open(filepath, "w", encoding="utf-8") as f:
