@@ -217,11 +217,6 @@ body.earth-school-page.earth-consent-open {
   background: radial-gradient(circle at center, rgba(137, 240, 255, 0.08), rgba(7, 17, 31, 0.34) 62%);
 }
 
-.earth-experience-modal.is-closing-note::before,
-.earth-experience-modal.is-closing-note::after {
-  opacity: 0;
-}
-
 .earth-consent-kicker {
   margin: 0 0 16px;
   font-size: 0.82rem;
@@ -270,41 +265,6 @@ body.earth-school-page.earth-consent-open {
   margin: 0 0 18px;
   font-size: 1.04rem;
   line-height: 1.7;
-}
-
-.earth-closing-note {
-  text-align: center;
-  background:
-    linear-gradient(180deg, rgba(5, 12, 21, 0.46), rgba(5, 12, 21, 0.76)),
-    url("/assets/soul.png") center center / cover no-repeat;
-  border-radius: 18px;
-  padding: 10px 14px 18px;
-}
-
-.earth-closing-watermark {
-  display: block;
-  width: min(170px, 42vw);
-  margin: 0 auto 18px;
-  opacity: 0.9;
-}
-
-.earth-closing-note .earth-experience-choice-actions {
-  margin-top: 22px;
-}
-
-.earth-closing-source {
-  margin-top: 22px;
-  color: var(--earth-muted);
-}
-
-.earth-closing-source a {
-  color: var(--earth-accent-strong);
-  text-decoration: none;
-}
-
-.earth-closing-source a:hover,
-.earth-closing-source a:focus-visible {
-  text-decoration: underline;
 }
 
 .earth-experience-choice-actions {

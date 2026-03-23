@@ -10,13 +10,10 @@
   const experienceBody = document.querySelector("[data-experience-body]");
   const experienceDecision = document.querySelector("[data-experience-decision]");
   const experienceSequence = document.querySelector("[data-experience-sequence]");
-  const closingNote = document.querySelector("[data-closing-note]");
-  const experienceModal = document.querySelector(".earth-experience-modal");
   const experiencePrevButton = document.querySelector("[data-experience-prev]");
   const experienceNextButton = document.querySelector("[data-experience-next]");
   const enterBodyButton = document.querySelector("[data-choice-enter-body]");
   const completeExperienceButton = document.querySelector("[data-choice-complete]");
-  const closingReturnButton = document.querySelector("[data-closing-return]");
   const prevButton = document.querySelector("[data-prev-section]");
   const nextButton = document.querySelector("[data-next-section]");
   const progressFill = document.querySelector("[data-progress-fill]");
@@ -27,7 +24,7 @@
   const earthAiInput = document.querySelector("[data-earth-ai-input]");
   const earthAiClear = document.querySelector("[data-earth-ai-clear]");
 
-  if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot || !openConsentButton || !acceptConsentButton || !consentBackdrop || !experienceBackdrop || !experienceStepLabel || !experienceTitle || !experienceBody || !experienceDecision || !experienceSequence || !closingNote || !experienceModal || !experiencePrevButton || !experienceNextButton || !enterBodyButton || !completeExperienceButton || !closingReturnButton) {
+  if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot || !openConsentButton || !acceptConsentButton || !consentBackdrop || !experienceBackdrop || !experienceStepLabel || !experienceTitle || !experienceBody || !experienceDecision || !experienceSequence || !experiencePrevButton || !experienceNextButton || !enterBodyButton || !completeExperienceButton) {
     return;
   }
 
@@ -180,21 +177,12 @@
       ].join("\n");
     }).join("\n\n");
 
-    const closingText = Array.from(closingNote.querySelectorAll("p"))
-      .map(function (paragraph) {
-        return paragraph.textContent.trim();
-      })
-      .filter(Boolean)
-      .join("\n");
-
     return [
       heroText,
       "Earth School Main Guide",
       sectionText,
       "Earth School Completion Sequence",
       sequenceText,
-      "Earth School Closing Note",
-      closingText,
     ].filter(Boolean).join("\n\n");
   }
 
@@ -220,20 +208,6 @@
     document.body.classList.remove("earth-consent-open");
   }
 
-  function showExperienceSequence() {
-    experienceSequence.hidden = false;
-    closingNote.hidden = true;
-    experienceModal.classList.remove("is-closing-note");
-    experienceModal.scrollTop = 0;
-  }
-
-  function showClosingNote() {
-    experienceSequence.hidden = true;
-    closingNote.hidden = false;
-    experienceModal.classList.add("is-closing-note");
-    experienceModal.scrollTop = 0;
-  }
-
   function renderExperienceStage() {
     const stage = experienceStages[experienceIndex];
     experienceStepLabel.textContent = "Stage " + (experienceIndex + 1) + " of " + experienceStages.length;
@@ -252,7 +226,7 @@
 
   function openExperienceModal() {
     experienceIndex = 0;
-    showExperienceSequence();
+    experienceSequence.hidden = false;
     renderExperienceStage();
     experienceBackdrop.hidden = false;
     experienceBackdrop.setAttribute("aria-hidden", "false");
@@ -354,10 +328,6 @@
   });
 
   completeExperienceButton.addEventListener("click", function () {
-    showClosingNote();
-  });
-
-  closingReturnButton.addEventListener("click", function () {
     closeExperienceModal();
     resetToOpeningState();
   });
