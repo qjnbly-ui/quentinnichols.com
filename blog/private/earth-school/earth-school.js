@@ -86,7 +86,7 @@
     {
       title: "Return",
       points: [
-        "many do not want to come back",
+        "many do not want to come back to their body",
         "the return can feel assigned rather than chosen",
         "the message is often that it is not yet time"
       ]
