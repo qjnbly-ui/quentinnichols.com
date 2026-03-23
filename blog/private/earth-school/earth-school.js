@@ -19,12 +19,15 @@
   const progressFill = document.querySelector("[data-progress-fill]");
   const progressText = document.querySelector("[data-progress-text]");
   const guideRoot = document.querySelector("[data-guide-root]");
+  const earthAiBackdrop = document.querySelector("[data-earth-ai-backdrop]");
+  const earthAiOpen = document.querySelector("[data-earth-ai-open]");
+  const earthAiClose = document.querySelector("[data-earth-ai-close]");
   const earthAiLog = document.querySelector("[data-earth-ai-log]");
   const earthAiForm = document.querySelector("[data-earth-ai-form]");
   const earthAiInput = document.querySelector("[data-earth-ai-input]");
   const earthAiClear = document.querySelector("[data-earth-ai-clear]");
 
-  if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot || !openConsentButton || !acceptConsentButton || !consentBackdrop || !experienceBackdrop || !experienceStepLabel || !experienceTitle || !experienceBody || !experienceDecision || !experienceSequence || !experiencePrevButton || !experienceNextButton || !enterBodyButton || !completeExperienceButton) {
+  if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot || !openConsentButton || !acceptConsentButton || !consentBackdrop || !experienceBackdrop || !experienceStepLabel || !experienceTitle || !experienceBody || !experienceDecision || !experienceSequence || !experiencePrevButton || !experienceNextButton || !enterBodyButton || !completeExperienceButton || !earthAiBackdrop || !earthAiOpen || !earthAiClose) {
     return;
   }
 
@@ -119,6 +122,21 @@
     consentBackdrop.hidden = false;
     consentBackdrop.setAttribute("aria-hidden", "false");
     document.body.classList.add("earth-consent-open");
+  }
+
+  function openEarthAi() {
+    earthAiBackdrop.hidden = false;
+    earthAiBackdrop.setAttribute("aria-hidden", "false");
+    document.body.classList.add("earth-consent-open");
+    window.setTimeout(function () {
+      if (earthAiInput) earthAiInput.focus();
+    }, 120);
+  }
+
+  function closeEarthAi() {
+    earthAiBackdrop.hidden = true;
+    earthAiBackdrop.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("earth-consent-open");
   }
 
   function loadEarthAiMessages() {
@@ -274,10 +292,7 @@
     nextButton.textContent = safeIndex === sections.length - 1 ? "Complete Experience" : "Continue";
 
     if (options && options.scroll) {
-      const activeSection = sections[safeIndex];
-      if (activeSection) {
-        activeSection.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      guideRoot.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
@@ -302,6 +317,14 @@
 
   openConsentButton.addEventListener("click", function () {
     openConsent();
+  });
+
+  earthAiOpen.addEventListener("click", function () {
+    openEarthAi();
+  });
+
+  earthAiClose.addEventListener("click", function () {
+    closeEarthAi();
   });
 
   acceptConsentButton.addEventListener("click", function () {

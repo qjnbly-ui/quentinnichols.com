@@ -92,6 +92,7 @@
             <div class="earth-progress-fill" data-progress-fill></div>
           </div>
           <div class="earth-progress-text" data-progress-text>Passage I of VI</div>
+          <button class="earth-ai-inline-link" type="button" data-earth-ai-open>Questions? Ask Earth School AI</button>
         </div>
       </div>
 
@@ -1349,28 +1350,31 @@
         <button class="earth-nav-button" type="button" data-prev-section>Return to Prior Passage</button>
         <button class="earth-nav-button earth-nav-button-primary" type="button" data-next-section>Continue</button>
       </div>
-
-      <section class="earth-ai-shell" aria-label="Earth School AI">
-        <div class="earth-ai-card">
-          <div class="earth-ai-head">
-            <div>
-              <p class="earth-ai-kicker">Earth School AI</p>
-              <h2 class="earth-ai-title">Ask Within This Guide</h2>
-            </div>
-            <button class="earth-ai-clear" type="button" data-earth-ai-clear>Clear</button>
-          </div>
-          <div class="earth-ai-log" data-earth-ai-log aria-live="polite"></div>
-          <form class="earth-ai-form" data-earth-ai-form>
-            <label class="earth-ai-label" for="earth-ai-message">Ask about themes, sections, or structure</label>
-            <div class="earth-ai-row">
-              <textarea id="earth-ai-message" data-earth-ai-input rows="3" placeholder="How does remembering relate to the completion sequence?" required></textarea>
-              <button class="earth-primary-button earth-ai-submit" type="submit">Ask</button>
-            </div>
-            <p class="earth-ai-hint">This AI is scoped to Earth School only.</p>
-          </form>
-        </div>
-      </section>
     </section>
+
+    <div class="earth-ai-backdrop" data-earth-ai-backdrop hidden aria-hidden="true">
+      <div class="earth-ai-modal" role="dialog" aria-modal="true" aria-labelledby="earth-ai-title">
+        <div class="earth-ai-head">
+          <div>
+            <p class="earth-ai-kicker">Earth School AI</p>
+            <h2 class="earth-ai-title" id="earth-ai-title">Ask Within This Guide</h2>
+          </div>
+          <div class="earth-ai-top-actions">
+            <button class="earth-ai-clear" type="button" data-earth-ai-clear>Clear</button>
+            <button class="earth-ai-close" type="button" data-earth-ai-close aria-label="Close Earth School AI">Close</button>
+          </div>
+        </div>
+        <div class="earth-ai-log" data-earth-ai-log aria-live="polite"></div>
+        <form class="earth-ai-form" data-earth-ai-form>
+          <label class="earth-ai-label" for="earth-ai-message">Ask about themes, sections, or structure</label>
+          <div class="earth-ai-row">
+            <textarea id="earth-ai-message" data-earth-ai-input rows="3" placeholder="How does remembering relate to the completion sequence?" required></textarea>
+            <button class="earth-primary-button earth-ai-submit" type="submit">Ask</button>
+          </div>
+          <p class="earth-ai-hint">This AI is scoped to Earth School only.</p>
+        </form>
+      </div>
+    </div>
   </main>
   <script src="/blog/private/earth-school/earth-school.js"></script>
 </body>
