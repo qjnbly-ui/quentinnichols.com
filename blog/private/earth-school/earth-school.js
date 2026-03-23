@@ -19,6 +19,8 @@
   const progressFill = document.querySelector("[data-progress-fill]");
   const progressText = document.querySelector("[data-progress-text]");
   const guideRoot = document.querySelector("[data-guide-root]");
+  const earthEntryCopy = document.querySelector("[data-earth-entry-copy]");
+  const earthEntryActions = document.querySelector("[data-earth-entry-actions]");
   const earthAiBackdrop = document.querySelector("[data-earth-ai-backdrop]");
   const earthAiOpen = document.querySelector("[data-earth-ai-open]");
   const earthAiClose = document.querySelector("[data-earth-ai-close]");
@@ -261,6 +263,8 @@
     consentBackdrop.hidden = true;
     consentBackdrop.setAttribute("aria-hidden", "true");
     document.body.classList.remove("earth-consent-open");
+    if (earthEntryCopy) earthEntryCopy.hidden = true;
+    if (earthEntryActions) earthEntryActions.hidden = true;
     guideRoot.hidden = false;
     guideRoot.setAttribute("aria-hidden", "false");
 
