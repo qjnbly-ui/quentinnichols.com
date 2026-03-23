@@ -20,6 +20,10 @@ body.earth-school-page {
   color: var(--earth-text);
 }
 
+body.earth-school-page.earth-consent-open {
+  overflow: hidden;
+}
+
 .earth-shell {
   width: min(1180px, calc(100vw - 40px));
   margin: 0 auto;
@@ -126,6 +130,52 @@ body.earth-school-page {
   margin-top: 26px;
   border-radius: 30px;
   overflow: hidden;
+}
+
+.earth-consent-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 10, 18, 0.76);
+  backdrop-filter: blur(12px);
+}
+
+.earth-consent-modal {
+  width: min(680px, 100%);
+  padding: 34px;
+  border: 1px solid var(--earth-line-strong);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(12, 27, 48, 0.96), rgba(7, 17, 31, 0.98));
+  box-shadow: var(--earth-shadow);
+  text-align: center;
+}
+
+.earth-consent-kicker {
+  margin: 0 0 16px;
+  font-size: 0.82rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--earth-muted);
+}
+
+.earth-consent-modal h2 {
+  margin: 0 0 20px;
+  font-size: clamp(1.9rem, 4vw, 2.7rem);
+  line-height: 1.08;
+}
+
+.earth-consent-modal p {
+  margin: 0 0 18px;
+  font-size: 1.02rem;
+  line-height: 1.85;
+  color: var(--earth-text);
+}
+
+.earth-consent-button {
+  margin-top: 10px;
 }
 
 .earth-guide-bar {
@@ -281,6 +331,10 @@ body.earth-school-page {
   .earth-panel,
   .earth-hero-copy {
     padding: 24px;
+  }
+
+  .earth-consent-modal {
+    padding: 26px 22px;
   }
 
   .earth-panel p {

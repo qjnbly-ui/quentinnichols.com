@@ -1,14 +1,16 @@
 (function () {
   const sections = Array.from(document.querySelectorAll("[data-section]"));
   const chapterLinks = Array.from(document.querySelectorAll(".earth-chapter-link"));
-  const startButton = document.querySelector("[data-start-guide]");
+  const openConsentButton = document.querySelector("[data-open-consent]");
+  const acceptConsentButton = document.querySelector("[data-accept-consent]");
+  const consentBackdrop = document.querySelector("[data-consent-backdrop]");
   const prevButton = document.querySelector("[data-prev-section]");
   const nextButton = document.querySelector("[data-next-section]");
   const progressFill = document.querySelector("[data-progress-fill]");
   const progressText = document.querySelector("[data-progress-text]");
   const guideRoot = document.querySelector("[data-guide-root]");
 
-  if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot) {
+  if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot || !openConsentButton || !acceptConsentButton || !consentBackdrop) {
     return;
   }
 
@@ -63,11 +65,17 @@
     setActiveSection(0, { scroll: true });
   });
 
-  if (startButton) {
-    startButton.addEventListener("click", function () {
-      setActiveSection(0, { scroll: true });
-    });
-  }
+  openConsentButton.addEventListener("click", function () {
+    consentBackdrop.hidden = false;
+    document.body.classList.add("earth-consent-open");
+  });
+
+  acceptConsentButton.addEventListener("click", function () {
+    consentBackdrop.hidden = true;
+    document.body.classList.remove("earth-consent-open");
+    guideRoot.hidden = false;
+    setActiveSection(0, { scroll: true });
+  });
 
   setActiveSection(0);
 })();

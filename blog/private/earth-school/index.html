@@ -27,12 +27,34 @@
           A guided document on entering Earth, being shaped by it, recognizing its patterns, and learning to move within it with awareness.
         </p>
         <div class="earth-hero-actions">
-          <button class="earth-primary-button" type="button" data-start-guide>Get Started</button>
+          <button class="earth-primary-button" type="button" data-open-consent>Proceed to Guide</button>
         </div>
       </div>
     </section>
 
-    <section class="earth-guide" aria-label="Earth School guide" data-guide-root>
+    <div class="earth-consent-backdrop" data-consent-backdrop hidden>
+      <div class="earth-consent-modal" role="dialog" aria-modal="true" aria-labelledby="earth-consent-title">
+        <p class="earth-consent-kicker">Before proceeding, it is important to understand:</p>
+        <h2 id="earth-consent-title">Entering this experience requires that you forget what you know now.</h2>
+        <p>
+          While within it, you may feel uncertain, disoriented, or completely lost.<br>
+          This is part of the structure.
+        </p>
+        <p>
+          You will return to what you are now,<br>
+          with additional experience carried forward.
+        </p>
+        <p>
+          If you choose to continue,<br>
+          you are accepting these conditions.
+        </p>
+        <button class="earth-primary-button earth-consent-button" type="button" data-accept-consent>
+          Accept and Proceed
+        </button>
+      </div>
+    </div>
+
+    <section class="earth-guide" aria-label="Earth School guide" data-guide-root hidden>
       <div class="earth-guide-bar">
         <nav class="earth-chapter-nav" aria-label="Earth School sections">
           <button type="button" class="earth-chapter-link is-active" data-target="section-1">I. Pre-Entry Guide</button>
