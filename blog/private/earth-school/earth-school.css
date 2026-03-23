@@ -24,6 +24,10 @@ body.earth-school-page.earth-consent-open {
   overflow: hidden;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .earth-shell {
   width: min(1180px, calc(100vw - 40px));
   margin: 0 auto;

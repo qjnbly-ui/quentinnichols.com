@@ -16,6 +16,24 @@
 
   let currentIndex = 0;
 
+  function openConsent() {
+    consentBackdrop.hidden = false;
+    consentBackdrop.setAttribute("aria-hidden", "false");
+    document.body.classList.add("earth-consent-open");
+  }
+
+  function revealGuide() {
+    consentBackdrop.hidden = true;
+    consentBackdrop.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("earth-consent-open");
+    guideRoot.hidden = false;
+    guideRoot.setAttribute("aria-hidden", "false");
+
+    window.requestAnimationFrame(function () {
+      setActiveSection(0, { scroll: true });
+    });
+  }
+
   function setActiveSection(index, options) {
     const safeIndex = Math.max(0, Math.min(index, sections.length - 1));
     currentIndex = safeIndex;
@@ -66,16 +84,13 @@
   });
 
   openConsentButton.addEventListener("click", function () {
-    consentBackdrop.hidden = false;
-    document.body.classList.add("earth-consent-open");
+    openConsent();
   });
 
   acceptConsentButton.addEventListener("click", function () {
-    consentBackdrop.hidden = true;
-    document.body.classList.remove("earth-consent-open");
-    guideRoot.hidden = false;
-    setActiveSection(0, { scroll: true });
+    revealGuide();
   });
 
+  guideRoot.setAttribute("aria-hidden", "true");
   setActiveSection(0);
 })();
