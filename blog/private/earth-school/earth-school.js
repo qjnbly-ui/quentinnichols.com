@@ -9,17 +9,21 @@
   const experienceTitle = document.querySelector("[data-experience-title]");
   const experienceBody = document.querySelector("[data-experience-body]");
   const experienceDecision = document.querySelector("[data-experience-decision]");
+  const experienceSequence = document.querySelector("[data-experience-sequence]");
+  const closingNote = document.querySelector("[data-closing-note]");
+  const experienceModal = document.querySelector(".earth-experience-modal");
   const experiencePrevButton = document.querySelector("[data-experience-prev]");
   const experienceNextButton = document.querySelector("[data-experience-next]");
   const enterBodyButton = document.querySelector("[data-choice-enter-body]");
   const completeExperienceButton = document.querySelector("[data-choice-complete]");
+  const closingReturnButton = document.querySelector("[data-closing-return]");
   const prevButton = document.querySelector("[data-prev-section]");
   const nextButton = document.querySelector("[data-next-section]");
   const progressFill = document.querySelector("[data-progress-fill]");
   const progressText = document.querySelector("[data-progress-text]");
   const guideRoot = document.querySelector("[data-guide-root]");
 
-  if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot || !openConsentButton || !acceptConsentButton || !consentBackdrop || !experienceBackdrop || !experienceStepLabel || !experienceTitle || !experienceBody || !experienceDecision || !experiencePrevButton || !experienceNextButton || !enterBodyButton || !completeExperienceButton) {
+  if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot || !openConsentButton || !acceptConsentButton || !consentBackdrop || !experienceBackdrop || !experienceStepLabel || !experienceTitle || !experienceBody || !experienceDecision || !experienceSequence || !closingNote || !experienceModal || !experiencePrevButton || !experienceNextButton || !enterBodyButton || !completeExperienceButton || !closingReturnButton) {
     return;
   }
 
@@ -31,80 +35,80 @@
       title: "Separation",
       points: [
         "awareness continues while the body is inactive",
-        "often described as leaving the body or observing from above",
-        "sometimes confusion appears at first"
+        "you may feel removed from the form without immediately understanding what has happened",
+        "disorientation is common at first, especially when the system is no longer being felt in the usual way"
       ]
     },
     {
       title: "Peace / Release",
       points: [
-        "pain disappears",
-        "overwhelming calm, safety, or relief arrives",
-        "often described as more real than normal life"
+        "pressure begins to lift",
+        "pain often disappears",
+        "what remains is often described as relief, calm, safety, or a kind of peace more complete than ordinary Earth experience"
       ]
     },
     {
       title: "Transition / Movement",
       points: [
-        "there is movement without effort",
-        "commonly described as tunnel, darkness, or light",
-        "direction is felt before it is understood"
+        "movement may begin without effort",
+        "some describe darkness, tunnel, or light",
+        "direction is often felt before it is understood, as though you are being carried toward another threshold"
       ]
     },
     {
       title: "Encounter / Environment",
       points: [
-        "a different space or realm is entered",
-        "it may be felt as light, presence, or meaningful environment",
-        "some describe relatives or beings, though this varies"
+        "a different environment may become apparent",
+        "it is often experienced less as a place in the earthly sense and more as a space filled with meaning, presence, or intelligence",
+        "some encounter others there, though what is perceived can vary"
       ]
     },
     {
       title: "The Light / Presence",
       points: [
-        "it is often described as intelligent, loving, and fully aware of you",
-        "communication is immediate",
-        "it is usually non-verbal"
+        "many describe an aware presence or light that knows them completely",
+        "it is often felt as loving, intelligent, and impossible to hide from",
+        "communication is usually immediate and non-verbal, understood all at once rather than spoken"
       ]
     },
     {
       title: "Life Review",
       points: [
-        "life is seen all at once rather than piece by piece",
-        "it is not only memory",
-        "the effects of actions on others are felt directly"
+        "what has been lived may become visible all at once",
+        "this is not memory alone",
+        "the effects of your actions on others may be felt directly, making clear that what you do affects what comes next, not just for you, but for others"
       ]
     },
     {
       title: "Boundary / Decision Point",
       points: [
-        "a threshold appears",
-        "it may feel like a line, gate, or point of no return",
-        "the sense is clear: further movement changes everything"
+        "a boundary may appear",
+        "it can feel like a line, a gate, or a point beyond which continuation would mean something irreversible",
+        "this is often experienced as a true threshold"
       ]
     },
     {
       title: "Return",
       points: [
         "many do not want to come back to their body",
-        "the return can feel assigned rather than chosen",
-        "the message is often that it is not yet time"
+        "the return is often felt as necessary rather than chosen",
+        "what has been seen is not always meant to end the experience, but in some cases to interrupt it"
       ]
     },
     {
       title: "Re-entry into the Body",
       points: [
-        "re-entry is abrupt",
+        "re-entry is often abrupt",
         "limitation returns immediately",
-        "the body can feel painful or dense again"
+        "weight, location, and pressure are felt again as awareness re-enters form"
       ]
     },
     {
       title: "After-effects",
       points: [
-        "perspective on life changes",
-        "fear of death often decreases",
-        "meaning becomes stronger and the experience can be difficult to explain"
+        "the experience may continue, but not in the same way",
+        "fear of death often decreases, meaning becomes stronger, and ordinary life can feel altered",
+        "in some cases, this is the very interruption that begins remembering"
       ]
     }
   ];
@@ -119,6 +123,20 @@
     experienceBackdrop.hidden = true;
     experienceBackdrop.setAttribute("aria-hidden", "true");
     document.body.classList.remove("earth-consent-open");
+  }
+
+  function showExperienceSequence() {
+    experienceSequence.hidden = false;
+    closingNote.hidden = true;
+    experienceModal.classList.remove("is-closing-note");
+    experienceModal.scrollTop = 0;
+  }
+
+  function showClosingNote() {
+    experienceSequence.hidden = true;
+    closingNote.hidden = false;
+    experienceModal.classList.add("is-closing-note");
+    experienceModal.scrollTop = 0;
   }
 
   function renderExperienceStage() {
@@ -139,6 +157,7 @@
 
   function openExperienceModal() {
     experienceIndex = 0;
+    showExperienceSequence();
     renderExperienceStage();
     experienceBackdrop.hidden = false;
     experienceBackdrop.setAttribute("aria-hidden", "false");
@@ -236,10 +255,14 @@
 
   enterBodyButton.addEventListener("click", function () {
     closeExperienceModal();
-    setActiveSection(4, { scroll: true });
+    setActiveSection(3, { scroll: true });
   });
 
   completeExperienceButton.addEventListener("click", function () {
+    showClosingNote();
+  });
+
+  closingReturnButton.addEventListener("click", function () {
     closeExperienceModal();
     resetToOpeningState();
   });
