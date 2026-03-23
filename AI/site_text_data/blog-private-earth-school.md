@@ -891,3 +891,91 @@ But it is available.
 And if you choose to enter,
 
 it is something you may come to understand from within.
+
+Earth School AI
+
+Ask Within This Guide
+
+This AI is scoped to Earth School only.
+
+Earth School Completion Sequence
+
+Stage 1: Separation
+
+awareness continues while the body is inactive
+
+you may feel removed from the form without immediately understanding what has happened
+
+disorientation is common at first, especially when the system is no longer being felt in the usual way
+
+Stage 2: Peace / Release
+
+pressure begins to lift
+
+pain often disappears
+
+what remains is often described as relief, calm, safety, or a kind of peace more complete than ordinary Earth experience
+
+Stage 3: Transition / Movement
+
+movement may begin without effort
+
+some describe darkness, tunnel, or light
+
+direction is often felt before it is understood, as though you are being carried toward another threshold
+
+Stage 4: Encounter / Environment
+
+a different environment may become apparent
+
+it is often experienced less as a place in the earthly sense and more as a space filled with meaning, presence, or intelligence
+
+some encounter others there, though what is perceived can vary
+
+Stage 5: The Light / Presence
+
+many describe an aware presence or light that knows them completely
+
+it is often felt as loving, intelligent, and impossible to hide from
+
+communication is usually immediate and non-verbal, understood all at once rather than spoken
+
+Stage 6: Life Review
+
+what has been lived may become visible all at once
+
+this is not memory alone
+
+the effects of your actions on others may be felt directly, making clear that what you do affects what comes next, not just for you, but for others
+
+Stage 7: Boundary / Decision Point
+
+a boundary may appear
+
+it can feel like a line, a gate, or a point beyond which continuation would mean something irreversible
+
+this is often experienced as a true threshold
+
+Stage 8: Return
+
+many do not want to come back to their body
+
+the return is often felt as necessary rather than chosen
+
+what has been seen is not always meant to end the experience, but in some cases to interrupt it
+
+Stage 9: Re-entry into the Body
+
+re-entry is often abrupt
+
+limitation returns immediately
+
+weight, location, and pressure are felt again as awareness re-enters form
+
+Stage 10: After-effects
+
+the experience may continue, but not in the same way
+
+fear of death often decreases, meaning becomes stronger, and ordinary life can feel altered
+
+in some cases, this is the very interruption that begins remembering

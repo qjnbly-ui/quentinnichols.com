@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 from bs4 import BeautifulSoup
 from urllib.parse import quote
@@ -80,6 +81,45 @@ def save_to_md(content):
     print(f"Saved: {filename}")
 
 
+def parse_js_string_array(block: str):
+    values = []
+    for match in re.finditer(r'"((?:[^"\\]|\\.)*)"', block, re.DOTALL):
+        values.append(bytes(match.group(1), "utf-8").decode("unicode_escape"))
+    return values
+
+
+def extract_earth_school_stages() -> str:
+    js_path = Path("blog/private/earth-school/earth-school.js")
+    if not js_path.exists():
+        return ""
+
+    js = js_path.read_text(encoding="utf-8", errors="ignore")
+    stages_match = re.search(r"const experienceStages = \[(.*?)\];", js, re.DOTALL)
+    if not stages_match:
+        return ""
+
+    stages_block = stages_match.group(1)
+    stage_matches = re.finditer(
+        r"\{\s*title:\s*\"((?:[^\"\\]|\\.)*)\",\s*points:\s*\[(.*?)\]\s*\}",
+        stages_block,
+        re.DOTALL,
+    )
+
+    parts = ["Earth School Completion Sequence"]
+    found_any = False
+    for index, stage_match in enumerate(stage_matches, start=1):
+        found_any = True
+        title = bytes(stage_match.group(1), "utf-8").decode("unicode_escape")
+        points = parse_js_string_array(stage_match.group(2))
+        parts.append(f"Stage {index}: {title}")
+        parts.extend(points)
+
+    if not found_any:
+        return ""
+
+    return "\n\n".join(parts)
+
+
 def file_path_to_url(path: Path) -> str:
     rel = path.relative_to(Path(".")).as_posix()
     if rel == "index.html":
@@ -103,6 +143,10 @@ def scrape_local_site():
         soup = BeautifulSoup(html, "html.parser")
         url = file_path_to_url(path)
         content = extract_page_content(soup, url)
+        if content and url.endswith("/blog/private/earth-school/"):
+            extra = extract_earth_school_stages()
+            if extra:
+                content["body"] = f"{content['body']}\n\n{extra}"
         save_to_md(content)
 
 

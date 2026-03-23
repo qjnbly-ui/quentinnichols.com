@@ -22,6 +22,10 @@
   const progressFill = document.querySelector("[data-progress-fill]");
   const progressText = document.querySelector("[data-progress-text]");
   const guideRoot = document.querySelector("[data-guide-root]");
+  const earthAiLog = document.querySelector("[data-earth-ai-log]");
+  const earthAiForm = document.querySelector("[data-earth-ai-form]");
+  const earthAiInput = document.querySelector("[data-earth-ai-input]");
+  const earthAiClear = document.querySelector("[data-earth-ai-clear]");
 
   if (!sections.length || !chapterLinks.length || !prevButton || !nextButton || !progressFill || !progressText || !guideRoot || !openConsentButton || !acceptConsentButton || !consentBackdrop || !experienceBackdrop || !experienceStepLabel || !experienceTitle || !experienceBody || !experienceDecision || !experienceSequence || !closingNote || !experienceModal || !experiencePrevButton || !experienceNextButton || !enterBodyButton || !completeExperienceButton || !closingReturnButton) {
     return;
@@ -29,6 +33,7 @@
 
   let currentIndex = 0;
   let experienceIndex = 0;
+  const earthAiStorageKey = "earth_school_ai_chat";
   const passageNumerals = ["I", "II", "III", "IV", "V", "VI"];
   const experienceStages = [
     {
@@ -117,6 +122,96 @@
     consentBackdrop.hidden = false;
     consentBackdrop.setAttribute("aria-hidden", "false");
     document.body.classList.add("earth-consent-open");
+  }
+
+  function loadEarthAiMessages() {
+    try {
+      const raw = localStorage.getItem(earthAiStorageKey);
+      return raw ? JSON.parse(raw) : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function saveEarthAiMessages(messages) {
+    localStorage.setItem(earthAiStorageKey, JSON.stringify(messages));
+  }
+
+  function renderEarthAi(messages) {
+    if (!earthAiLog) return;
+    earthAiLog.innerHTML = "";
+
+    messages.forEach(function (message) {
+      const bubble = document.createElement("div");
+      bubble.className = "earth-ai-bubble earth-ai-bubble--" + message.role;
+      const text = document.createElement("p");
+      text.className = "earth-ai-bubble-text";
+      text.textContent = message.text;
+      bubble.appendChild(text);
+      earthAiLog.appendChild(bubble);
+    });
+
+    earthAiLog.scrollTop = earthAiLog.scrollHeight;
+  }
+
+  function buildEarthSchoolContext() {
+    const heroText = [
+      document.querySelector("#earth-school-title")?.textContent || "",
+      document.querySelector(".earth-subtitle")?.textContent || "",
+      document.querySelector(".earth-intro")?.textContent || "",
+    ].filter(Boolean).join("\n");
+
+    const sectionText = sections.map(function (section) {
+      const title = section.querySelector("h2")?.textContent || "";
+      const subtitle = section.querySelector(".earth-panel-subtitle")?.textContent || "";
+      const body = Array.from(section.querySelectorAll("p"))
+        .map(function (paragraph) {
+          return paragraph.textContent.trim();
+        })
+        .filter(Boolean)
+        .join("\n");
+      return [title, subtitle, body].filter(Boolean).join("\n");
+    }).join("\n\n");
+
+    const sequenceText = experienceStages.map(function (stage, index) {
+      return [
+        "Stage " + (index + 1) + ": " + stage.title,
+        stage.points.join("\n"),
+      ].join("\n");
+    }).join("\n\n");
+
+    const closingText = Array.from(closingNote.querySelectorAll("p"))
+      .map(function (paragraph) {
+        return paragraph.textContent.trim();
+      })
+      .filter(Boolean)
+      .join("\n");
+
+    return [
+      heroText,
+      "Earth School Main Guide",
+      sectionText,
+      "Earth School Completion Sequence",
+      sequenceText,
+      "Earth School Closing Note",
+      closingText,
+    ].filter(Boolean).join("\n\n");
+  }
+
+  async function sendEarthAiMessage(payloadMessages, context) {
+    const response = await fetch("/api/earth-school-ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: payloadMessages, context: context }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Request failed");
+    }
+
+    const data = await response.json();
+    return data.reply || "I couldn't generate a response.";
   }
 
   function closeExperienceModal() {
@@ -266,6 +361,44 @@
     closeExperienceModal();
     resetToOpeningState();
   });
+
+  if (earthAiLog && earthAiForm && earthAiInput && earthAiClear) {
+    const earthAiMessages = loadEarthAiMessages();
+    renderEarthAi(earthAiMessages);
+
+    earthAiForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      const text = earthAiInput.value.trim();
+      if (!text) return;
+
+      earthAiMessages.push({ role: "user", text: text });
+      const payloadMessages = earthAiMessages.map(function (message) {
+        return { role: message.role, content: message.text };
+      });
+      const pendingIndex = earthAiMessages.push({ role: "assistant", text: "Thinking..." }) - 1;
+
+      renderEarthAi(earthAiMessages);
+      saveEarthAiMessages(earthAiMessages);
+      earthAiInput.value = "";
+
+      try {
+        const reply = await sendEarthAiMessage(payloadMessages, buildEarthSchoolContext());
+        earthAiMessages[pendingIndex].text = reply;
+      } catch (error) {
+        earthAiMessages[pendingIndex].text = "Sorry, something went wrong. Please try again.";
+      }
+
+      renderEarthAi(earthAiMessages);
+      saveEarthAiMessages(earthAiMessages);
+    });
+
+    earthAiClear.addEventListener("click", function () {
+      if (!confirm("Clear this Earth School chat from your device?")) return;
+      earthAiMessages.length = 0;
+      saveEarthAiMessages(earthAiMessages);
+      renderEarthAi(earthAiMessages);
+    });
+  }
 
   guideRoot.setAttribute("aria-hidden", "true");
   setActiveSection(0);
