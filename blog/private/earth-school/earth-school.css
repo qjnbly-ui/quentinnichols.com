@@ -150,6 +150,17 @@ body.earth-school-page.earth-consent-open {
   backdrop-filter: blur(12px);
 }
 
+.earth-experience-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 10, 18, 0.82);
+  backdrop-filter: blur(14px);
+}
+
 .earth-consent-modal {
   position: relative;
   isolation: isolate;
@@ -163,6 +174,20 @@ body.earth-school-page.earth-consent-open {
   overflow: hidden;
 }
 
+.earth-experience-modal {
+  position: relative;
+  isolation: isolate;
+  width: min(720px, 100%);
+  padding: 34px;
+  border: 1px solid var(--earth-line-strong);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(12, 27, 48, 0.9), rgba(7, 17, 31, 0.94));
+  box-shadow: var(--earth-shadow);
+  text-align: center;
+  overflow: hidden;
+}
+
+.earth-experience-modal::before,
 .earth-consent-modal::before {
   content: "";
   position: absolute;
@@ -174,6 +199,7 @@ body.earth-school-page.earth-consent-open {
   transform: scale(1.03);
 }
 
+.earth-experience-modal::after,
 .earth-consent-modal::after {
   content: "";
   position: absolute;
@@ -190,17 +216,53 @@ body.earth-school-page.earth-consent-open {
   color: var(--earth-muted);
 }
 
+.earth-experience-step {
+  margin: 0 0 12px;
+  font-size: 0.86rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--earth-accent-strong);
+}
+
+.earth-experience-modal h2,
 .earth-consent-modal h2 {
   margin: 0 0 20px;
   font-size: clamp(1.9rem, 4vw, 2.7rem);
   line-height: 1.08;
 }
 
+.earth-experience-body p,
 .earth-consent-modal p {
   margin: 0 0 18px;
   font-size: 1.02rem;
   line-height: 1.85;
   color: var(--earth-text);
+}
+
+.earth-experience-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.earth-experience-decision {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(137, 240, 255, 0.14);
+}
+
+.earth-experience-question {
+  margin: 0 0 18px;
+  font-size: 1.04rem;
+  line-height: 1.7;
+}
+
+.earth-experience-choice-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .earth-consent-button {
@@ -366,6 +428,10 @@ body.earth-school-page.earth-consent-open {
     padding: 26px 22px;
   }
 
+  .earth-experience-modal {
+    padding: 26px 22px;
+  }
+
   .earth-panel p {
     margin-bottom: 16px;
     font-size: 1rem;
@@ -383,6 +449,10 @@ body.earth-school-page.earth-consent-open {
   }
 
   .earth-guide-actions {
+    flex-direction: column;
+  }
+
+  .earth-experience-actions {
     flex-direction: column;
   }
 
