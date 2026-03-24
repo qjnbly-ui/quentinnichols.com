@@ -254,8 +254,22 @@
   }
 
   function resetToOpeningState() {
+    experienceIndex = 0;
+    currentIndex = 0;
+
+    consentBackdrop.hidden = true;
+    consentBackdrop.setAttribute("aria-hidden", "true");
+    experienceBackdrop.hidden = true;
+    experienceBackdrop.setAttribute("aria-hidden", "true");
+
     guideRoot.hidden = true;
     guideRoot.setAttribute("aria-hidden", "true");
+
+    if (earthEntryCopy) earthEntryCopy.hidden = false;
+    if (earthEntryActions) earthEntryActions.hidden = false;
+
+    setActiveSection(0);
+    document.body.classList.remove("earth-consent-open");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
