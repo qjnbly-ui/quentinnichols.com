@@ -1,0 +1,25 @@
+ <!doctype html>
+<html>
+<head>
+  <title>Login</title>
+</head>
+<body>
+
+  <h1>Login Test</h1>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <script>
+    const { createClient } = supabase;
+
+    const supabaseClient = createClient(
+      "https://mgxdiolwevcgwgzhzttd.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1neGRpb2x3ZXZjZ3dnemh6dHRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNDM1NzMsImV4cCI6MjA4ODgxOTU3M30.S6QuRVHIhFW1UnRYP1S38ILXWIZ7WtqHI8BqoDhUhGA"
+    );
+
+    console.log("Supabase connected:", supabaseClient);
+  </script>
+
+</body>
+</html>
