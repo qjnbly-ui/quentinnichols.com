@@ -9,7 +9,10 @@
   if (!summary || !panel || !spacer) return;
 
   if (!summary.querySelector(".nav-menu-label")) {
-    summary.innerHTML = '<span class="nav-menu-label">Menu</span>';
+    const label = document.createElement("span");
+    label.className = "nav-menu-label";
+    label.textContent = "Menu";
+    summary.appendChild(label);
   }
 
   let actionLink = spacer.querySelector(".nav-action-link");
@@ -21,9 +24,14 @@
   }
 
   const inPortal = window.location.pathname.startsWith("/portal/");
-  const inLogin = window.location.pathname.startsWith("/login/");
-  actionLink.textContent = inPortal ? "Portal" : "Login";
-  actionLink.href = inPortal ? "/portal/" : "/login/";
+  const setActionLink = (session) => {
+    const loggedIn = Boolean(session);
+    actionLink.textContent = loggedIn || inPortal ? "Portal" : "Login";
+    actionLink.href = loggedIn || inPortal ? "/portal/" : "/login/";
+    actionLink.setAttribute("aria-label", loggedIn || inPortal ? "Go to portal" : "Go to login");
+  };
+
+  setActionLink(null);
 
   let closeButton = panel.querySelector(".nav-menu-close");
   if (!closeButton) {
@@ -69,4 +77,38 @@
   });
 
   sync();
+
+  const loadAuth = () =>
+    new Promise((resolve, reject) => {
+      if (window.siteAuth) {
+        resolve(window.siteAuth);
+        return;
+      }
+
+      const existingScript = document.querySelector('script[src="/assets/auth.js"]');
+      if (existingScript) {
+        existingScript.addEventListener("load", () => resolve(window.siteAuth), { once: true });
+        existingScript.addEventListener("error", reject, { once: true });
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "/assets/auth.js";
+      script.async = true;
+      script.onload = () => resolve(window.siteAuth);
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
+
+  loadAuth()
+    .then(async (auth) => {
+      if (!auth) return;
+      setActionLink(await auth.getSession());
+      await auth.onAuthStateChange((session) => {
+        setActionLink(session);
+      });
+    })
+    .catch(() => {
+      setActionLink(null);
+    });
 })();

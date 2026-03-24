@@ -157,19 +157,12 @@
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="/assets/auth.js"></script>
   <script src="/assets/nav.js"></script>
 
   <script>
-    const { createClient } = supabase;
-
-    const supabaseClient = createClient(
-      "YOUR_SUPABASE_URL",
-      "YOUR_ANON_KEY"
-    );
-
     async function checkAuth() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
+      const session = await window.siteAuth.getSession();
 
       if (!session) {
         window.location.href = "/login/";
@@ -177,11 +170,14 @@
     }
 
     async function logout() {
-      await supabaseClient.auth.signOut();
+      await window.siteAuth.logout();
       window.location.href = "/";
     }
 
-    checkAuth();
+    checkAuth().catch((error) => {
+      console.log("Portal auth check failed:", error);
+      window.location.href = "/login/";
+    });
   </script>
 
 </body>
