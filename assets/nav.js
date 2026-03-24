@@ -31,7 +31,20 @@
     actionLink.setAttribute("aria-label", loggedIn || inPortal ? "Go to portal" : "Go to login");
   };
 
-  setActionLink(null);
+  const getStoredSessionHint = () => {
+    if (window.siteAuth?.getStoredSession) {
+      return window.siteAuth.getStoredSession();
+    }
+
+    try {
+      const raw = window.localStorage.getItem("sb-mgxdiolwevcgwgzhzttd-auth-token");
+      return raw ? JSON.parse(raw) : null;
+    } catch (_error) {
+      return null;
+    }
+  };
+
+  setActionLink(getStoredSessionHint());
 
   let closeButton = panel.querySelector(".nav-menu-close");
   if (!closeButton) {
