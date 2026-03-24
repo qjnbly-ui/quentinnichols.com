@@ -1,11 +1,18 @@
- <!doctype html>
+<!doctype html>
 <html>
 <head>
   <title>Login</title>
 </head>
 <body>
 
-  <h1>Login Test</h1>
+  <h1>Login</h1>
+
+  <input id="email" placeholder="Email"><br><br>
+  <input id="password" type="password" placeholder="Password"><br><br>
+
+  <button onclick="login()">Login</button>
+
+  <p id="message"></p>
 
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
@@ -14,11 +21,27 @@
     const { createClient } = supabase;
 
     const supabaseClient = createClient(
-      "https://mgxdiolwevcgwgzhzttd.supabase.co",
+       "https://mgxdiolwevcgwgzhzttd.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1neGRpb2x3ZXZjZ3dnemh6dHRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMyNDM1NzMsImV4cCI6MjA4ODgxOTU3M30.S6QuRVHIhFW1UnRYP1S38ILXWIZ7WtqHI8BqoDhUhGA"
     );
 
-    console.log("Supabase connected:", supabaseClient);
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        document.getElementById("message").innerText = error.message;
+        console.log("Login error:", error);
+      } else {
+        console.log("Logged in:", data);
+        window.location.href = "/portal/";
+      }
+    }
   </script>
 
 </body>
