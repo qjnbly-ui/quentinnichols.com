@@ -575,6 +575,10 @@ textarea {
   color: var(--ink-700);
 }
 
+.why-me-promise {
+  margin-top: 22px;
+}
+
 .video-placeholder {
   min-height: 300px;
   display: grid;
@@ -787,7 +791,8 @@ textarea {
 
   .topbar {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    text-align: center;
     gap: 8px;
     padding: 10px 0;
     font-size: 11px;
@@ -839,6 +844,10 @@ textarea {
     padding-bottom: 44px;
   }
 
+  .hero-copy {
+    text-align: center;
+  }
+
   .eyebrow {
     margin-bottom: 10px;
     font-size: 12px;
@@ -854,6 +863,8 @@ textarea {
     margin-top: 16px;
     font-size: 1.02rem;
     line-height: 1.55;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .signup-bar {
@@ -922,6 +933,10 @@ textarea {
 
   .faq-video iframe {
     min-height: 260px;
+  }
+
+  .why-me-promise {
+    margin-top: 30px;
   }
 
   .contact-form {
