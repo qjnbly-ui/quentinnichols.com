@@ -1,3 +1,43 @@
+const campaignAccessKey = "cole-chase-campaign-access";
+const campaignPassword = "cole2026";
+const gateForm = document.querySelector("#campaign-gate-form");
+const gateFeedback = document.querySelector("#campaign-gate-feedback");
+
+const normalizePassword = (value) => String(value || "").replace(/\s+/g, "").toLowerCase();
+
+const unlockCampaignSite = () => {
+  document.body.classList.remove("is-locked");
+};
+
+const lockCampaignSite = () => {
+  document.body.classList.add("is-locked");
+};
+
+if (localStorage.getItem(campaignAccessKey) === "granted") {
+  unlockCampaignSite();
+} else {
+  lockCampaignSite();
+}
+
+if (gateForm && gateFeedback) {
+  gateForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(gateForm);
+    const password = normalizePassword(formData.get("password"));
+
+    if (password !== campaignPassword) {
+      gateFeedback.textContent = "Incorrect password. Campaign team access only.";
+      return;
+    }
+
+    localStorage.setItem(campaignAccessKey, "granted");
+    gateFeedback.textContent = "";
+    gateForm.reset();
+    unlockCampaignSite();
+  });
+}
+
 const navToggle = document.querySelector(".nav-toggle");
 const navLinks = document.querySelector(".nav-links");
 

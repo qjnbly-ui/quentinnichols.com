@@ -34,6 +34,181 @@ body {
     linear-gradient(180deg, #f4efe5 0%, #f7f4ee 35%, #efe8db 100%);
 }
 
+body.is-locked {
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+body.is-locked .campaign-site {
+  display: none;
+}
+
+.campaign-gate {
+  display: none;
+}
+
+body.is-locked .campaign-gate {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  background:
+    linear-gradient(90deg, rgba(13, 44, 69, 0.96) 0%, rgba(13, 44, 69, 0.94) 54%, rgba(13, 44, 69, 0.78) 100%),
+    radial-gradient(circle at 82% 30%, rgba(224, 180, 89, 0.28), transparent 20%),
+    linear-gradient(135deg, #1a4060 0%, #0d2c45 100%);
+  color: var(--white);
+}
+
+.campaign-gate-shell {
+  width: min(var(--max-width), 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+  gap: 36px;
+  align-items: stretch;
+}
+
+.campaign-gate-copy,
+.campaign-gate-card {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.campaign-gate-copy {
+  padding: clamp(28px, 5vw, 56px);
+  background: rgba(9, 27, 42, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.campaign-gate-copy h1 {
+  margin: 0;
+  font-family: "Oswald", Impact, sans-serif;
+  font-size: clamp(2.7rem, 6vw, 4.8rem);
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  max-width: 10ch;
+}
+
+.campaign-gate-lead {
+  margin: 22px 0 0;
+  font-size: 1.2rem;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 34rem;
+}
+
+.campaign-gate-body,
+.campaign-gate-note {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.campaign-gate-body {
+  margin: 10px 0 0;
+  font-size: 1rem;
+}
+
+.campaign-gate-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-top: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.campaign-gate-form input,
+.campaign-gate-form button {
+  min-height: 66px;
+  border: 0;
+}
+
+.campaign-gate-form input {
+  padding: 0 18px;
+  color: var(--ink-900);
+  background: transparent;
+}
+
+.campaign-gate-form button {
+  padding: 0 26px;
+  background: var(--gold-500);
+  color: var(--ink-900);
+  font-family: "Oswald", Impact, sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.campaign-gate-note {
+  min-height: 1.5rem;
+  margin: 12px 0 0;
+  font-size: 0.98rem;
+}
+
+.campaign-gate-mark {
+  display: grid;
+}
+
+.campaign-gate-card {
+  padding: clamp(28px, 5vw, 44px);
+  align-self: stretch;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 12px;
+  background:
+    linear-gradient(180deg, rgba(247, 244, 238, 0.96), rgba(239, 232, 219, 0.94)),
+    radial-gradient(circle at top right, rgba(224, 180, 89, 0.22), transparent 30%);
+  color: var(--ink-900);
+}
+
+.campaign-gate-portrait-frame {
+  width: 100%;
+  max-width: 300px;
+  aspect-ratio: 4 / 5;
+  margin: 0 0 6px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 24px 50px rgba(11, 24, 37, 0.22);
+  background: linear-gradient(180deg, rgba(19, 57, 84, 0.12), rgba(19, 57, 84, 0.03));
+}
+
+.campaign-gate-portrait {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.campaign-gate-card-kicker,
+.campaign-gate-card-title {
+  margin: 0;
+  font-family: "Oswald", Impact, sans-serif;
+  text-transform: uppercase;
+}
+
+.campaign-gate-card-kicker {
+  font-size: 1rem;
+  letter-spacing: 0.24em;
+  color: var(--navy-800);
+}
+
+.campaign-gate-card-title {
+  font-size: clamp(2.4rem, 5vw, 3.8rem);
+  line-height: 0.92;
+  color: var(--navy-900);
+}
+
+.campaign-gate-card-copy {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--ink-700);
+  max-width: 22rem;
+  text-align: center;
+}
+
 a {
   color: inherit;
 }
@@ -763,6 +938,10 @@ textarea {
 }
 
 @media (max-width: 980px) {
+  .campaign-gate-shell {
+    grid-template-columns: 1fr;
+  }
+
   .section {
     padding: 64px 0;
   }
@@ -805,6 +984,66 @@ textarea {
 }
 
 @media (max-width: 760px) {
+  .campaign-gate {
+    padding: 20px 10px;
+  }
+
+  .campaign-gate-copy,
+  .campaign-gate-card {
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+
+  .campaign-gate-copy h1 {
+    max-width: none;
+  }
+
+  .campaign-gate-form {
+    grid-template-columns: 1fr;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .campaign-gate-form button {
+    width: 100%;
+  }
+
+  .campaign-gate-card {
+    grid-template-columns: 88px minmax(0, 1fr);
+    justify-items: start;
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 4px;
+  }
+
+  .campaign-gate-portrait-frame {
+    grid-row: 1 / 4;
+    width: 88px;
+    min-width: 88px;
+    max-width: 88px;
+    aspect-ratio: 1 / 1;
+    margin: 0;
+    border-radius: 18px;
+    box-shadow: 0 14px 28px rgba(11, 24, 37, 0.16);
+  }
+
+  .campaign-gate-card-kicker {
+    align-self: end;
+    font-size: 0.82rem;
+    letter-spacing: 0.18em;
+  }
+
+  .campaign-gate-card-title {
+    font-size: 1.9rem;
+    line-height: 0.9;
+  }
+
+  .campaign-gate-card-copy {
+    font-size: 0.92rem;
+    line-height: 1.45;
+    text-align: left;
+  }
+
   .topbar,
   .main-nav,
   .hero,
