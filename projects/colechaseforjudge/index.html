@@ -3,55 +3,414 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cole Chase for Judge</title>
-</head>
+  <title>Cole Chase for Judge | Klamath County</title>
+  <meta
+    name="description"
+    content="Campaign microsite for Cole Chase for Judge in Klamath County, Oregon."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="./styles.css" />
-  <style>
-    .draft-banner {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      background-color: orange;
-      color: #000;
-      text-align: center;
-      padding: 10px;
-      font-weight: bold;
-      z-index: 1000;
-    }
-
-    body {
-      padding-top: 50px;
-    }
-  </style>
-</head>
 </head>
 <body>
-  <div class="draft-banner">
-    Concept website draft. Not an official campaign site.
-  </div>
-  <div class="container">
-    <h1>Cole Chase</h1>
-    <h2>Candidate for Circuit Court Judge<br>Klamath County, Oregon</h2>
+  <div class="draft-ribbon">Draft campaign concept hidden on QuentinNichols.com</div>
 
-    <p>This is a concept website draft intended to demonstrate a potential online presence for a judicial campaign.</p>
-
-    <hr style="margin: 30px 0;">
-
-    <h3>About</h3>
-    <p>Cole Chase has experience serving as a Deputy District Attorney in Klamath County, working within the criminal justice system and representing the interests of the public. His professional background includes handling cases involving public safety and legal accountability.</p>
-
-    <h3>Approach</h3>
-    <p>A judicial role requires fairness, integrity, and a commitment to applying the law consistently. This concept emphasizes a professional and balanced presentation focused on experience, responsibility, and service to the community.</p>
-
-    <h3>Community</h3>
-    <p>Strong communities rely on trust in their legal systems. A campaign website provides a space to share background, values, and information with the public in a clear and accessible way.</p>
-
-    <div class="footer">
-      Concept draft created by Quentin Nichols<br>
-      <a href="https://quentinnichols.com" target="_blank">quentinnichols.com</a>
+  <header class="site-header" id="top">
+    <div class="topbar">
+      <p>Klamath County Circuit Court Campaign</p>
+      <a href="https://www.facebook.com/p/Cole-Chase-For-Judge-61583466609396/" target="_blank" rel="noopener">@ColeChaseForJudge</a>
     </div>
-  </div>
+
+    <nav class="main-nav" aria-label="Campaign">
+      <a class="brand" href="#top">
+        <span class="brand-name">Cole Chase</span>
+        <span class="brand-role">For Judge</span>
+      </a>
+
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+        Menu
+      </button>
+
+      <div class="nav-links" id="nav-links">
+        <a href="#about">About</a>
+        <a href="#qualifications">Qualifications</a>
+        <a href="#why-me">Why Me</a>
+        <a href="#endorsements">Endorsements</a>
+        <a href="#contact">Volunteer</a>
+        <a class="nav-donate" href="#donate">Contribute</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Constitution. Accountability. Klamath’s Choice.</p>
+        <h1>Choose Klamath County’s next judge.</h1>
+        <p class="hero-lead">
+          Cole Chase is running for Circuit Court Judge in Klamath County. With two decades of
+          legal experience, he is prepared to uphold the Constitution, protect the rights of
+          citizens, and serve with fairness and accountability.
+        </p>
+
+        <form class="signup-bar" id="newsletter-form" novalidate>
+          <label class="sr-only" for="newsletter-email">Email address</label>
+          <input
+            id="newsletter-email"
+            name="email"
+            type="email"
+            placeholder="Email address"
+            autocomplete="email"
+            required
+          />
+          <label class="sr-only" for="newsletter-zip">ZIP code</label>
+          <input
+            id="newsletter-zip"
+            name="zip"
+            type="text"
+            placeholder="ZIP"
+            inputmode="numeric"
+            autocomplete="postal-code"
+            maxlength="10"
+          />
+          <button type="submit">Stay Involved</button>
+        </form>
+        <p class="form-note" id="newsletter-feedback" aria-live="polite"></p>
+
+        <div class="hero-actions">
+          <a class="button button-gold" href="#contact">Volunteer</a>
+          <a class="button button-outline" href="#donate">Donate</a>
+          <a class="button button-outline" href="#video">Watch Video</a>
+        </div>
+      </div>
+
+      <div class="hero-portrait">
+        <div class="portrait-card">
+          <div class="portrait-frame">
+            <img
+              class="portrait-image"
+              src="./assets/images/ColeChase.jpg"
+              alt="Cole Chase campaign portrait"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section class="section metrics">
+      <article>
+        <strong>21 years</strong>
+        <span>Practicing law</span>
+      </article>
+      <article>
+        <strong>Deputy DA</strong>
+        <span>Klamath County service</span>
+      </article>
+      <article>
+        <strong>2006-2012</strong>
+        <span>Youth court judge service</span>
+      </article>
+      <article>
+        <strong>2008-2014</strong>
+        <span>Planning Commission service</span>
+      </article>
+    </section>
+
+    <section class="section split-section" id="about">
+      <div class="section-heading">
+        <p class="eyebrow">About</p>
+        <h2>A prosecutor’s record built in service to this county.</h2>
+      </div>
+      <div class="split-grid">
+        <div>
+          <p>
+            As a prosecutor in the Klamath County District Attorney’s Office, Cole Chase has
+            dedicated his career to serving this county. His campaign is centered on public safety,
+            victims’ rights, accountability, and the obligation to uphold Constitutional protections.
+          </p>
+          <p>
+            His campaign message emphasizes courtroom experience, including trial work holding
+            accountable those who steal, those who hurt children, and those who harm the community.
+            The site can pair that argument with the verified filing background already listed below.
+          </p>
+        </div>
+        <div class="info-card">
+          <h3>Campaign case</h3>
+          <ul>
+            <li>Uphold the Constitution and protect citizens’ rights.</li>
+            <li>Hold criminals accountable while treating everyone with dignity.</li>
+            <li>Keep Klamath County’s priorities in Klamath County.</li>
+            <li>Let voters choose the next judge.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="qualifications">
+      <div class="section-heading">
+        <p class="eyebrow">Qualifications</p>
+        <h2>Built through casework, preparation, and years in the system.</h2>
+      </div>
+      <div class="cards three-up">
+        <article class="card">
+          <h3>Practice and public service</h3>
+          <p>
+            The filing record identifies 21 years in legal practice, current work as a Deputy
+            District Attorney, and additional legal practice through LMT Defenders.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Teaching and judicial service</h3>
+          <p>
+            His listed background includes adjunct faculty work in criminal justice and six years
+            as a youth peer court judge, both of which support a qualifications argument rooted
+            in legal process and judgment.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Education</h3>
+          <p>
+            His filing lists degrees from the University of Iowa, including a BA in political
+            science and history, an MS in urban and regional planning, and a JD from the College of Law.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section accent-section" id="why-me">
+      <div class="section-heading">
+        <p class="eyebrow">Why Me</p>
+        <h2>Why Cole Chase is the right choice.</h2>
+      </div>
+      <div class="cards three-up">
+        <article class="card card-dark">
+          <h3>Protect Constitutional rights</h3>
+          <p>
+            His campaign is centered on the claim that every Constitutional right matters and that a
+            judge must guard those rights for every citizen who enters the courtroom.
+          </p>
+        </article>
+        <article class="card card-dark">
+          <h3>Hold people accountable</h3>
+          <p>
+            He argues that fairness and accountability are not in conflict: everyone deserves dignity
+            and impartial treatment, but criminals must be held responsible for the harms they cause.
+          </p>
+        </article>
+        <article class="card card-dark">
+          <h3>Let Klamath County decide</h3>
+          <p>
+            His message draws a clear contrast between a locally chosen judge and one appointed from Salem,
+            arguing that Klamath County voters should choose who serves on the bench.
+          </p>
+        </article>
+      </div>
+      <div class="info-card why-me-promise">
+        <h3>As your Circuit Court Judge, I will:</h3>
+        <ul>
+          <li>Make decisions that uphold justice and protect our community’s priorities.</li>
+          <li>Continue to safeguard our Constitutional rights, all of them.</li>
+          <li>Hold individuals accountable while treating everyone with dignity and respect.</li>
+          <li>Uphold the rule of law with integrity and accountability.</li>
+          <li>Ensure every person receives fair and impartial treatment.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section video-section" id="video">
+      <div class="section-heading">
+        <p class="eyebrow">Campaign Video</p>
+        <h2>Video space reserved for the campaign.</h2>
+      </div>
+      <div class="video-shell">
+        <div class="video-placeholder video-placeholder-empty" aria-hidden="true"></div>
+        <div class="info-card">
+          <h3>Video area</h3>
+          <p class="fill-note">(Team: embed the main campaign video here when it is ready.)</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="endorsements">
+      <div class="section-heading">
+        <p class="eyebrow">Endorsements</p>
+        <h2>Visible support from trusted local institutions matters in a judicial race.</h2>
+      </div>
+      <article class="endorsement-feature">
+        <div class="endorsement-feature-badge">Endorsement Announcement</div>
+        <h3>Klamath Falls Police Beneficiary</h3>
+        <p>
+          Thank you to the Klamath Falls Police Beneficiary and members of the Klamath Falls
+          Police Department for their endorsement and support.
+        </p>
+        <div class="endorsement-feature-meta">
+          <span>Featured support</span>
+          <a href="https://www.facebook.com/p/Cole-Chase-For-Judge-61583466609396/" target="_blank" rel="noopener">@ColeChaseForJudge</a>
+        </div>
+      </article>
+      <div class="endorsement-grid">
+        <article class="endorsement-card">
+          <div class="logo-placeholder">Police</div>
+          <blockquote>
+            “Endorsed by the Klamath Falls Police Beneficiary and members of the Klamath Falls Police Department.”
+          </blockquote>
+          <p>Klamath Falls Police Beneficiary</p>
+        </article>
+        <article class="endorsement-card">
+          <div class="logo-placeholder">Attorney</div>
+          <blockquote>
+            <span class="fill-note">(Team: add a lawyer endorsement here focused on preparation, courtroom professionalism, and judgment.)</span>
+          </blockquote>
+          <p><span class="fill-note-inline">(Team: add attorney name)</span></p>
+        </article>
+        <article class="endorsement-card">
+          <div class="logo-placeholder">Community</div>
+          <blockquote>
+            <span class="fill-note">(Team: add one local community endorsement here so the section does not feel limited to legal insiders.)</span>
+          </blockquote>
+          <p><span class="fill-note-inline">(Team: add community endorser name)</span></p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section donate-strip" id="donate">
+      <div>
+        <p class="eyebrow">Contribute</p>
+        <h2>Mobile-first donation flow belongs one tap away.</h2>
+        <p class="fill-note">(Team: add the live donation link and campaign finance page URL here.)</p>
+      </div>
+      <div class="donate-actions">
+        <a class="button button-gold" href="#" data-placeholder-link="donate">
+          Donate
+        </a>
+        <a class="button button-outline-dark" href="#" data-placeholder-link="finance">
+          Campaign Finance
+        </a>
+      </div>
+    </section>
+
+    <section class="section faq-section" id="faq">
+      <div class="section-heading">
+        <p class="eyebrow">FAQ</p>
+        <h2>Short answers to the questions judicial voters actually have.</h2>
+      </div>
+      <div class="faq-list">
+        <details>
+          <summary>Can judicial candidates talk about specific issues or future cases?</summary>
+          <p>
+            Not like candidates for legislative office can. The safer lane is to explain background,
+            temperament, qualifications, and commitment to fairness rather than pre-judging disputes.
+          </p>
+        </details>
+        <details>
+          <summary>Why is Cole qualified?</summary>
+          <p>
+            He is making the case on experience and trial work: two decades practicing law, service
+            as a Deputy District Attorney, prior youth peer court judging, criminal justice teaching,
+            and local public service on the Klamath Falls Planning Commission.
+          </p>
+        </details>
+        <details>
+          <summary>What is this campaign about?</summary>
+          <p>
+            The campaign message is about Constitutional rights, public safety, victims, accountability,
+            and making sure Klamath County voters choose the next judge.
+          </p>
+        </details>
+        <details>
+          <summary>What is the truth about the gun incident being discussed online?</summary>
+          <p>
+            There’s been a lot of noise on social media about the charges related to the gun incident
+            involving Cole Chase. In this video, he sits down with a member of the community to
+            address it face to face, on camera, with no filters.
+          </p>
+          <p>
+            The campaign’s position is that he pulled a gun in self-defense, was never convicted of
+            a felony, that claims circulating online are false, and that the District Attorney’s
+            Office hired him back because of the kind of prosecutor he is.
+          </p>
+          <p>
+            The point of sharing the reel here is directness: he answers the questions himself,
+            on the record, and asks voters not to let misinformation decide the election.
+          </p>
+          <div class="faq-video">
+            <iframe
+              src="https://www.facebook.com/plugins/video.php?height=423&amp;href=https%3A%2F%2Fwww.facebook.com%2Freel%2F4059965974293486%2F&amp;show_text=false&amp;width=560&amp;t=0"
+              width="560"
+              height="423"
+              data-allowfullscreen="true"
+              style="border:none;overflow:hidden"
+              scrolling="no"
+              frameborder="0"
+              allowfullscreen="true"
+              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowFullScreen="true"
+              title="Cole Chase campaign video"
+            ></iframe>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="section contact-section" id="contact">
+      <div class="section-heading">
+        <p class="eyebrow">Volunteer + Contact</p>
+        <h2>Collect supporters, volunteers, and direct questions in one place.</h2>
+      </div>
+      <div class="contact-grid">
+        <form class="contact-form" id="volunteer-form" novalidate>
+          <label>
+            Full name
+            <input type="text" name="name" autocomplete="name" required />
+          </label>
+          <label>
+            Email
+            <input type="email" name="email" autocomplete="email" required />
+          </label>
+          <label>
+            Phone
+            <input type="tel" name="phone" autocomplete="tel" />
+          </label>
+          <label>
+            How can you help?
+            <select name="interest">
+              <option value="Volunteer">Volunteer</option>
+              <option value="Host a sign">Host a sign</option>
+              <option value="Request endorsement">Request endorsement</option>
+              <option value="General contact">General contact</option>
+            </select>
+          </label>
+          <label>
+            Message
+            <textarea name="message" rows="5" placeholder="Tell the campaign how you’d like to help."></textarea>
+          </label>
+          <button class="button button-gold submit-button" type="submit">Send Message</button>
+          <p class="form-note" id="volunteer-feedback" aria-live="polite"></p>
+        </form>
+
+        <aside class="contact-panel">
+          <h3>Campaign actions</h3>
+          <ul>
+            <li><a href="https://www.facebook.com/p/Cole-Chase-For-Judge-61583466609396/" target="_blank" rel="noopener">@ColeChaseForJudge</a></li>
+            <li><a href="#" data-placeholder-link="instagram"><span class="fill-note-inline">(Team: add Instagram URL if used)</span></a></li>
+            <li><a href="mailto:cole.p.chase@gmail.com">cole.p.chase@gmail.com</a></li>
+            <li><a href="tel:15412816987">(541) 281-6987</a></li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>I’m honored to ask for your vote and your support.</p>
+    <p>Together, we can build a justice system Klamath County can be proud of.</p>
+    <p class="site-credit">Website by Quentin Nichols</p>
+  </footer>
 
   <script src="./app.js"></script>
 </body>

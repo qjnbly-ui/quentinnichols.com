@@ -1,6 +1,6 @@
-# Cole Chase For Judge (Concept Draft)
+# Cole Chase For Judge
 
-This is a **concept website draft** created to demonstrate a potential campaign website for a judicial race in Klamath County, Oregon.
+This is a campaign website concept for a judicial race in Klamath County, Oregon.
 
 ⚠️ This is NOT an official campaign website and has not been approved by the candidate or campaign team.
 
@@ -32,7 +32,7 @@ colechaseforjudge/
 
 ## Notes on Tone and Content
 
-This draft intentionally:
+This project intentionally:
 - Uses neutral, professional language
 - Avoids political messaging or endorsements
 - Focuses on structure rather than finalized content
