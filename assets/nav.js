@@ -8,6 +8,11 @@
   const spacer = siteNav.querySelector(".nav-spacer");
   if (!summary || !panel || !spacer) return;
 
+  const blogLink = panel.querySelector('a[href="/blog/"]');
+  if (blogLink) {
+    blogLink.remove();
+  }
+
   if (!summary.querySelector(".nav-menu-label")) {
     const label = document.createElement("span");
     label.className = "nav-menu-label";
