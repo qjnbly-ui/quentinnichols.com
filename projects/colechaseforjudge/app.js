@@ -20,10 +20,10 @@ const buildMailtoLink = ({ subject, lines }) => {
   return `mailto:cole.p.chase@gmail.com?subject=${encodeURIComponent(subject)}&body=${body}`;
 };
 
-const newsletterForm = document.querySelector("#newsletter-form");
-const newsletterFeedback = document.querySelector("#newsletter-feedback");
+document.querySelectorAll("[data-newsletter-form]").forEach((newsletterForm) => {
+  const newsletterFeedback = newsletterForm.nextElementSibling;
+  if (!newsletterFeedback) return;
 
-if (newsletterForm && newsletterFeedback) {
   newsletterForm.addEventListener("submit", (event) => {
     event.preventDefault();
 
@@ -44,7 +44,7 @@ if (newsletterForm && newsletterFeedback) {
     newsletterFeedback.textContent =
       "Signup saved on this device. Replace this with the real campaign signup service when ready.";
   });
-}
+});
 
 const volunteerForm = document.querySelector("#volunteer-form");
 const volunteerFeedback = document.querySelector("#volunteer-feedback");

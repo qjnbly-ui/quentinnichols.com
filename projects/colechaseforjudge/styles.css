@@ -286,6 +286,10 @@ textarea {
   margin-top: 18px;
 }
 
+.mobile-hero-cta {
+  display: none;
+}
+
 .button {
   display: inline-flex;
   align-items: center;
@@ -868,13 +872,7 @@ textarea {
     padding-bottom: 44px;
   }
 
-  .hero-portrait {
-    order: -1;
-  }
-
   .hero-copy {
-    display: flex;
-    flex-direction: column;
     text-align: center;
   }
 
@@ -897,26 +895,47 @@ textarea {
     margin-right: auto;
   }
 
-  .signup-bar {
-    grid-template-columns: 1fr;
-    margin-top: 20px;
-    order: 3;
+  .hero .signup-bar,
+  .hero .hero-actions,
+  .hero #newsletter-feedback {
+    display: none;
   }
 
-  .signup-bar input + input {
-    border-left: 0;
-    border-top: 1px solid rgba(21, 36, 51, 0.12);
+  .mobile-hero-cta {
+    display: grid;
+    gap: 22px;
+    width: min(var(--max-width), calc(100% - 20px));
+    margin: 8px auto 0;
   }
 
-  .hero-actions,
+  .mobile-hero-actions,
   .donate-actions {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    margin-top: 16px;
+    margin-top: 0;
   }
 
-  .hero-actions {
-    order: 2;
+  .mobile-hero-actions {
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .mobile-hero-actions .button {
+    min-height: 58px;
+    padding: 0 18px;
+  }
+
+  .mobile-hero-cta .signup-bar {
+    grid-template-columns: 1fr;
+    margin-top: 0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .mobile-hero-cta .signup-bar input + input {
+    border-left: 0;
+    border-top: 1px solid rgba(21, 36, 51, 0.12);
   }
 
   .button,
@@ -924,12 +943,12 @@ textarea {
     width: 100%;
   }
 
-  .signup-bar input,
-  .signup-bar button {
-    min-height: 56px;
+  .mobile-hero-cta .signup-bar input,
+  .mobile-hero-cta .signup-bar button {
+    min-height: 52px;
   }
 
-  .signup-bar button {
+  .mobile-hero-cta .signup-bar button {
     font-size: 1.05rem;
     letter-spacing: 0.03em;
   }
@@ -941,8 +960,9 @@ textarea {
 
   .metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-    margin-top: -20px;
+    gap: 12px;
+    margin-top: -8px;
+    margin-bottom: 8px;
   }
 
   .metrics article,
@@ -955,11 +975,17 @@ textarea {
   .faq-list details,
   .endorsement-feature,
   .donate-strip {
-    padding: 22px 18px;
+    padding: 20px 16px;
   }
 
   .metrics strong {
-    font-size: 1.7rem;
+    font-size: 1.55rem;
+  }
+
+  .metrics span {
+    margin-top: 8px;
+    font-size: 0.95rem;
+    line-height: 1.35;
   }
 
   .section-heading {
@@ -983,6 +1009,13 @@ textarea {
 
   .why-me-promise {
     margin-top: 30px;
+  }
+
+  .mobile-form-note {
+    min-height: 18px;
+    margin-top: -4px;
+    text-align: center;
+    color: var(--ink-700);
   }
 
   .donate-strip {

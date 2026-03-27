@@ -55,7 +55,7 @@
           citizens, and serve with fairness and accountability.
         </p>
 
-        <form class="signup-bar" id="newsletter-form" novalidate>
+        <form class="signup-bar" id="newsletter-form" data-newsletter-form novalidate>
           <label class="sr-only" for="newsletter-email">Email address</label>
           <input
             id="newsletter-email"
@@ -77,7 +77,7 @@
           />
           <button type="submit">Stay Involved</button>
         </form>
-        <p class="form-note" id="newsletter-feedback" aria-live="polite"></p>
+        <p class="form-note" id="newsletter-feedback" data-newsletter-feedback aria-live="polite"></p>
 
         <div class="hero-actions">
           <a class="button button-gold" href="#contact">Volunteer</a>
@@ -118,6 +118,38 @@
         <strong>2008-2014</strong>
         <span>Planning Commission service</span>
       </article>
+    </section>
+
+    <section class="mobile-hero-cta" aria-label="Mobile Campaign Actions">
+      <div class="mobile-hero-actions">
+        <a class="button button-gold" href="#contact">Volunteer</a>
+        <a class="button button-outline-dark" href="#donate">Donate</a>
+        <a class="button button-outline-dark" href="#video">Watch Video</a>
+      </div>
+
+      <form class="signup-bar" data-newsletter-form novalidate>
+        <label class="sr-only" for="newsletter-email-mobile">Email address</label>
+        <input
+          id="newsletter-email-mobile"
+          name="email"
+          type="email"
+          placeholder="Email address"
+          autocomplete="email"
+          required
+        />
+        <label class="sr-only" for="newsletter-zip-mobile">ZIP code</label>
+        <input
+          id="newsletter-zip-mobile"
+          name="zip"
+          type="text"
+          placeholder="ZIP"
+          inputmode="numeric"
+          autocomplete="postal-code"
+          maxlength="10"
+        />
+        <button type="submit">Stay Involved</button>
+      </form>
+      <p class="form-note mobile-form-note" data-newsletter-feedback aria-live="polite"></p>
     </section>
 
     <section class="section split-section" id="about">
