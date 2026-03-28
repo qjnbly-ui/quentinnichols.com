@@ -1299,7 +1299,7 @@ body.nav-menu-open {
 @media (max-width: 900px){
   .qjn-hero-wrap{
     grid-template-columns: 1fr;
-    gap: 30px;
+    gap: 20px;
   }
   .qjn-hero-text{
     max-width: none;
@@ -1318,8 +1318,8 @@ body.nav-menu-open {
 
 @media (max-width: 600px){
   .qjn-hero-simple{
-    min-height: calc(100vh - 68px);
-    padding: 1rem 16px 28px;
+    min-height: 0;
+    padding: 1rem 16px 12px;
   }
   .qjn-hero-title{
     font-size: 34px;
@@ -1336,6 +1336,10 @@ body.nav-menu-open {
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 999px;
     text-align: center;
+  }
+
+  .qjn-hero-photo{
+    max-width: min(100%, 440px);
   }
 }
 
@@ -1535,7 +1539,7 @@ body.nav-menu-open {
   }
 
   .qjn-yt-min {
-    padding: 24px 16px 46px;
+    padding: 10px 16px 46px;
   }
 
   .qjn-yt-min-title {
