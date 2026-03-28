@@ -12,7 +12,8 @@
     }
 
     .bly-stage {
-      padding: var(--nav-content-pad) 0 56px;
+      min-height: calc(100vh - 72px);
+      padding: clamp(1rem, 3vw, 1.75rem) 0 56px;
     }
 
     /* ===== Bly Section ===== */
@@ -59,6 +60,8 @@
 
     /* Cards */
     .bly-card {
+      display: flex;
+      flex-direction: column;
       background: #121212;
       border-radius: 18px;
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -99,6 +102,9 @@
     }
 
     .bly-card-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
       padding: 18px 18px 20px;
     }
 
@@ -121,7 +127,9 @@
     .bly-btn {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
+      margin-top: auto;
       padding: 10px 22px;
       border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, 0.3);
@@ -138,6 +146,47 @@
       transform: translateY(-2px);
       border-color: rgba(255, 255, 255, 0.55);
       background: #232323;
+    }
+
+    @media (max-width: 720px) {
+      .bly-stage {
+        min-height: calc(100vh - 68px);
+        padding-top: 1rem;
+        padding-bottom: 40px;
+      }
+
+      .bly-wrap {
+        padding-right: 12px;
+        padding-left: 12px;
+      }
+
+      .bly-grid {
+        gap: 18px;
+      }
+
+      .bly-card-media {
+        aspect-ratio: 16 / 10;
+      }
+
+      .bly-card-body {
+        padding: 16px;
+      }
+
+      .bly-card-title {
+        font-size: 20px;
+      }
+
+      .bly-card-text {
+        margin-bottom: 14px;
+        font-size: 14px;
+      }
+
+      .bly-btn {
+        width: 100%;
+        min-height: 46px;
+        padding: 10px 16px;
+        letter-spacing: 0.16em;
+      }
     }
   </style>
   <!-- Google tag (gtag.js) -->
