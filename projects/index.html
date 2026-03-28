@@ -105,6 +105,7 @@
       display: flex;
       flex: 1;
       flex-direction: column;
+      align-items: flex-start;
       padding: 18px 18px 20px;
     }
 
@@ -130,11 +131,13 @@
       justify-content: center;
       gap: 8px;
       margin-top: auto;
+      align-self: center;
       padding: 10px 22px;
       border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, 0.3);
       color: var(--text);
       text-decoration: none;
+      text-align: center;
       font-size: 11px;
       letter-spacing: 0.22em;
       text-transform: uppercase;
@@ -146,6 +149,58 @@
       transform: translateY(-2px);
       border-color: rgba(255, 255, 255, 0.55);
       background: #232323;
+    }
+
+    /* ===== Work With Me Section ===== */
+    .work-with-me {
+      margin-top: 60px;
+      padding: 42px 24px;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(18, 18, 18, 0.96), rgba(10, 10, 10, 0.92)),
+        radial-gradient(circle at top, rgba(245, 242, 234, 0.08), transparent 58%);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    .work-inner {
+      max-width: 720px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .work-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 5vw, 36px);
+      margin: 0 0 16px;
+      line-height: 1.1;
+    }
+
+    .work-text {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+
+    .work-list {
+      list-style: none;
+      padding: 0;
+      margin: 24px 0 28px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .work-list li {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      opacity: 0.9;
+    }
+
+    .work-btn {
+      margin-top: 10px;
     }
 
     @media (max-width: 720px) {
@@ -186,6 +241,12 @@
         min-height: 46px;
         padding: 10px 16px;
         letter-spacing: 0.16em;
+      }
+
+      .work-with-me {
+        margin-top: 40px;
+        padding: 28px 16px;
+        border-radius: 20px;
       }
     }
   </style>
@@ -248,7 +309,7 @@
             <div class="bly-card-body">
               <h3 class="bly-card-title">Ruth Obenchain Recreation Center</h3>
               <p class="bly-card-text">
-                A once-quiet community gym brought back to life. Memberships, open gym nights, and more.
+                Built and modernized a community recreation center, implementing memberships, access control, and automated systems to increase engagement and daily use.
               </p>
               <a href="https://ruthobenchainrc.com" class="bly-btn">
                 View RORC Page
@@ -265,7 +326,7 @@
             <div class="bly-card-body">
               <h3 class="bly-card-title">blyoregon.org</h3>
               <p class="bly-card-text">
-                The official site for Bly, Oregon with updates, minutes, and community resources.
+                Designed and maintained a centralized platform for the Bly community, bringing public records, updates, and local resources into one accessible system.
               </p>
               <a href="https://www.blyoregon.org" class="bly-btn" target="_blank" rel="noopener">
                 Visit blyoregon.org
@@ -282,7 +343,7 @@
             <div class="bly-card-body">
               <h3 class="bly-card-title">Public Records App</h3>
               <p class="bly-card-text">
-                A searchable public records database built for towns, boards, and nonprofits.
+                Developed a searchable records system that allows organizations to store, manage, and access public documents efficiently.
               </p>
               <a href="/PublicRecordsApp/" class="bly-btn">
                 View Public Records App
@@ -299,7 +360,7 @@
             <div class="bly-card-body">
               <h3 class="bly-card-title">AI Music Generator</h3>
               <p class="bly-card-text">
-                Generate short songs with custom prompts, optional tags, and your own lyrics.
+                Built an AI-powered music tool that generates custom songs using prompts, tags, and user-written lyrics.
               </p>
               <a href="/music-generator/" class="bly-btn">
                 Open Music Generator
@@ -308,6 +369,33 @@
           </article>
 
         </div>
+
+      <!-- ============ Work With Me Section ============ -->
+      <section class="work-with-me">
+        <div class="work-inner">
+          <h2 class="work-title">Work With Me</h2>
+          <p class="work-text">
+            I design and build systems that help communities, organizations, and small teams operate better.
+          </p>
+          <p class="work-text">
+            This includes custom websites, internal tools, automation systems, and data dashboards.
+          </p>
+          <p class="work-text">
+            If you have an idea or a problem that needs a solution, I can help build it.
+          </p>
+
+          <ul class="work-list">
+            <li>Custom Websites</li>
+            <li>Internal Tools & Apps</li>
+            <li>Automation Systems</li>
+            <li>Data Dashboards & Tracking</li>
+            <li>Project Setup & Infrastructure</li>
+          </ul>
+
+          <a href="/contact/" class="bly-btn work-btn">Start a Project</a>
+        </div>
+      </section>
+
       </div>
     </section>
   </main>
