@@ -13,6 +13,25 @@
     blogLink.remove();
   }
 
+  const normalizePath = (path) => {
+    if (!path) return "/";
+    const cleaned = path.replace(/index\.html$/, "");
+    if (cleaned === "/") return "/";
+    return cleaned.endsWith("/") ? cleaned : `${cleaned}/`;
+  };
+
+  const currentPath = normalizePath(window.location.pathname);
+  panel.querySelectorAll("a[href]").forEach((link) => {
+    const href = link.getAttribute("href");
+    if (!href || href.startsWith("http") || href.startsWith("#")) {
+      return;
+    }
+
+    if (normalizePath(href) === currentPath) {
+      link.remove();
+    }
+  });
+
   if (!summary.querySelector(".nav-menu-label")) {
     const label = document.createElement("span");
     label.className = "nav-menu-label";
@@ -84,6 +103,13 @@
   backdrop.addEventListener("click", () => {
     nav.removeAttribute("open");
     sync();
+  });
+
+  panel.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      nav.removeAttribute("open");
+      sync();
+    });
   });
 
   nav.addEventListener("toggle", sync);
