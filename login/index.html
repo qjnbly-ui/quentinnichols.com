@@ -5,115 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Private Login</title>
   <link rel="stylesheet" href="/style.css">
-  <style>
-    .auth-page {
-      min-height: 100vh;
-      background: #000000;
-      color: var(--text);
-    }
-
-    .auth-main {
-      min-height: calc(100vh - 72px);
-      display: grid;
-      justify-items: center;
-      align-content: start;
-      padding: clamp(1.5rem, 4vw, 2.5rem) 1rem 2rem;
-    }
-
-    .auth-card {
-      width: min(560px, 100%);
-      padding: 1.8rem;
-      border-radius: 28px;
-      border: 1px solid var(--surface-border);
-      background: rgba(12, 12, 12, 0.94);
-      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.42);
-    }
-
-    .auth-kicker {
-      margin: 0 0 0.85rem;
-      font-size: 0.76rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .auth-title {
-      margin: 0;
-      font-size: clamp(2.4rem, 6vw, 4.2rem);
-      line-height: 0.96;
-      letter-spacing: -0.05em;
-      color: var(--text);
-    }
-
-    .auth-copy {
-      margin: 1rem 0 0;
-      font-size: 1rem;
-      line-height: 1.8;
-      color: var(--muted);
-    }
-
-    .auth-form {
-      display: grid;
-      gap: 0.95rem;
-      margin-top: 1.6rem;
-    }
-
-    .auth-label {
-      display: grid;
-      gap: 0.45rem;
-      font-size: 0.84rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .auth-input {
-      width: 100%;
-      min-height: 52px;
-      padding: 0 0.95rem;
-      border-radius: 16px;
-      border: 1px solid var(--surface-border);
-      background: #111111;
-      color: var(--text);
-      font: inherit;
-    }
-
-    .auth-input::placeholder {
-      color: rgba(245, 242, 234, 0.42);
-    }
-
-    .auth-button {
-      min-height: 52px;
-      margin-top: 0.35rem;
-      border: 1px solid var(--surface-border-strong);
-      border-radius: 999px;
-      background: #f5f2ea;
-      color: #111111;
-      font: inherit;
-      font-size: 0.92rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-    }
-
-    .auth-message {
-      min-height: 1.5rem;
-      margin: 0.25rem 0 0;
-      color: #f0b0b0;
-    }
-
-    @media (max-width: 720px) {
-      .auth-main {
-        min-height: calc(100vh - 68px);
-        padding-top: 1rem;
-      }
-
-      .auth-card {
-        padding: 1.35rem;
-        border-radius: 24px;
-      }
-    }
-  </style>
 </head>
 <body class="auth-page">
   <nav class="site-nav" aria-label="Site">
@@ -146,43 +37,84 @@
       <h1 class="auth-title">Login</h1>
       <p class="auth-copy">Sign in to enter the private side of the site.</p>
 
-      <div class="auth-form">
+      <form class="auth-form" id="login-form">
         <label class="auth-label" for="email">
           Email
-          <input class="auth-input" id="email" type="email" placeholder="name@example.com" autocomplete="email">
+          <input class="auth-input" id="email" type="email" placeholder="name@example.com" autocomplete="email" required>
         </label>
 
         <label class="auth-label" for="password">
           Password
-          <input class="auth-input" id="password" type="password" placeholder="Password" autocomplete="current-password">
+          <input class="auth-input" id="password" type="password" placeholder="Password" autocomplete="current-password" required>
         </label>
 
-        <button class="auth-button" type="button" onclick="login()">Login</button>
-        <p class="auth-message" id="message"></p>
-      </div>
+        <button class="auth-button" id="login-button" type="submit">Login</button>
+        <p class="auth-message" id="message" aria-live="polite"></p>
+      </form>
     </section>
   </main>
 
   <script src="/assets/auth.js"></script>
   <script src="/assets/nav.js"></script>
   <script>
-    async function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const message = document.getElementById("message");
+    const loginForm = document.getElementById("login-form");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginButton = document.getElementById("login-button");
+    const message = document.getElementById("message");
 
-      message.innerText = "";
-
-      const { data, error } = await window.siteAuth.login(email, password);
-
-      if (error) {
-        message.innerText = error.message;
-        console.log("Login error:", error);
+    function setMessage(text, state = "") {
+      message.innerText = text;
+      if (state) {
+        message.dataset.state = state;
       } else {
-        console.log("Logged in:", data);
-        window.location.href = "/portal/";
+        delete message.dataset.state;
       }
     }
+
+    function setPending(pending) {
+      emailInput.disabled = pending;
+      passwordInput.disabled = pending;
+      loginButton.disabled = pending;
+      loginButton.textContent = pending ? "Signing In..." : "Login";
+    }
+
+    async function login() {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        setMessage("Enter your email and password to continue.", "error");
+        return;
+      }
+
+      setMessage("");
+      setPending(true);
+
+      try {
+        const { data, error } = await window.siteAuth.login(email, password);
+
+        if (error) {
+          setMessage(error.message, "error");
+          console.log("Login error:", error);
+          return;
+        }
+
+        console.log("Logged in:", data);
+        setMessage("Login successful. Redirecting...", "success");
+        window.location.href = "/portal/";
+      } catch (error) {
+        setMessage("Login failed. Please try again.", "error");
+        console.log("Unexpected login error:", error);
+      } finally {
+        setPending(false);
+      }
+    }
+
+    loginForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      login();
+    });
 
     window.siteAuth.getSession().then((session) => {
       if (session) {

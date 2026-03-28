@@ -69,31 +69,33 @@
 
     /* Photos */
     .bly-card-media {
+      position: relative;
       width: 100%;
-      padding-top: 56.25%;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #0f0f0f;
     }
 
-    .bly-rorc-img {
-      background-image: url("/projects/images/RORCimage.png");
-    }
-
-    .bly-blyoregon-img {
-      background-image: url("/projects/images/blyoregon.org.png");
-    }
-
-    .bly-records-img {
-      background-image: url("/projects/images/recordsapppicture.png");
+    .bly-card-media img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .bly-music-img {
-      background-image: linear-gradient(135deg, rgba(32, 32, 32, 0.9), rgba(8, 8, 8, 0.9)),
-        url("/assets/Watermark (1) copy.png");
-      background-size: cover, 140px;
-      background-position: center, center;
-      background-repeat: no-repeat;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(135deg, rgba(32, 32, 32, 0.9), rgba(8, 8, 8, 0.9)),
+        radial-gradient(circle at top, rgba(245, 242, 234, 0.16), transparent 58%);
+    }
+
+    .bly-music-img img {
+      width: min(160px, 42%);
+      height: auto;
+      object-fit: contain;
+      opacity: 0.9;
     }
 
     .bly-card-body {
@@ -190,7 +192,9 @@
 
           <!-- RORC Card -->
           <article class="bly-card">
-            <div class="bly-card-media bly-rorc-img"></div>
+            <div class="bly-card-media">
+              <img src="/projects/images/RORCimage.png" alt="Ruth Obenchain Recreation Center website preview" loading="lazy" decoding="async">
+            </div>
 
             <div class="bly-card-body">
               <h3 class="bly-card-title">Ruth Obenchain Recreation Center</h3>
@@ -205,7 +209,9 @@
 
           <!-- Bly Oregon Card -->
           <article class="bly-card">
-            <div class="bly-card-media bly-blyoregon-img"></div>
+            <div class="bly-card-media">
+              <img src="/projects/images/blyoregon.org.png" alt="blyoregon.org website preview" loading="lazy" decoding="async">
+            </div>
 
             <div class="bly-card-body">
               <h3 class="bly-card-title">blyoregon.org</h3>
@@ -220,7 +226,9 @@
 
           <!-- Public Records App -->
           <article class="bly-card">
-            <div class="bly-card-media bly-records-img"></div>
+            <div class="bly-card-media">
+              <img src="/projects/images/recordsapppicture.png" alt="Public Records App preview" loading="lazy" decoding="async">
+            </div>
 
             <div class="bly-card-body">
               <h3 class="bly-card-title">Public Records App</h3>
@@ -235,7 +243,9 @@
 
           <!-- Music Generator -->
           <article class="bly-card">
-            <div class="bly-card-media bly-music-img"></div>
+            <div class="bly-card-media bly-music-img">
+              <img src="/assets/Watermark (1) copy.png" alt="AI Music Generator project mark" loading="lazy" decoding="async">
+            </div>
 
             <div class="bly-card-body">
               <h3 class="bly-card-title">AI Music Generator</h3>

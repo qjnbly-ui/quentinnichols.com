@@ -5,109 +5,6 @@
   <title>Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/style.css">
-  <style>
-    .portal-page {
-      min-height: 100vh;
-      background: #000000;
-      color: var(--text);
-    }
-
-    .portal-main {
-      width: min(720px, calc(100% - 2rem));
-      margin: 0 auto;
-      min-height: calc(100vh - 72px);
-      padding: clamp(1.5rem, 4vw, 2.5rem) 0 3rem;
-    }
-
-    .portal-card {
-      padding: 1.8rem;
-      border-radius: 28px;
-      border: 1px solid var(--surface-border);
-      background: rgba(12, 12, 12, 0.94);
-      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.42);
-    }
-
-    .portal-kicker {
-      margin: 0 0 0.85rem;
-      font-size: 0.76rem;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .portal-title {
-      margin: 0;
-      font-size: clamp(2.4rem, 6vw, 4.2rem);
-      line-height: 0.96;
-      letter-spacing: -0.05em;
-      color: var(--text);
-    }
-
-    .portal-copy {
-      margin: 1rem 0 0;
-      font-size: 1rem;
-      line-height: 1.8;
-      color: var(--muted);
-    }
-
-    .portal-links {
-      display: grid;
-      gap: 0.9rem;
-      margin-top: 1.7rem;
-    }
-
-    .portal-link {
-      display: block;
-      padding: 1rem 1.05rem;
-      border-radius: 16px;
-      border: 1px solid var(--surface-border);
-      background: #111111;
-      color: var(--text);
-      text-decoration: none;
-      font-size: 1rem;
-      line-height: 1.6;
-    }
-
-    .portal-link span {
-      display: block;
-      margin-top: 0.2rem;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .portal-actions {
-      margin-top: 1.7rem;
-      padding-top: 1.3rem;
-      border-top: 1px solid var(--surface-border);
-    }
-
-    .portal-button {
-      min-height: 50px;
-      padding: 0 1rem;
-      border: 1px solid var(--surface-border-strong);
-      border-radius: 999px;
-      background: #f5f2ea;
-      color: #111111;
-      font: inherit;
-      font-size: 0.9rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-    }
-
-    @media (max-width: 720px) {
-      .portal-main {
-        width: min(100% - 1rem, 720px);
-        min-height: calc(100vh - 68px);
-        padding-top: 1rem;
-      }
-
-      .portal-card {
-        padding: 1.35rem;
-        border-radius: 24px;
-      }
-    }
-  </style>
 </head>
 
 <body class="portal-page">
@@ -139,27 +36,43 @@
     <section class="portal-card">
       <p class="portal-kicker">Private Access</p>
       <h1 class="portal-title">Portal</h1>
-      <p class="portal-copy">Access available systems.</p>
+      <p class="portal-copy">Access available systems, writing, and site tools from one place.</p>
+      <p class="portal-status" id="portal-status">Signed in</p>
 
-      <div class="portal-links">
-        <a class="portal-link" href="/AI/">
-          AI
-          <span>Site-grounded chat and private tools.</span>
-        </a>
+      <section class="portal-section" aria-labelledby="portal-section-tools">
+        <p class="portal-kicker">Tools</p>
+        <h2 class="portal-section-title" id="portal-section-tools">Writing And Site Access</h2>
+        <div class="portal-links">
+          <a class="portal-link" href="/AI/">
+            <strong class="portal-link-title">AI</strong>
+            <span>Site-grounded chat and private tools.</span>
+          </a>
 
-        <a class="portal-link" href="/blog/">
-          Blog
-          <span>Published writing, reflections, and public posts.</span>
-        </a>
+          <a class="portal-link" href="/blog/">
+            <strong class="portal-link-title">Blog</strong>
+            <span>Published writing, reflections, and public posts.</span>
+          </a>
 
-        <a class="portal-link" href="/blog/private/">
-          Private Blog
-          <span>Personal writing and unpublished work.</span>
-        </a>
-      </div>
+          <a class="portal-link" href="/blog/private/">
+            <strong class="portal-link-title">Private Blog</strong>
+            <span>Personal writing and unpublished work.</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="portal-section" aria-labelledby="portal-section-projects">
+        <p class="portal-kicker">Projects</p>
+        <h2 class="portal-section-title" id="portal-section-projects">Unpublished Work</h2>
+        <div class="portal-links">
+          <a class="portal-link" href="/projects/colechaseforjudge/">
+            <strong class="portal-link-title">Cole Chase For Judge</strong>
+            <span>Private project link for the unpublished campaign site.</span>
+          </a>
+        </div>
+      </section>
 
       <div class="portal-actions">
-        <button class="portal-button" onclick="logout()">Logout</button>
+        <button class="portal-button" id="logout-button" onclick="logout()">Logout</button>
       </div>
     </section>
   </main>
@@ -168,15 +81,28 @@
   <script src="/assets/nav.js"></script>
 
   <script>
+    const portalStatus = document.getElementById("portal-status");
+    const logoutButton = document.getElementById("logout-button");
+
+    function setPortalStatus(session) {
+      const email = session?.user?.email;
+      portalStatus.textContent = email ? `Signed in as ${email}` : "Signed in";
+    }
+
     async function checkAuth() {
       const session = await window.siteAuth.getSession();
 
       if (!session) {
         window.location.href = "/login/";
+        return;
       }
+
+      setPortalStatus(session);
     }
 
     async function logout() {
+      logoutButton.disabled = true;
+      logoutButton.textContent = "Signing Out...";
       await window.siteAuth.logout();
       window.location.href = "/";
     }
