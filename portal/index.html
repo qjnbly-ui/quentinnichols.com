@@ -15,7 +15,8 @@
     .portal-main {
       width: min(720px, calc(100% - 2rem));
       margin: 0 auto;
-      padding: 7rem 0 3rem;
+      min-height: calc(100vh - 72px);
+      padding: clamp(1.5rem, 4vw, 2.5rem) 0 3rem;
     }
 
     .portal-card {
@@ -97,7 +98,8 @@
     @media (max-width: 720px) {
       .portal-main {
         width: min(100% - 1rem, 720px);
-        padding-top: 6.5rem;
+        min-height: calc(100vh - 68px);
+        padding-top: 1rem;
       }
 
       .portal-card {
