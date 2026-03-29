@@ -6,6 +6,11 @@
       "permanent": true
     },
     {
+      "source": "/projects/colechaseforjudge/",
+      "destination": "https://colechaseforjudge.com/",
+      "permanent": true
+    },
+    {
       "source": "/projects/colechaseforjudge/index.html",
       "destination": "https://colechaseforjudge.com/",
       "permanent": true
