@@ -2,9 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Portal</title>
+  <title>Portal Cameras</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/style.css">
+  <style>
+    .portal-camera-shell {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1.4rem;
+    }
+
+    .portal-camera-panel {
+      overflow: hidden;
+      border: 1px solid var(--surface-border);
+      border-radius: 20px;
+      background: #050505;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .portal-camera-panel iframe {
+      display: block;
+      width: 100%;
+      height: min(72vh, 760px);
+      min-height: 420px;
+      border: 0;
+      background: #000000;
+    }
+
+    .portal-camera-actions {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    @media (max-width: 720px) {
+      .portal-camera-panel {
+        border-radius: 16px;
+      }
+
+      .portal-camera-panel iframe {
+        min-height: 320px;
+        height: 58vh;
+      }
+    }
+  </style>
 </head>
 
 <body class="portal-page">
@@ -35,50 +75,30 @@
   <main class="portal-main">
     <section class="portal-card">
       <p class="portal-kicker">Private Access</p>
-      <h1 class="portal-title">Portal</h1>
-      <p class="portal-copy">Access available systems, writing, and site tools from one place.</p>
+      <h1 class="portal-title">Camera Feed</h1>
+      <p class="portal-copy">Live ESP32 camera access from inside the portal. This page only works when you are on the same local network as the camera.</p>
       <p class="portal-status" id="portal-status">Signed in</p>
 
-      <section class="portal-section" aria-labelledby="portal-section-tools">
-        <p class="portal-kicker">Tools</p>
-        <h2 class="portal-section-title" id="portal-section-tools">Writing And Site Access</h2>
-        <div class="portal-links">
-          <a class="portal-link" href="/AI/">
-            <strong class="portal-link-title">AI</strong>
-            <span>Site-grounded chat and private tools.</span>
-          </a>
-
-          <a class="portal-link" href="/blog/">
-            <strong class="portal-link-title">Blog</strong>
-            <span>Published writing, reflections, and public posts.</span>
-          </a>
-
-          <a class="portal-link" href="/blog/private/">
-            <strong class="portal-link-title">Private Blog</strong>
-            <span>Personal writing and unpublished work.</span>
-          </a>
-        </div>
-      </section>
-
-      <section class="portal-section" aria-labelledby="portal-section-projects">
-        <p class="portal-kicker">Projects</p>
-        <h2 class="portal-section-title" id="portal-section-projects">Unpublished Work</h2>
-        <div class="portal-links">
-          <a class="portal-link" href="https://colechaseforjudge.com/" target="_blank" rel="noopener">
-            <strong class="portal-link-title">Cole Chase For Judge</strong>
-            <span>Live campaign site on its own domain.</span>
-          </a>
-        </div>
-      </section>
-
-      <section class="portal-section" aria-labelledby="portal-section-camera">
+      <section class="portal-section" aria-labelledby="portal-camera-title">
         <p class="portal-kicker">Camera</p>
-        <h2 class="portal-section-title" id="portal-section-camera">ESP32 Camera Feed</h2>
-        <div class="portal-links">
-          <a class="portal-link" href="/portal/cameras/">
-            <strong class="portal-link-title">Camera Feed</strong>
-            <span>Open the embedded ESP32 camera page inside the portal.</span>
-          </a>
+        <h2 class="portal-section-title" id="portal-camera-title">ESP32 Camera</h2>
+
+        <div class="portal-camera-shell">
+          <div class="portal-camera-panel">
+            <iframe src="http://esp32-cam.local/" title="ESP32 camera feed"></iframe>
+          </div>
+
+          <div class="portal-camera-actions">
+            <a class="portal-link" href="http://esp32-cam.local/" target="_self" rel="noopener">
+              <strong class="portal-link-title">Open Direct Camera Page</strong>
+              <span>Use the standalone camera page if the embedded view does not load.</span>
+            </a>
+
+            <a class="portal-link" href="/portal/">
+              <strong class="portal-link-title">Back To Portal</strong>
+              <span>Return to the main portal dashboard.</span>
+            </a>
+          </div>
         </div>
       </section>
 
