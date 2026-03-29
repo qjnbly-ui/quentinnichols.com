@@ -2,12 +2,12 @@
   "redirects": [
     {
       "source": "/projects/colechaseforjudge",
-      "destination": "/projects/colechaseforjudge/",
+      "destination": "https://colechaseforjudge.com/",
       "permanent": true
     },
     {
       "source": "/projects/colechaseforjudge/index.html",
-      "destination": "/projects/colechaseforjudge/",
+      "destination": "https://colechaseforjudge.com/",
       "permanent": true
     }
   ]
