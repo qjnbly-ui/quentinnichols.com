@@ -123,6 +123,9 @@ module.exports = async function handler(req, res) {
     const details = String(body.details || "").trim();
     const source = String(body.source || "Projects page").trim();
     const website = String(body.website || "").trim();
+    const isPhotography = inquiryType === "photography";
+    const detailsLabel = isPhotography ? "Inquiry details" : "Project details";
+    const introLabel = isPhotography ? "New photography inquiry" : "New project inquiry";
 
     if (website) {
       res.statusCode = 200;
@@ -134,7 +137,7 @@ module.exports = async function handler(req, res) {
     if (!name || !email || !details) {
       res.statusCode = 400;
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ error: "Name, email, and project details are required." }));
+      res.end(JSON.stringify({ error: `Name, email, and ${detailsLabel.toLowerCase()} are required.` }));
       return;
     }
 
@@ -182,7 +185,7 @@ module.exports = async function handler(req, res) {
           ["Budget or timeline", budgetTimeline || "Not provided"],
         ];
 
-    const subject = `New inquiry from ${name} (${source})`;
+    const subject = `New ${isPhotography ? "photography inquiry" : "project inquiry"} from ${name} (${source})`;
     const detailHtml = detailRows
       .map(([label, value]) => `<p><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`)
       .join("");
@@ -192,24 +195,24 @@ module.exports = async function handler(req, res) {
 
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111;">
-        <h2 style="margin-bottom: 16px;">New inquiry</h2>
+        <h2 style="margin-bottom: 16px;">${escapeHtml(introLabel)}</h2>
         <p><strong>Source:</strong> ${escapeHtml(source)}</p>
         <p><strong>Name:</strong> ${escapeHtml(name)}</p>
         <p><strong>Email:</strong> ${escapeHtml(email)}</p>
         ${detailHtml}
-        <p><strong>Project details:</strong></p>
+        <p><strong>${escapeHtml(detailsLabel)}:</strong></p>
         <p>${escapeHtml(details).replace(/\n/g, "<br>")}</p>
       </div>
     `;
 
     const text = [
-      "New project inquiry",
+      introLabel,
       `Source: ${source}`,
       `Name: ${name}`,
       `Email: ${email}`,
       detailText,
       "",
-      "Project details:",
+      `${detailsLabel}:`,
       details,
     ].join("\n");
 
