@@ -1212,6 +1212,7 @@ body.nav-menu-open {
 .qjn-photo-field {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .qjn-photo-field label {
@@ -1252,6 +1253,8 @@ body.nav-menu-open {
 
 .qjn-photo-date-input {
   color-scheme: dark;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .qjn-photo-field textarea {
