@@ -520,7 +520,7 @@
 
       <!-- ============ Work With Me Section ============ -->
       <section class="work-with-me">
-        <div class="work-inner">
+        <div class="work-inner js-inquiry-widget" data-endpoint="/api/project-inquiry">
           <h2 class="work-title">Work With Me</h2>
           <p class="work-text">
             I design and build systems that help communities, organizations, and small teams operate better.
@@ -540,18 +540,18 @@
             <li>Project Setup & Infrastructure</li>
           </ul>
 
-          <div class="work-actions" id="projectCtaRow">
-            <button type="button" class="bly-btn work-btn" id="startProjectButton" aria-expanded="false" aria-controls="projectFormShell">
+          <div class="work-actions" data-role="cta-row">
+            <button type="button" class="bly-btn work-btn" data-role="open-form" aria-expanded="false" aria-controls="projectFormShell">
               Start a Project
             </button>
           </div>
 
-          <div class="work-form-shell" id="projectFormShell">
-            <form class="project-form" id="projectInquiryForm" novalidate>
+          <div class="work-form-shell" id="projectFormShell" data-role="form-shell">
+            <form class="project-form" novalidate data-role="form" data-submit-label="Submit Project Request">
               <div class="project-grid">
                 <div class="project-field">
                   <label for="projectName">Name</label>
-                  <input id="projectName" name="name" type="text" autocomplete="name" placeholder="Your name" required>
+                  <input id="projectName" name="name" type="text" autocomplete="name" placeholder="Your name" required data-role="first-input">
                 </div>
                 <div class="project-field">
                   <label for="projectEmail">Email</label>
@@ -562,11 +562,11 @@
               <div class="project-grid">
                 <div class="project-field">
                   <label for="projectCompany">Organization</label>
-                  <input id="projectCompany" name="company" type="text" autocomplete="organization" placeholder="Business, team, or community">
+                  <input id="projectCompany" name="organization" type="text" autocomplete="organization" placeholder="Business, team, or community">
                 </div>
                 <div class="project-field">
                   <label for="projectBudget">Budget or Timeline</label>
-                  <input id="projectBudget" name="budget" type="text" placeholder="Budget, target date, or both">
+                  <input id="projectBudget" name="budgetTimeline" type="text" placeholder="Budget, target date, or both">
                 </div>
               </div>
 
@@ -575,22 +575,26 @@
                 <textarea id="projectDetails" name="details" placeholder="What are you trying to build, improve, or automate?" required></textarea>
               </div>
 
+              <input type="hidden" name="source" value="Projects page">
+
               <div class="project-hp" aria-hidden="true">
                 <label for="projectWebsite">Website</label>
                 <input id="projectWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
               </div>
 
-              <p class="project-status" id="projectStatus" aria-live="polite"></p>
+              <p class="project-status" data-role="status" aria-live="polite"></p>
 
-              <button type="submit" class="bly-btn project-submit" id="projectSubmitButton">Submit Project Request</button>
+              <button type="submit" class="bly-btn project-submit" data-role="submit">Submit Project Request</button>
             </form>
 
-            <div class="project-success" id="projectSuccess" hidden>
+            <div class="project-success" hidden data-role="success">
               <h3>Submitted</h3>
-              <p>Your project request has been sent. If you want more ways to reach me, you can head to the contact page.</p>
+              <p>Your project request has been sent. You can also email or call directly if you want to follow up right away.</p>
               <div class="project-success-actions">
+                <a href="mailto:quentin@quentinnichols.com" class="bly-btn">Email Quentin</a>
+                <a href="tel:+15419040421" class="bly-btn">Call Quentin</a>
                 <a href="/contact/" class="bly-btn">More Contact Info</a>
-                <button type="button" class="bly-btn" id="submitAnotherButton">Submit Another</button>
+                <button type="button" class="bly-btn" data-role="reset">Submit Another</button>
               </div>
             </div>
           </div>
@@ -601,105 +605,6 @@
     </section>
   </main>
   <script src="/assets/nav.js"></script>
-  <script>
-    (function () {
-      const startButton = document.getElementById("startProjectButton");
-      const ctaRow = document.getElementById("projectCtaRow");
-      const formShell = document.getElementById("projectFormShell");
-      const form = document.getElementById("projectInquiryForm");
-      const successPanel = document.getElementById("projectSuccess");
-      const status = document.getElementById("projectStatus");
-      const submitButton = document.getElementById("projectSubmitButton");
-      const submitAnotherButton = document.getElementById("submitAnotherButton");
-
-      if (!startButton || !ctaRow || !formShell || !form || !successPanel || !status || !submitButton) {
-        return;
-      }
-
-      function openForm() {
-        formShell.classList.add("is-open");
-        startButton.setAttribute("aria-expanded", "true");
-        ctaRow.classList.add("is-hidden");
-        ctaRow.hidden = true;
-      }
-
-      function setStatus(message, isError) {
-        status.textContent = message || "";
-        status.classList.toggle("is-error", Boolean(isError));
-      }
-
-      function showForm() {
-        form.hidden = false;
-        successPanel.hidden = true;
-        setStatus("");
-      }
-
-      startButton.addEventListener("click", function () {
-        openForm();
-        showForm();
-        const firstInput = document.getElementById("projectName");
-        if (firstInput) firstInput.focus();
-      });
-
-      if (submitAnotherButton) {
-        submitAnotherButton.addEventListener("click", function () {
-          form.reset();
-          showForm();
-          openForm();
-          const firstInput = document.getElementById("projectName");
-          if (firstInput) firstInput.focus();
-        });
-      }
-
-      form.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        setStatus("");
-
-        if (!form.reportValidity()) {
-          return;
-        }
-
-        submitButton.disabled = true;
-        submitButton.textContent = "Submitting...";
-
-        const formData = new FormData(form);
-        const payload = {
-          name: String(formData.get("name") || "").trim(),
-          email: String(formData.get("email") || "").trim(),
-          company: String(formData.get("company") || "").trim(),
-          budget: String(formData.get("budget") || "").trim(),
-          details: String(formData.get("details") || "").trim(),
-          website: String(formData.get("website") || "").trim()
-        };
-
-        try {
-          const response = await fetch("/api/project-inquiry", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-          });
-
-          const data = await response.json().catch(function () {
-            return {};
-          });
-
-          if (!response.ok) {
-            throw new Error(data.error || "Unable to submit right now.");
-          }
-
-          form.hidden = true;
-          successPanel.hidden = false;
-          form.reset();
-        } catch (error) {
-          setStatus(error.message || "Unable to submit right now.", true);
-        } finally {
-          submitButton.disabled = false;
-          submitButton.textContent = "Submit Project Request";
-        }
-      });
-    }());
-  </script>
+  <script src="/assets/inquiry-form.js"></script>
 </body>
 </html>

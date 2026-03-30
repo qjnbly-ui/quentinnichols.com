@@ -117,7 +117,7 @@
           </a>
         </section>
 
-        <section class="qjn-booking-strip qjn-booking-strip--inquiry" aria-labelledby="photoInquiryTitle">
+        <section class="qjn-booking-strip qjn-booking-strip--inquiry js-inquiry-widget" aria-labelledby="photoInquiryTitle" data-endpoint="/api/project-inquiry">
           <div class="qjn-booking-content qjn-booking-content--stacked">
             <div>
               <h2 class="qjn-booking-title" id="photoInquiryTitle">Work With Me</h2>
@@ -133,18 +133,18 @@
             </div>
           </div>
 
-          <div class="qjn-photo-cta-row" id="photoInquiryCtaRow">
-            <button type="button" class="qjn-btn qjn-btn--light" id="photoInquiryButton" aria-expanded="false" aria-controls="photoInquiryShell">
+          <div class="qjn-photo-cta-row" data-role="cta-row">
+            <button type="button" class="qjn-btn qjn-btn--light" data-role="open-form" aria-expanded="false" aria-controls="photoInquiryShell">
               Start a Photography Inquiry
             </button>
           </div>
 
-          <div class="qjn-photo-inquiry-shell" id="photoInquiryShell">
-            <form class="qjn-photo-form" id="photoInquiryForm" novalidate>
+          <div class="qjn-photo-inquiry-shell" id="photoInquiryShell" data-role="form-shell">
+            <form class="qjn-photo-form" novalidate data-role="form" data-submit-label="Submit Inquiry">
               <div class="qjn-photo-form-grid">
                 <div class="qjn-photo-field">
                   <label for="photoInquiryName">Name</label>
-                  <input id="photoInquiryName" name="name" type="text" autocomplete="name" placeholder="Your name" required>
+                  <input id="photoInquiryName" name="name" type="text" autocomplete="name" placeholder="Your name" required data-role="first-input">
                 </div>
                 <div class="qjn-photo-field">
                   <label for="photoInquiryEmail">Email</label>
@@ -155,7 +155,7 @@
               <div class="qjn-photo-form-grid">
                 <div class="qjn-photo-field">
                   <label for="photoInquirySession">Session Type</label>
-                  <select id="photoInquirySession" name="company" class="qjn-photo-select">
+                  <select id="photoInquirySession" name="sessionType" class="qjn-photo-select">
                     <option value="">Select a session type</option>
                     <option value="Portrait Session">Portrait Session</option>
                     <option value="Family Session">Family Session</option>
@@ -174,12 +174,19 @@
                   </select>
                 </div>
                 <div class="qjn-photo-field">
-                  <label for="photoInquiryTiming">Date or Timing</label>
-                  <div class="qjn-photo-date-row">
-                    <input id="photoInquiryTiming" name="budget" type="date" class="qjn-photo-date-input">
-                    <button type="button" class="qjn-btn qjn-btn--ghost qjn-photo-picker-btn" id="photoDatePickerButton">Pick Date</button>
-                  </div>
+                  <label for="photoInquiryTiming">Preferred Date</label>
+                  <input id="photoInquiryTiming" name="preferredDate" type="date" class="qjn-photo-date-input">
                 </div>
+              </div>
+
+              <div class="qjn-photo-field">
+                <label for="photoInquiryTimingNotes">Timing Notes</label>
+                <input id="photoInquiryTimingNotes" name="timingNotes" type="text" placeholder="Sometime this fall, weekday evenings, flexible, etc.">
+              </div>
+
+              <div class="qjn-photo-field">
+                <label for="photoInquiryLocation">Location</label>
+                <input id="photoInquiryLocation" name="location" type="text" placeholder="City, venue, or general area">
               </div>
 
               <div class="qjn-photo-field">
@@ -187,6 +194,7 @@
                 <textarea id="photoInquiryDetails" name="details" placeholder="Tell me what you want photographed, where, and anything important to know." required></textarea>
               </div>
 
+              <input type="hidden" name="inquiryType" value="photography">
               <input type="hidden" name="source" value="Photography page">
 
               <div class="qjn-photo-hp" aria-hidden="true">
@@ -194,19 +202,21 @@
                 <input id="photoInquiryWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
               </div>
 
-              <p class="qjn-photo-status" id="photoInquiryStatus" aria-live="polite"></p>
+              <p class="qjn-photo-status" data-role="status" aria-live="polite"></p>
 
-              <button type="submit" class="qjn-btn qjn-btn--light qjn-photo-submit" id="photoInquirySubmit">
+              <button type="submit" class="qjn-btn qjn-btn--light qjn-photo-submit" data-role="submit">
                 Submit Inquiry
               </button>
             </form>
 
-            <div class="qjn-photo-success" id="photoInquirySuccess" hidden>
+            <div class="qjn-photo-success" hidden data-role="success">
               <h3>Submitted</h3>
-              <p>Your photography inquiry has been sent. For more ways to reach me, you can also head to the contact page.</p>
+              <p>Your photography inquiry has been sent. You can also email or call directly if you want to follow up right away.</p>
               <div class="qjn-photo-success-actions">
+                <a href="mailto:quentin@quentinnichols.com" class="qjn-btn qjn-btn--ghost">Email Quentin</a>
+                <a href="tel:+15419040421" class="qjn-btn qjn-btn--ghost">Call Quentin</a>
                 <a href="/contact/" class="qjn-btn qjn-btn--ghost">More Contact Info</a>
-                <button type="button" class="qjn-btn qjn-btn--ghost" id="photoSubmitAnotherButton">Submit Another</button>
+                <button type="button" class="qjn-btn qjn-btn--ghost" data-role="reset">Submit Another</button>
               </div>
             </div>
           </div>
@@ -216,120 +226,6 @@
   </main>
 
   <script src="/assets/nav.js"></script>
-  <script>
-    (function () {
-      const startButton = document.getElementById("photoInquiryButton");
-      const ctaRow = document.getElementById("photoInquiryCtaRow");
-      const shell = document.getElementById("photoInquiryShell");
-      const form = document.getElementById("photoInquiryForm");
-      const successPanel = document.getElementById("photoInquirySuccess");
-      const status = document.getElementById("photoInquiryStatus");
-      const submitButton = document.getElementById("photoInquirySubmit");
-      const submitAnotherButton = document.getElementById("photoSubmitAnotherButton");
-      const dateInput = document.getElementById("photoInquiryTiming");
-      const datePickerButton = document.getElementById("photoDatePickerButton");
-
-      if (!startButton || !ctaRow || !shell || !form || !successPanel || !status || !submitButton) {
-        return;
-      }
-
-      function openForm() {
-        shell.classList.add("is-open");
-        startButton.setAttribute("aria-expanded", "true");
-        ctaRow.classList.add("is-hidden");
-        ctaRow.hidden = true;
-      }
-
-      function setStatus(message, isError) {
-        status.textContent = message || "";
-        status.classList.toggle("is-error", Boolean(isError));
-      }
-
-      function showForm() {
-        form.hidden = false;
-        successPanel.hidden = true;
-        setStatus("");
-      }
-
-      startButton.addEventListener("click", function () {
-        openForm();
-        showForm();
-        const firstInput = document.getElementById("photoInquiryName");
-        if (firstInput) firstInput.focus();
-      });
-
-      if (submitAnotherButton) {
-        submitAnotherButton.addEventListener("click", function () {
-          form.reset();
-          showForm();
-          openForm();
-          const firstInput = document.getElementById("photoInquiryName");
-          if (firstInput) firstInput.focus();
-        });
-      }
-
-      if (dateInput && datePickerButton) {
-        datePickerButton.addEventListener("click", function () {
-          if (typeof dateInput.showPicker === "function") {
-            dateInput.showPicker();
-            return;
-          }
-
-          dateInput.focus();
-          dateInput.click();
-        });
-      }
-
-      form.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        setStatus("");
-
-        if (!form.reportValidity()) {
-          return;
-        }
-
-        submitButton.disabled = true;
-        submitButton.textContent = "Submitting...";
-
-        const formData = new FormData(form);
-        const payload = {
-          name: String(formData.get("name") || "").trim(),
-          email: String(formData.get("email") || "").trim(),
-          company: String(formData.get("company") || "").trim(),
-          budget: String(formData.get("budget") || "").trim(),
-          details: String(formData.get("details") || "").trim(),
-          source: String(formData.get("source") || "").trim(),
-          website: String(formData.get("website") || "").trim()
-        };
-
-        try {
-          const response = await fetch("/api/project-inquiry", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-          });
-
-          const data = await response.json().catch(function () {
-            return {};
-          });
-
-          if (!response.ok) {
-            throw new Error(data.error || "Unable to submit right now.");
-          }
-
-          form.hidden = true;
-          successPanel.hidden = false;
-          form.reset();
-        } catch (error) {
-          setStatus(error.message || "Unable to submit right now.", true);
-        } finally {
-          submitButton.disabled = false;
-          submitButton.textContent = "Submit Inquiry";
-        }
-      });
-    }());
-  </script>
+  <script src="/assets/inquiry-form.js"></script>
 </body>
 </html>

@@ -1254,17 +1254,6 @@ body.nav-menu-open {
   color-scheme: dark;
 }
 
-.qjn-photo-date-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: stretch;
-}
-
-.qjn-photo-picker-btn {
-  min-width: 120px;
-}
-
 .qjn-photo-field textarea {
   min-height: 132px;
   resize: vertical;
@@ -1351,10 +1340,6 @@ body.nav-menu-open {
   }
 
   .qjn-photo-form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .qjn-photo-date-row {
     grid-template-columns: 1fr;
   }
 }
