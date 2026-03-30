@@ -203,6 +203,132 @@
       margin-top: 10px;
     }
 
+    .work-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .work-form-shell {
+      display: none;
+      margin-top: 24px;
+      text-align: left;
+    }
+
+    .work-form-shell.is-open {
+      display: block;
+    }
+
+    .project-form {
+      display: grid;
+      gap: 14px;
+      padding: 22px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .project-form[hidden],
+    .project-success[hidden] {
+      display: none;
+    }
+
+    .project-field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .project-field label {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .project-field input,
+    .project-field textarea {
+      width: 100%;
+      padding: 14px 15px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      background: rgba(12, 12, 12, 0.88);
+      color: var(--text);
+      font: inherit;
+    }
+
+    .project-field input::placeholder,
+    .project-field textarea::placeholder {
+      color: rgba(245, 242, 234, 0.42);
+    }
+
+    .project-field textarea {
+      min-height: 132px;
+      resize: vertical;
+    }
+
+    .project-field input:focus,
+    .project-field textarea:focus {
+      outline: none;
+      border-color: rgba(255, 255, 255, 0.38);
+      box-shadow: 0 0 0 3px rgba(245, 242, 234, 0.08);
+    }
+
+    .project-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .project-hp {
+      position: absolute;
+      left: -9999px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .project-status {
+      min-height: 22px;
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .project-status.is-error {
+      color: #ffb4b4;
+    }
+
+    .project-submit {
+      width: 100%;
+    }
+
+    .project-success {
+      padding: 26px 22px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.04);
+      text-align: center;
+    }
+
+    .project-success h3 {
+      margin: 0 0 12px;
+      font-family: var(--font-display);
+      font-size: clamp(24px, 4vw, 30px);
+    }
+
+    .project-success p {
+      margin: 0 0 18px;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .project-success-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
     @media (max-width: 720px) {
       .bly-stage {
         min-height: calc(100vh - 68px);
@@ -247,6 +373,15 @@
         margin-top: 40px;
         padding: 28px 16px;
         border-radius: 20px;
+      }
+
+      .project-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .project-form,
+      .project-success {
+        padding: 18px;
       }
     }
   </style>
@@ -392,7 +527,60 @@
             <li>Project Setup & Infrastructure</li>
           </ul>
 
-          <a href="/contact/" class="bly-btn work-btn">Start a Project</a>
+          <div class="work-actions">
+            <button type="button" class="bly-btn work-btn" id="startProjectButton" aria-expanded="false" aria-controls="projectFormShell">
+              Start a Project
+            </button>
+          </div>
+
+          <div class="work-form-shell" id="projectFormShell">
+            <form class="project-form" id="projectInquiryForm" novalidate>
+              <div class="project-grid">
+                <div class="project-field">
+                  <label for="projectName">Name</label>
+                  <input id="projectName" name="name" type="text" autocomplete="name" placeholder="Your name" required>
+                </div>
+                <div class="project-field">
+                  <label for="projectEmail">Email</label>
+                  <input id="projectEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+                </div>
+              </div>
+
+              <div class="project-grid">
+                <div class="project-field">
+                  <label for="projectCompany">Organization</label>
+                  <input id="projectCompany" name="company" type="text" autocomplete="organization" placeholder="Business, team, or community">
+                </div>
+                <div class="project-field">
+                  <label for="projectBudget">Budget or Timeline</label>
+                  <input id="projectBudget" name="budget" type="text" placeholder="Budget, target date, or both">
+                </div>
+              </div>
+
+              <div class="project-field">
+                <label for="projectDetails">Project Details</label>
+                <textarea id="projectDetails" name="details" placeholder="What are you trying to build, improve, or automate?" required></textarea>
+              </div>
+
+              <div class="project-hp" aria-hidden="true">
+                <label for="projectWebsite">Website</label>
+                <input id="projectWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+              </div>
+
+              <p class="project-status" id="projectStatus" aria-live="polite"></p>
+
+              <button type="submit" class="bly-btn project-submit" id="projectSubmitButton">Submit Project Request</button>
+            </form>
+
+            <div class="project-success" id="projectSuccess" hidden>
+              <h3>Submitted</h3>
+              <p>Your project request has been sent. If you want more ways to reach me, you can head to the contact page.</p>
+              <div class="project-success-actions">
+                <a href="/contact/" class="bly-btn">More Contact Info</a>
+                <button type="button" class="bly-btn" id="submitAnotherButton">Submit Another</button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -400,5 +588,102 @@
     </section>
   </main>
   <script src="/assets/nav.js"></script>
+  <script>
+    (function () {
+      const startButton = document.getElementById("startProjectButton");
+      const formShell = document.getElementById("projectFormShell");
+      const form = document.getElementById("projectInquiryForm");
+      const successPanel = document.getElementById("projectSuccess");
+      const status = document.getElementById("projectStatus");
+      const submitButton = document.getElementById("projectSubmitButton");
+      const submitAnotherButton = document.getElementById("submitAnotherButton");
+
+      if (!startButton || !formShell || !form || !successPanel || !status || !submitButton) {
+        return;
+      }
+
+      function openForm() {
+        formShell.classList.add("is-open");
+        startButton.setAttribute("aria-expanded", "true");
+      }
+
+      function setStatus(message, isError) {
+        status.textContent = message || "";
+        status.classList.toggle("is-error", Boolean(isError));
+      }
+
+      function showForm() {
+        form.hidden = false;
+        successPanel.hidden = true;
+        setStatus("");
+      }
+
+      startButton.addEventListener("click", function () {
+        openForm();
+        showForm();
+        const firstInput = document.getElementById("projectName");
+        if (firstInput) firstInput.focus();
+      });
+
+      if (submitAnotherButton) {
+        submitAnotherButton.addEventListener("click", function () {
+          form.reset();
+          showForm();
+          openForm();
+          const firstInput = document.getElementById("projectName");
+          if (firstInput) firstInput.focus();
+        });
+      }
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        setStatus("");
+
+        if (!form.reportValidity()) {
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Submitting...";
+
+        const formData = new FormData(form);
+        const payload = {
+          name: String(formData.get("name") || "").trim(),
+          email: String(formData.get("email") || "").trim(),
+          company: String(formData.get("company") || "").trim(),
+          budget: String(formData.get("budget") || "").trim(),
+          details: String(formData.get("details") || "").trim(),
+          website: String(formData.get("website") || "").trim()
+        };
+
+        try {
+          const response = await fetch("/api/project-inquiry", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json().catch(function () {
+            return {};
+          });
+
+          if (!response.ok) {
+            throw new Error(data.error || "Unable to submit right now.");
+          }
+
+          form.hidden = true;
+          successPanel.hidden = false;
+          form.reset();
+        } catch (error) {
+          setStatus(error.message || "Unable to submit right now.", true);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = "Submit Project Request";
+        }
+      });
+    }());
+  </script>
 </body>
 </html>
