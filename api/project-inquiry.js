@@ -33,7 +33,6 @@ function buildEmailShell(contentHtml) {
               <tr>
                 <td align="center" style="padding:28px 24px 18px;background:linear-gradient(180deg,#131313,#0a0a0a);border-bottom:1px solid rgba(255,255,255,0.08);">
                   <img src="https://www.quentinnichols.com/assets/Watermark%20(1)%20copy.png" alt="Quentin Nichols" width="120" style="display:block;width:120px;max-width:120px;height:auto;margin:0 auto 14px;">
-                  <div style="font-family:Georgia,serif;font-size:28px;line-height:1.15;color:#f5f2ea;">Quentin Nichols</div>
                   <div style="margin-top:8px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.24em;text-transform:uppercase;color:#b9ae95;">quentinnichols.com</div>
                 </td>
               </tr>
