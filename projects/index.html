@@ -209,6 +209,10 @@
       margin-top: 10px;
     }
 
+    .work-actions.is-hidden {
+      display: none;
+    }
+
     .work-form-shell {
       display: none;
       margin-top: 24px;
@@ -527,7 +531,7 @@
             <li>Project Setup & Infrastructure</li>
           </ul>
 
-          <div class="work-actions">
+          <div class="work-actions" id="projectCtaRow">
             <button type="button" class="bly-btn work-btn" id="startProjectButton" aria-expanded="false" aria-controls="projectFormShell">
               Start a Project
             </button>
@@ -591,6 +595,7 @@
   <script>
     (function () {
       const startButton = document.getElementById("startProjectButton");
+      const ctaRow = document.getElementById("projectCtaRow");
       const formShell = document.getElementById("projectFormShell");
       const form = document.getElementById("projectInquiryForm");
       const successPanel = document.getElementById("projectSuccess");
@@ -598,13 +603,15 @@
       const submitButton = document.getElementById("projectSubmitButton");
       const submitAnotherButton = document.getElementById("submitAnotherButton");
 
-      if (!startButton || !formShell || !form || !successPanel || !status || !submitButton) {
+      if (!startButton || !ctaRow || !formShell || !form || !successPanel || !status || !submitButton) {
         return;
       }
 
       function openForm() {
         formShell.classList.add("is-open");
         startButton.setAttribute("aria-expanded", "true");
+        ctaRow.classList.add("is-hidden");
+        ctaRow.hidden = true;
       }
 
       function setStatus(message, isError) {
