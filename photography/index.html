@@ -116,10 +116,220 @@
             </div>
           </a>
         </section>
+
+        <section class="qjn-booking-strip qjn-booking-strip--inquiry" aria-labelledby="photoInquiryTitle">
+          <div class="qjn-booking-content qjn-booking-content--stacked">
+            <div>
+              <h2 class="qjn-booking-title" id="photoInquiryTitle">Work With Me</h2>
+              <p class="qjn-booking-sub">
+                If you want portraits, family photos, event coverage, or aerial work, send the details here and I’ll follow up.
+              </p>
+            </div>
+            <div class="qjn-booking-meta">
+              <span class="qjn-booking-badge">Portraits</span>
+              <span class="qjn-booking-badge">Families</span>
+              <span class="qjn-booking-badge">Events</span>
+              <span class="qjn-booking-badge">Aerial</span>
+            </div>
+          </div>
+
+          <div class="qjn-photo-cta-row" id="photoInquiryCtaRow">
+            <button type="button" class="qjn-btn qjn-btn--light" id="photoInquiryButton" aria-expanded="false" aria-controls="photoInquiryShell">
+              Start a Photography Inquiry
+            </button>
+          </div>
+
+          <div class="qjn-photo-inquiry-shell" id="photoInquiryShell">
+            <form class="qjn-photo-form" id="photoInquiryForm" novalidate>
+              <div class="qjn-photo-form-grid">
+                <div class="qjn-photo-field">
+                  <label for="photoInquiryName">Name</label>
+                  <input id="photoInquiryName" name="name" type="text" autocomplete="name" placeholder="Your name" required>
+                </div>
+                <div class="qjn-photo-field">
+                  <label for="photoInquiryEmail">Email</label>
+                  <input id="photoInquiryEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+                </div>
+              </div>
+
+              <div class="qjn-photo-form-grid">
+                <div class="qjn-photo-field">
+                  <label for="photoInquirySession">Session Type</label>
+                  <select id="photoInquirySession" name="company" class="qjn-photo-select">
+                    <option value="">Select a session type</option>
+                    <option value="Portrait Session">Portrait Session</option>
+                    <option value="Family Session">Family Session</option>
+                    <option value="Couples Session">Couples Session</option>
+                    <option value="Engagement Session">Engagement Session</option>
+                    <option value="Senior Photos">Senior Photos</option>
+                    <option value="Maternity Session">Maternity Session</option>
+                    <option value="Lifestyle Session">Lifestyle Session</option>
+                    <option value="Event Coverage">Event Coverage</option>
+                    <option value="Wedding Inquiry">Wedding Inquiry</option>
+                    <option value="Branding Session">Branding Session</option>
+                    <option value="Real Estate Photos">Real Estate Photos</option>
+                    <option value="Aerial / Drone Work">Aerial / Drone Work</option>
+                    <option value="Fine Art / Print Inquiry">Fine Art / Print Inquiry</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="qjn-photo-field">
+                  <label for="photoInquiryTiming">Date or Timing</label>
+                  <div class="qjn-photo-date-row">
+                    <input id="photoInquiryTiming" name="budget" type="date" class="qjn-photo-date-input">
+                    <button type="button" class="qjn-btn qjn-btn--ghost qjn-photo-picker-btn" id="photoDatePickerButton">Pick Date</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="qjn-photo-field">
+                <label for="photoInquiryDetails">Details</label>
+                <textarea id="photoInquiryDetails" name="details" placeholder="Tell me what you want photographed, where, and anything important to know." required></textarea>
+              </div>
+
+              <input type="hidden" name="source" value="Photography page">
+
+              <div class="qjn-photo-hp" aria-hidden="true">
+                <label for="photoInquiryWebsite">Website</label>
+                <input id="photoInquiryWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
+              </div>
+
+              <p class="qjn-photo-status" id="photoInquiryStatus" aria-live="polite"></p>
+
+              <button type="submit" class="qjn-btn qjn-btn--light qjn-photo-submit" id="photoInquirySubmit">
+                Submit Inquiry
+              </button>
+            </form>
+
+            <div class="qjn-photo-success" id="photoInquirySuccess" hidden>
+              <h3>Submitted</h3>
+              <p>Your photography inquiry has been sent. For more ways to reach me, you can also head to the contact page.</p>
+              <div class="qjn-photo-success-actions">
+                <a href="/contact/" class="qjn-btn qjn-btn--ghost">More Contact Info</a>
+                <button type="button" class="qjn-btn qjn-btn--ghost" id="photoSubmitAnotherButton">Submit Another</button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </section>
   </main>
 
   <script src="/assets/nav.js"></script>
+  <script>
+    (function () {
+      const startButton = document.getElementById("photoInquiryButton");
+      const ctaRow = document.getElementById("photoInquiryCtaRow");
+      const shell = document.getElementById("photoInquiryShell");
+      const form = document.getElementById("photoInquiryForm");
+      const successPanel = document.getElementById("photoInquirySuccess");
+      const status = document.getElementById("photoInquiryStatus");
+      const submitButton = document.getElementById("photoInquirySubmit");
+      const submitAnotherButton = document.getElementById("photoSubmitAnotherButton");
+      const dateInput = document.getElementById("photoInquiryTiming");
+      const datePickerButton = document.getElementById("photoDatePickerButton");
+
+      if (!startButton || !ctaRow || !shell || !form || !successPanel || !status || !submitButton) {
+        return;
+      }
+
+      function openForm() {
+        shell.classList.add("is-open");
+        startButton.setAttribute("aria-expanded", "true");
+        ctaRow.classList.add("is-hidden");
+        ctaRow.hidden = true;
+      }
+
+      function setStatus(message, isError) {
+        status.textContent = message || "";
+        status.classList.toggle("is-error", Boolean(isError));
+      }
+
+      function showForm() {
+        form.hidden = false;
+        successPanel.hidden = true;
+        setStatus("");
+      }
+
+      startButton.addEventListener("click", function () {
+        openForm();
+        showForm();
+        const firstInput = document.getElementById("photoInquiryName");
+        if (firstInput) firstInput.focus();
+      });
+
+      if (submitAnotherButton) {
+        submitAnotherButton.addEventListener("click", function () {
+          form.reset();
+          showForm();
+          openForm();
+          const firstInput = document.getElementById("photoInquiryName");
+          if (firstInput) firstInput.focus();
+        });
+      }
+
+      if (dateInput && datePickerButton) {
+        datePickerButton.addEventListener("click", function () {
+          if (typeof dateInput.showPicker === "function") {
+            dateInput.showPicker();
+            return;
+          }
+
+          dateInput.focus();
+          dateInput.click();
+        });
+      }
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        setStatus("");
+
+        if (!form.reportValidity()) {
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Submitting...";
+
+        const formData = new FormData(form);
+        const payload = {
+          name: String(formData.get("name") || "").trim(),
+          email: String(formData.get("email") || "").trim(),
+          company: String(formData.get("company") || "").trim(),
+          budget: String(formData.get("budget") || "").trim(),
+          details: String(formData.get("details") || "").trim(),
+          source: String(formData.get("source") || "").trim(),
+          website: String(formData.get("website") || "").trim()
+        };
+
+        try {
+          const response = await fetch("/api/project-inquiry", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json().catch(function () {
+            return {};
+          });
+
+          if (!response.ok) {
+            throw new Error(data.error || "Unable to submit right now.");
+          }
+
+          form.hidden = true;
+          successPanel.hidden = false;
+          form.reset();
+        } catch (error) {
+          setStatus(error.message || "Unable to submit right now.", true);
+        } finally {
+          submitButton.disabled = false;
+          submitButton.textContent = "Submit Inquiry";
+        }
+      });
+    }());
+  </script>
 </body>
 </html>

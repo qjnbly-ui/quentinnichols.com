@@ -30,6 +30,7 @@ module.exports = async function handler(req, res) {
     const company = String(body.company || "").trim();
     const budget = String(body.budget || "").trim();
     const details = String(body.details || "").trim();
+    const source = String(body.source || "Projects page").trim();
     const website = String(body.website || "").trim();
 
     if (website) {
@@ -65,10 +66,11 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const subject = `New project inquiry from ${name}`;
+    const subject = `New inquiry from ${name} (${source})`;
     const html = `
       <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #111;">
-        <h2 style="margin-bottom: 16px;">New project inquiry</h2>
+        <h2 style="margin-bottom: 16px;">New inquiry</h2>
+        <p><strong>Source:</strong> ${escapeHtml(source)}</p>
         <p><strong>Name:</strong> ${escapeHtml(name)}</p>
         <p><strong>Email:</strong> ${escapeHtml(email)}</p>
         <p><strong>Organization:</strong> ${escapeHtml(company || "Not provided")}</p>
@@ -80,6 +82,7 @@ module.exports = async function handler(req, res) {
 
     const text = [
       "New project inquiry",
+      `Source: ${source}`,
       `Name: ${name}`,
       `Email: ${email}`,
       `Organization: ${company || "Not provided"}`,
