@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Records Database App</title>
+  <meta
+    name="description"
+    content="Authenticated records management app with Supabase login, uploads, and extracted-text search."
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0f1620;
+      --ink-soft: #1c2733;
+      --slate: #5d6979;
+      --fog: #f4f7fb;
+      --mist: #e9eef5;
+      --line: rgba(15, 22, 32, 0.1);
+      --teal: #176f66;
+      --gold: #ea9b3f;
+      --danger: #9d2f3f;
+      --white: #ffffff;
+      --shadow: 0 24px 60px rgba(12, 18, 28, 0.14);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --radius-pill: 999px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Manrope", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      line-height: 1.6;
+      background:
+        radial-gradient(900px 460px at 8% 12%, rgba(23, 111, 102, 0.14), transparent 60%),
+        radial-gradient(720px 420px at 94% 0%, rgba(234, 155, 63, 0.16), transparent 60%),
+        linear-gradient(180deg, #f8fafc 0%, #ecf1f7 100%);
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .topbar {
+      color: var(--white);
+      background:
+        radial-gradient(640px 360px at 10% 18%, rgba(23, 111, 102, 0.38), transparent 58%),
+        radial-gradient(540px 300px at 92% 10%, rgba(234, 155, 63, 0.32), transparent 55%),
+        linear-gradient(135deg, #0b1219 0%, #101925 52%, #0c141c 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .topbar-inner,
+    .main {
+      width: min(1120px, calc(100vw - 2.4rem));
+      margin: 0 auto;
+    }
+
+    .topbar-inner {
+      padding: 1.6rem 0 2rem;
+      display: grid;
+      gap: 1.2rem;
+    }
+
+    .topbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .brand-badge {
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.12);
+      font-family: "Fraunces", "Times New Roman", serif;
+      font-size: 0.96rem;
+    }
+
+    .topbar-links {
+      display: flex;
+      gap: 0.7rem;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--white);
+      text-decoration: none;
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero-copy {
+      max-width: 680px;
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .eyebrow {
+      margin: 0;
+      font-size: 0.74rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    h1 {
+      margin: 0;
+      font-family: "Fraunces", "Times New Roman", serif;
+      font-size: clamp(2.2rem, 4vw, 3.3rem);
+      line-height: 1.06;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.8);
+      max-width: 62ch;
+    }
+
+    .main {
+      padding: 2rem 0 3rem;
+      display: grid;
+      gap: 1.4rem;
+    }
+
+    .panel {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .panel-head h2,
+    .panel-head h3 {
+      margin: 0;
+      font-family: "Fraunces", "Times New Roman", serif;
+      font-size: 1.45rem;
+    }
+
+    .panel-head p {
+      margin: 0.35rem 0 0;
+      color: var(--slate);
+    }
+
+    .stack {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .field {
+      display: grid;
+      gap: 0.38rem;
+    }
+
+    .field label,
+    .field-title {
+      font-size: 0.76rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--teal);
+    }
+
+    input,
+    textarea,
+    select,
+    button {
+      font: inherit;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(15, 22, 32, 0.12);
+      background: var(--fog);
+      padding: 0.8rem 0.9rem;
+      color: var(--ink);
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .actions,
+    .inline-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: var(--radius-pill);
+      padding: 0.75rem 1.15rem;
+      background: var(--ink);
+      color: var(--white);
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 12px 24px rgba(12, 18, 28, 0.14);
+    }
+
+    .btn.secondary {
+      background: var(--white);
+      color: var(--ink);
+      border: 1px solid rgba(15, 22, 32, 0.12);
+      box-shadow: none;
+    }
+
+    .btn.warn {
+      background: var(--danger);
+    }
+
+    .helper {
+      margin: 0;
+      color: var(--slate);
+      font-size: 0.94rem;
+    }
+
+    .notice {
+      border-radius: var(--radius-md);
+      padding: 0.95rem 1rem;
+      background: #f7fbfa;
+      border: 1px solid rgba(23, 111, 102, 0.16);
+      color: var(--ink-soft);
+    }
+
+    .notice strong {
+      color: var(--teal);
+    }
+
+    .status {
+      min-height: 1.25rem;
+      color: var(--slate);
+      font-size: 0.94rem;
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    .status.success {
+      color: var(--teal);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .user-badge {
+      border-radius: var(--radius-pill);
+      background: var(--mist);
+      color: var(--ink-soft);
+      padding: 0.55rem 0.9rem;
+      font-size: 0.9rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.8rem;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--fog);
+      padding: 1rem;
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .stat-label {
+      font-size: 0.74rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--teal);
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) 180px auto;
+      gap: 0.8rem;
+      align-items: end;
+    }
+
+    .doc-list {
+      display: grid;
+      gap: 0.9rem;
+    }
+
+    .doc-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: grid;
+      gap: 0.75rem;
+      background: #fff;
+    }
+
+    .doc-meta {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .doc-title {
+      margin: 0;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--ink);
+    }
+
+    .doc-subtitle,
+    .doc-snippet,
+    .doc-error {
+      margin: 0;
+      color: var(--slate);
+      font-size: 0.94rem;
+    }
+
+    .doc-error {
+      color: var(--danger);
+    }
+
+    .doc-status {
+      border-radius: var(--radius-pill);
+      padding: 0.3rem 0.7rem;
+      background: var(--fog);
+      border: 1px solid var(--line);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: capitalize;
+    }
+
+    .doc-actions {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .empty {
+      margin: 0;
+      color: var(--slate);
+    }
+
+    code.inline {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: var(--fog);
+      padding: 0.14rem 0.35rem;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 860px) {
+      .grid-2,
+      .grid-3,
+      .search-row,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-row">
+          <div class="brand">
+            <span class="brand-badge">RD</span>
+            Records Database
+          </div>
+          <div class="topbar-links">
+            <a class="pill" href="/PublicRecordsApp/">Home</a>
+            <a class="pill" href="/PublicRecordsApp/demo/">Demo</a>
+          </div>
+        </div>
+        <div class="hero-copy">
+          <p class="eyebrow">Supabase App</p>
+          <h1>Private records management with login, uploads, and extracted-text search.</h1>
+          <p>
+            This MVP gives each signed-in user a private document library, stores files in Supabase Storage,
+            extracts text from supported uploads, and lets them search that saved text without rereading the original file every time.
+          </p>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel stack" id="setup-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Connect Supabase</h2>
+            <p>Add your project URL and anon key in <code class="inline">app/config.js</code> before using the app.</p>
+          </div>
+        </div>
+        <div class="notice">
+          <strong>Missing config.</strong> Copy <code class="inline">app/config.example.js</code> to
+          <code class="inline">app/config.js</code>, then paste your Supabase project URL and anon key.
+        </div>
+      </section>
+
+      <section class="panel stack hidden" id="auth-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Login</h2>
+            <p>Use email and password for the first pass. Magic links can be added later.</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <form class="panel stack" id="signup-form">
+            <div class="panel-head">
+              <div>
+                <h3>Create account</h3>
+                <p>New users get their own private storage path automatically.</p>
+              </div>
+            </div>
+            <div class="field">
+              <label for="signup-email">Email</label>
+              <input id="signup-email" type="email" autocomplete="email" required>
+            </div>
+            <div class="field">
+              <label for="signup-password">Password</label>
+              <input id="signup-password" type="password" autocomplete="new-password" minlength="8" required>
+            </div>
+            <div class="actions">
+              <button class="btn" type="submit">Create account</button>
+            </div>
+          </form>
+
+          <form class="panel stack" id="signin-form">
+            <div class="panel-head">
+              <div>
+                <h3>Sign in</h3>
+                <p>Same account system used for uploads, search, and future AI features.</p>
+              </div>
+            </div>
+            <div class="field">
+              <label for="signin-email">Email</label>
+              <input id="signin-email" type="email" autocomplete="email" required>
+            </div>
+            <div class="field">
+              <label for="signin-password">Password</label>
+              <input id="signin-password" type="password" autocomplete="current-password" required>
+            </div>
+            <div class="actions">
+              <button class="btn" type="submit">Sign in</button>
+            </div>
+          </form>
+        </div>
+        <p class="status" id="auth-status"></p>
+      </section>
+
+      <section class="panel stack hidden" id="app-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Your records</h2>
+            <p>Uploads land in your own folder path and get text extracted into the database for search.</p>
+          </div>
+          <div class="inline-actions">
+            <span class="user-badge" id="user-badge"></span>
+            <button class="btn secondary" id="refresh-docs" type="button">Refresh</button>
+            <button class="btn warn" id="signout-button" type="button">Sign out</button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Files</span>
+            <span class="stat-value" id="stat-files">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Ready</span>
+            <span class="stat-value" id="stat-ready">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Processing</span>
+            <span class="stat-value" id="stat-processing">0</span>
+          </div>
+        </div>
+
+        <form class="panel stack" id="upload-form">
+          <div class="panel-head">
+            <div>
+              <h3>Upload a document</h3>
+              <p>Supported in this first pass: <code class="inline">.docx</code>, <code class="inline">.txt</code>, <code class="inline">.md</code>, <code class="inline">.csv</code>, <code class="inline">.json</code>, <code class="inline">.html</code>.</p>
+            </div>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="upload-title">Document title</label>
+              <input id="upload-title" type="text" placeholder="April 2026 Board Minutes">
+            </div>
+            <div class="field">
+              <label for="upload-year">Year</label>
+              <input id="upload-year" type="text" placeholder="2026">
+            </div>
+            <div class="field">
+              <label for="upload-month">Month</label>
+              <input id="upload-month" type="text" placeholder="April">
+            </div>
+          </div>
+          <div class="field">
+            <label for="upload-file">File</label>
+            <input id="upload-file" type="file" required>
+          </div>
+          <div class="actions">
+            <button class="btn" type="submit">Upload and extract text</button>
+          </div>
+          <p class="status" id="upload-status"></p>
+        </form>
+
+        <section class="panel stack">
+          <div class="panel-head">
+            <div>
+              <h3>Search extracted text</h3>
+              <p>This mirrors your existing pattern: search the saved text index, not the original file on every query.</p>
+            </div>
+          </div>
+          <div class="search-row">
+            <div class="field">
+              <label for="search-query">Keyword or phrase</label>
+              <input id="search-query" type="search" placeholder="budget, grant, zoning, executive session">
+            </div>
+            <div class="field">
+              <label for="search-status">Status</label>
+              <select id="search-status">
+                <option value="all">All statuses</option>
+                <option value="ready">Ready</option>
+                <option value="processing">Processing</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+            <div class="actions">
+              <button class="btn secondary" id="search-reset" type="button">Reset</button>
+            </div>
+          </div>
+          <div class="doc-list" id="doc-list"></div>
+          <p class="empty hidden" id="doc-empty">No documents match the current filters.</p>
+          <p class="status" id="docs-status"></p>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
