@@ -6,6 +6,10 @@ const dashboardPanel = document.getElementById("dashboard-panel");
 const uploadStatus = document.getElementById("upload-status");
 const docsStatus = document.getElementById("docs-status");
 const userBadge = document.getElementById("user-badge");
+const accountSection = document.getElementById("account-section");
+const librarySection = document.getElementById("library-section");
+const showAccountSectionButton = document.getElementById("show-account-section");
+const showLibrarySectionButton = document.getElementById("show-library-section");
 const fileModal = document.getElementById("file-modal");
 const fileModalTitle = document.getElementById("file-modal-title");
 const fileModalFrame = document.getElementById("file-modal-frame");
@@ -17,14 +21,20 @@ const accountRole = document.getElementById("account-role");
 const accountTier = document.getElementById("account-tier");
 const accountStatus = document.getElementById("account-status");
 const accountLimit = document.getElementById("account-limit");
+const accountRemaining = document.getElementById("account-remaining");
 const accountCustomerId = document.getElementById("account-customer-id");
 const accountSubscriptionId = document.getElementById("account-subscription-id");
 const billingNote = document.getElementById("billing-note");
 const signoutButton = document.getElementById("signout-button");
+const profileForm = document.getElementById("profile-form");
+const profileFullNameInput = document.getElementById("profile-full-name");
+const profileOrganizationInput = document.getElementById("profile-organization");
+const profileRoleInput = document.getElementById("profile-role");
+const profileStatus = document.getElementById("profile-status");
 const uploadForm = document.getElementById("upload-form");
 const refreshButton = document.getElementById("refresh-docs");
 const searchQueryInput = document.getElementById("search-query");
-const searchStatusSelect = document.getElementById("search-status");
+const searchYearSelect = document.getElementById("search-year");
 const searchResetButton = document.getElementById("search-reset");
 const uploadTitleInput = document.getElementById("upload-title");
 const uploadYearInput = document.getElementById("upload-year");
@@ -32,11 +42,12 @@ const uploadMonthInput = document.getElementById("upload-month");
 const uploadFileInput = document.getElementById("upload-file");
 const docList = document.getElementById("doc-list");
 const docEmpty = document.getElementById("doc-empty");
-const downloadList = document.getElementById("download-list");
-const downloadEmpty = document.getElementById("download-empty");
+const fileList = document.getElementById("file-list");
+const fileEmpty = document.getElementById("file-empty");
+const fileStatus = document.getElementById("file-status");
 const statFiles = document.getElementById("stat-files");
-const statReady = document.getElementById("stat-ready");
-const statProcessing = document.getElementById("stat-processing");
+const statPlan = document.getElementById("stat-plan");
+const statRemaining = document.getElementById("stat-remaining");
 
 let supabase = null;
 let currentSession = null;
@@ -53,6 +64,16 @@ function setStatus(el, message, tone = "") {
 function show(el, visible) {
   if (!el) return;
   el.classList.toggle("hidden", !visible);
+}
+
+function showSection(section) {
+  const isAccount = section === "account";
+  accountSection.hidden = !isAccount;
+  librarySection.hidden = isAccount;
+  showAccountSectionButton.classList.toggle("is-active", isAccount);
+  showLibrarySectionButton.classList.toggle("is-active", !isAccount);
+  showAccountSectionButton.setAttribute("aria-pressed", String(isAccount));
+  showLibrarySectionButton.setAttribute("aria-pressed", String(!isAccount));
 }
 
 function escapeHtml(value) {
@@ -95,12 +116,6 @@ function getDocumentLimit(profile) {
   if (profile?.subscription_tier === "starter") return 250;
   if (profile?.subscription_tier === "organization") return 2500;
   return 25;
-}
-
-function statusCounts(docs) {
-  const ready = docs.filter((doc) => doc.status === "ready").length;
-  const processing = docs.filter((doc) => doc.status === "processing" || doc.status === "uploaded").length;
-  return { ready, processing };
 }
 
 function buildPreviewUrl(doc, signedUrl) {
@@ -181,21 +196,27 @@ function snippetFromText(text, query) {
 function renderProfile() {
   const profile = currentProfile;
   const tier = titleCase(profile?.subscription_tier || "free");
-  const status = titleCase(profile?.account_status || "active");
   const limit = getDocumentLimit(profile);
+  const remaining = Math.max(limit - documentsCache.length, 0);
 
   accountName.textContent = profile?.full_name || currentSession?.user?.email || "-";
   accountOrganization.textContent = profile?.organization_name || "-";
   accountRole.textContent = profile?.role || "-";
   accountTier.textContent = tier;
-  accountStatus.textContent = status;
+  accountStatus.textContent = titleCase(profile?.account_status || "active");
   accountLimit.textContent = `${limit} documents`;
+  accountRemaining.textContent = `${remaining} documents`;
   accountCustomerId.textContent = profile?.stripe_customer_id || "Not connected";
   accountSubscriptionId.textContent = profile?.stripe_subscription_id || "Not connected";
   billingNote.textContent = profile?.stripe_customer_id
     ? "This account has Stripe billing metadata attached and is ready for subscription status syncing."
     : "This account is on the free tier. Stripe customer and subscription IDs can be attached later without changing the account model.";
   userBadge.textContent = `${tier} · ${currentSession?.user?.email || currentSession?.user?.id || ""}`;
+  statPlan.textContent = tier;
+  statRemaining.textContent = String(remaining);
+  profileFullNameInput.value = profile?.full_name || "";
+  profileOrganizationInput.value = profile?.organization_name || "";
+  profileRoleInput.value = profile?.role || "";
 }
 
 async function syncProfileFromSession() {
@@ -227,20 +248,59 @@ async function loadProfile() {
   renderProfile();
 }
 
+async function handleProfileSave(event) {
+  event.preventDefault();
+  setStatus(profileStatus, "Saving profile...");
+
+  const updates = {
+    full_name: profileFullNameInput.value.trim() || null,
+    organization_name: profileOrganizationInput.value.trim() || null,
+    role: profileRoleInput.value.trim() || null,
+  };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update(updates)
+    .eq("id", currentSession.user.id);
+
+  if (error) {
+    setStatus(profileStatus, error.message, "error");
+    return;
+  }
+
+  currentProfile = {
+    ...(currentProfile || {}),
+    ...updates,
+  };
+  renderProfile();
+  setStatus(profileStatus, "Profile updated.", "success");
+}
+
 function renderDocuments() {
   const query = searchQueryInput.value.trim().toLowerCase();
-  const wantedStatus = searchStatusSelect.value;
+  const selectedYear = searchYearSelect.value;
+
+  docList.innerHTML = "";
+
+  if (!query) {
+    show(docEmpty, true);
+    docEmpty.textContent = "Type a keyword to search your documents.";
+    statFiles.textContent = String(documentsCache.length);
+    renderProfile();
+    return;
+  }
 
   const filtered = documentsCache.filter((doc) => {
-    const statusMatch = wantedStatus === "all" || doc.status === wantedStatus;
-    if (!statusMatch) return false;
-    if (!query) return true;
+    const yearMatch = selectedYear === "all" || String(doc.year || "") === selectedYear;
+    if (!yearMatch) return false;
     const haystack = `${doc.title || ""} ${doc.original_filename || ""} ${doc.extracted_text || ""}`.toLowerCase();
     return haystack.includes(query);
   });
 
-  docList.innerHTML = "";
   show(docEmpty, filtered.length === 0);
+  if (filtered.length === 0) {
+    docEmpty.textContent = "No documents match your search.";
+  }
 
   filtered.forEach((doc) => {
     const title = escapeHtml(doc.title || doc.original_filename || "Untitled document");
@@ -270,30 +330,52 @@ function renderDocuments() {
     docList.append(card);
   });
 
-  const counts = statusCounts(documentsCache);
   statFiles.textContent = String(documentsCache.length);
-  statReady.textContent = String(counts.ready);
-  statProcessing.textContent = String(counts.processing);
+  renderProfile();
 }
 
-function renderDownloads() {
-  const readyDocs = documentsCache.filter((doc) => doc.status === "ready").slice(0, 8);
-  downloadList.innerHTML = "";
-  show(downloadEmpty, readyDocs.length === 0);
+function updateYearFilterOptions() {
+  const years = Array.from(
+    new Set(
+      documentsCache
+        .map((doc) => String(doc.year || "").trim())
+        .filter(Boolean)
+    )
+  ).sort((a, b) => Number(b) - Number(a));
 
-  readyDocs.forEach((doc) => {
+  searchYearSelect.innerHTML = "";
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "All years";
+  searchYearSelect.append(allOption);
+
+  years.forEach((year) => {
+    const option = document.createElement("option");
+    option.value = year;
+    option.textContent = year;
+    searchYearSelect.append(option);
+  });
+}
+
+function renderFiles() {
+  fileList.innerHTML = "";
+  show(fileEmpty, documentsCache.length === 0);
+
+  documentsCache.forEach((doc) => {
     const item = document.createElement("article");
     item.className = "download-item";
     item.innerHTML = `
       <div>
         <p class="download-name">${escapeHtml(doc.title || doc.original_filename || "Untitled document")}</p>
-        <p class="download-meta">${escapeHtml(doc.original_filename || "Unknown file")}${doc.year ? ` · ${escapeHtml(doc.year)}` : ""}</p>
+        <p class="download-meta">${escapeHtml(doc.original_filename || "Unknown file")}${doc.year ? ` · ${escapeHtml(doc.year)}` : ""}${doc.month ? ` · ${escapeHtml(doc.month)}` : ""}</p>
       </div>
       <div class="doc-actions">
         <button class="btn secondary" type="button" data-action="download" data-id="${doc.id}">Download</button>
+        <button class="btn secondary" type="button" data-action="share" data-id="${doc.id}">Share</button>
+        <button class="btn warn" type="button" data-action="delete" data-id="${doc.id}">Delete</button>
       </div>
     `;
-    downloadList.append(item);
+    fileList.append(item);
   });
 }
 
@@ -310,24 +392,33 @@ async function loadDocuments() {
   }
 
   documentsCache = Array.isArray(data) ? data : [];
+  updateYearFilterOptions();
   renderDocuments();
-  renderDownloads();
+  renderFiles();
   setStatus(docsStatus, `${documentsCache.length} document${documentsCache.length === 1 ? "" : "s"} loaded.`, "success");
 }
 
-async function openFile(documentId) {
+async function createSignedUrlForDocument(documentId) {
   const doc = documentsCache.find((item) => item.id === documentId);
-  if (!doc) return;
+  if (!doc) return null;
 
   const { data, error } = await supabase.storage.from("documents").createSignedUrl(doc.storage_path, 60 * 60);
   if (error || !data?.signedUrl) {
     setStatus(docsStatus, error?.message || "Unable to create signed URL.", "error");
-    return;
+    return null;
   }
 
+  return { doc, signedUrl: data.signedUrl };
+}
+
+async function openFile(documentId) {
+  const signed = await createSignedUrlForDocument(documentId);
+  if (!signed) return;
+  const { doc, signedUrl } = signed;
+
   fileModalTitle.textContent = doc.title || doc.original_filename || "File preview";
-  fileModalFrame.src = buildPreviewUrl(doc, data.signedUrl);
-  fileModalDownload.href = data.signedUrl;
+  fileModalFrame.src = buildPreviewUrl(doc, signedUrl);
+  fileModalDownload.href = signedUrl;
   fileModalDownload.setAttribute("download", doc.original_filename || "download");
   fileModal.classList.add("is-open");
   fileModal.setAttribute("aria-hidden", "false");
@@ -337,6 +428,60 @@ function closeFileModal() {
   fileModal.classList.remove("is-open");
   fileModal.setAttribute("aria-hidden", "true");
   fileModalFrame.src = "";
+}
+
+async function shareFile(documentId) {
+  const signed = await createSignedUrlForDocument(documentId);
+  if (!signed) return;
+  const { doc, signedUrl } = signed;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: doc.title || doc.original_filename || "Shared file",
+        text: `Shared from Records Database: ${doc.title || doc.original_filename || "File"}`,
+        url: signedUrl,
+      });
+      setStatus(fileStatus, "Share sheet opened.", "success");
+      return;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+    }
+  }
+
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(signedUrl);
+    setStatus(fileStatus, "Share link copied to clipboard.", "success");
+    return;
+  }
+
+  setStatus(fileStatus, "Sharing is not available on this device.", "error");
+}
+
+async function deleteFile(documentId) {
+  const doc = documentsCache.find((item) => item.id === documentId);
+  if (!doc) return;
+
+  const confirmed = window.confirm(`Delete "${doc.title || doc.original_filename}"?`);
+  if (!confirmed) return;
+
+  setStatus(fileStatus, "Deleting file...");
+
+  const { error: storageError } = await supabase.storage.from("documents").remove([doc.storage_path]);
+  if (storageError) {
+    setStatus(fileStatus, storageError.message, "error");
+    return;
+  }
+
+  const { error: deleteError } = await supabase.from("documents").delete().eq("id", documentId);
+  if (deleteError) {
+    setStatus(fileStatus, deleteError.message, "error");
+    return;
+  }
+
+  closeFileModal();
+  setStatus(fileStatus, "File deleted.", "success");
+  await loadDocuments();
 }
 
 async function uploadDocument(event) {
@@ -409,9 +554,13 @@ async function handleSignout() {
 async function handleDocAction(event) {
   const button = event.target.closest("button[data-action]");
   if (!button) return;
-  if (button.getAttribute("data-action") === "download") {
-    await openFile(button.getAttribute("data-id"));
-  }
+  const action = button.getAttribute("data-action");
+  const id = button.getAttribute("data-id");
+  if (!id || !action) return;
+
+  if (action === "download") await openFile(id);
+  if (action === "share") await shareFile(id);
+  if (action === "delete") await deleteFile(id);
 }
 
 async function init() {
@@ -433,19 +582,23 @@ async function init() {
   await syncProfileFromSession();
   await loadProfile();
   await loadDocuments();
+  showSection("library");
 
   signoutButton.addEventListener("click", handleSignout);
   refreshButton.addEventListener("click", loadDocuments);
+  showAccountSectionButton.addEventListener("click", () => showSection("account"));
+  showLibrarySectionButton.addEventListener("click", () => showSection("library"));
+  profileForm.addEventListener("submit", handleProfileSave);
   uploadForm.addEventListener("submit", uploadDocument);
   searchQueryInput.addEventListener("input", renderDocuments);
-  searchStatusSelect.addEventListener("change", renderDocuments);
+  searchYearSelect.addEventListener("change", renderDocuments);
   searchResetButton.addEventListener("click", () => {
     searchQueryInput.value = "";
-    searchStatusSelect.value = "all";
+    searchYearSelect.value = "all";
     renderDocuments();
   });
   docList.addEventListener("click", handleDocAction);
-  downloadList.addEventListener("click", handleDocAction);
+  fileList.addEventListener("click", handleDocAction);
   fileModalClose.addEventListener("click", closeFileModal);
   fileModal.addEventListener("click", (event) => {
     if (event.target === fileModal) closeFileModal();

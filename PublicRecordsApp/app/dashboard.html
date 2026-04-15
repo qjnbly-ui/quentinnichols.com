@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Records Database Dashboard</title>
-  <meta name="description" content="Records Database dashboard for profile, billing, uploads, search, and downloads.">
+  <meta name="description" content="Records Database dashboard for profile, billing, uploads, search, and file management.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
@@ -18,9 +18,6 @@
           <div class="brand">
             <span class="brand-badge">RD</span>
             Records Database
-          </div>
-          <div class="topbar-links">
-            <a class="pill" href="/PublicRecordsApp/">Home</a>
           </div>
         </div>
       </div>
@@ -44,7 +41,7 @@
         <div class="panel-head">
           <div>
             <h2>Your records</h2>
-            <p>Your account, billing state, search, uploads, and downloads all live here.</p>
+            <p>Your account details and working library live here.</p>
           </div>
           <div class="inline-actions">
             <span class="user-badge" id="user-badge"></span>
@@ -59,147 +56,170 @@
             <span class="stat-value" id="stat-files">0</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Ready</span>
-            <span class="stat-value" id="stat-ready">0</span>
+            <span class="stat-label">Plan</span>
+            <span class="stat-value" id="stat-plan">Free</span>
           </div>
           <div class="stat">
-            <span class="stat-label">Processing</span>
-            <span class="stat-value" id="stat-processing">0</span>
+            <span class="stat-label">Remaining</span>
+            <span class="stat-value" id="stat-remaining">25</span>
           </div>
         </div>
 
-        <div class="dashboard-layout">
-          <aside class="dashboard-sidebar">
-            <section class="account-card">
-              <div class="panel-head">
-                <div>
-                  <h3>Profile</h3>
-                  <p>Your account details are loaded from Supabase.</p>
-                </div>
-              </div>
-              <div class="account-list">
-                <div class="account-item">
-                  <span class="account-label">Name</span>
-                  <p class="account-value" id="account-name">-</p>
-                </div>
-                <div class="account-item">
-                  <span class="account-label">Organization</span>
-                  <p class="account-value" id="account-organization">-</p>
-                </div>
-                <div class="account-item">
-                  <span class="account-label">Role</span>
-                  <p class="account-value" id="account-role">-</p>
-                </div>
-                <div class="account-item">
-                  <span class="account-label">Plan</span>
-                  <p class="account-value" id="account-tier">Free</p>
-                </div>
-                <div class="account-item">
-                  <span class="account-label">Status</span>
-                  <p class="account-value" id="account-status">Active</p>
-                </div>
-                <div class="account-item">
-                  <span class="account-label">Document limit</span>
-                  <p class="account-value" id="account-limit">25</p>
-                </div>
-              </div>
-            </section>
+        <div class="section-menu" role="tablist" aria-label="Dashboard sections">
+          <button class="section-menu-btn" id="show-account-section" type="button" aria-pressed="false">Account</button>
+          <button class="section-menu-btn is-active" id="show-library-section" type="button" aria-pressed="true">Library</button>
+        </div>
 
-            <section class="account-card">
-              <div class="panel-head">
-                <div>
-                  <h3>Billing</h3>
-                  <p>Prepared for future Stripe subscription syncing.</p>
-                </div>
+        <section class="section-view" id="account-section" hidden>
+          <section class="account-card">
+            <div class="panel-head">
+              <div>
+                <h3>Profile</h3>
+                <p>Your account details are loaded from Supabase and can be updated here.</p>
               </div>
-              <p class="account-note" id="billing-note">This account is on the free tier. Stripe customer and subscription IDs can be attached later without changing the account model.</p>
-              <div class="account-list">
-                <div class="account-item">
-                  <span class="account-label">Customer ID</span>
-                  <p class="account-value" id="account-customer-id">Not connected</p>
-                </div>
-                <div class="account-item">
-                  <span class="account-label">Subscription ID</span>
-                  <p class="account-value" id="account-subscription-id">Not connected</p>
-                </div>
+            </div>
+            <div class="account-list">
+              <div class="account-item">
+                <span class="account-label">Name</span>
+                <p class="account-value" id="account-name">-</p>
               </div>
-            </section>
-          </aside>
-
-          <div class="dashboard-main">
-            <section class="panel stack">
-              <div class="panel-head">
-                <div>
-                  <h3>Search</h3>
-                  <p>Search the extracted text saved with each document.</p>
-                </div>
+              <div class="account-item">
+                <span class="account-label">Organization</span>
+                <p class="account-value" id="account-organization">-</p>
               </div>
-              <div class="search-row">
-                <div class="field">
-                  <label for="search-query">Keyword or phrase</label>
-                  <input id="search-query" type="search" placeholder="budget, grant, zoning, executive session">
-                </div>
-                <div class="field">
-                  <label for="search-status">Status</label>
-                  <select id="search-status">
-                    <option value="all">All statuses</option>
-                    <option value="ready">Ready</option>
-                    <option value="processing">Processing</option>
-                    <option value="failed">Failed</option>
-                  </select>
-                </div>
-                <div class="actions">
-                  <button class="btn secondary" id="search-reset" type="button">Reset</button>
-                </div>
+              <div class="account-item">
+                <span class="account-label">Role</span>
+                <p class="account-value" id="account-role">-</p>
               </div>
-              <div class="doc-list" id="doc-list"></div>
-              <p class="empty hidden" id="doc-empty">No documents match the current filters.</p>
-              <p class="status" id="docs-status"></p>
-            </section>
-
-            <form class="panel stack" id="upload-form">
-              <div class="panel-head">
-                <div>
-                  <h3>Upload</h3>
-                  <p>Supported in this first pass: <code class="inline">.docx</code>, <code class="inline">.txt</code>, <code class="inline">.md</code>, <code class="inline">.csv</code>, <code class="inline">.json</code>, <code class="inline">.html</code>.</p>
-                </div>
+              <div class="account-item">
+                <span class="account-label">Plan</span>
+                <p class="account-value" id="account-tier">Free</p>
               </div>
-              <div class="grid-3">
-                <div class="field">
-                  <label for="upload-title">Document title</label>
-                  <input id="upload-title" type="text" placeholder="April 2026 Minutes">
-                </div>
-                <div class="field">
-                  <label for="upload-year">Year</label>
-                  <input id="upload-year" type="text" placeholder="2026">
-                </div>
-                <div class="field">
-                  <label for="upload-month">Month</label>
-                  <input id="upload-month" type="text" placeholder="April">
-                </div>
+              <div class="account-item">
+                <span class="account-label">Status</span>
+                <p class="account-value" id="account-status">Active</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Document allowance</span>
+                <p class="account-value" id="account-limit">25 documents</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Remaining</span>
+                <p class="account-value" id="account-remaining">25 documents</p>
+              </div>
+            </div>
+            <form class="stack" id="profile-form">
+              <div class="field">
+                <label for="profile-full-name">Full name</label>
+                <input id="profile-full-name" type="text" autocomplete="name">
               </div>
               <div class="field">
-                <label for="upload-file">File</label>
-                <input id="upload-file" type="file" required>
+                <label for="profile-organization">Organization name</label>
+                <input id="profile-organization" type="text" autocomplete="organization">
+              </div>
+              <div class="field">
+                <label for="profile-role">Role</label>
+                <input id="profile-role" type="text">
               </div>
               <div class="actions">
-                <button class="btn" type="submit">Upload and save extracted text</button>
+                <button class="btn" type="submit">Save profile</button>
               </div>
-              <p class="status" id="upload-status"></p>
+              <p class="status" id="profile-status"></p>
             </form>
+          </section>
 
-            <section class="panel stack">
-              <div class="panel-head">
-                <div>
-                  <h3>Downloads</h3>
-                  <p>Open recently added files directly from your archive.</p>
-                </div>
+          <section class="account-card">
+            <div class="panel-head">
+              <div>
+                <h3>Billing</h3>
+                <p>Prepared for future Stripe subscription syncing.</p>
               </div>
-              <div class="download-list" id="download-list"></div>
-              <p class="empty hidden" id="download-empty">No files are ready to download yet.</p>
-            </section>
-          </div>
-        </div>
+            </div>
+            <p class="account-note" id="billing-note">This account is on the free tier. Stripe customer and subscription IDs can be attached later without changing the account model.</p>
+            <div class="account-list">
+              <div class="account-item">
+                <span class="account-label">Customer ID</span>
+                <p class="account-value" id="account-customer-id">Not connected</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Subscription ID</span>
+                <p class="account-value" id="account-subscription-id">Not connected</p>
+              </div>
+            </div>
+          </section>
+        </section>
+
+        <section class="section-view" id="library-section">
+          <section class="panel stack">
+            <div class="panel-head">
+              <div>
+                <h3>Search</h3>
+                <p>Search the extracted text saved with each document.</p>
+              </div>
+            </div>
+            <div class="search-row">
+              <div class="field">
+                <label for="search-query">Keyword or phrase</label>
+                <input id="search-query" type="search" placeholder="budget, grant, zoning, executive session">
+              </div>
+              <div class="field">
+                <label for="search-year">Year</label>
+                <select id="search-year">
+                  <option value="all">All years</option>
+                </select>
+              </div>
+              <div class="actions">
+                <button class="btn secondary" id="search-reset" type="button">Reset</button>
+              </div>
+            </div>
+            <div class="doc-list" id="doc-list"></div>
+            <p class="empty" id="doc-empty">Type a keyword to search your documents.</p>
+            <p class="status" id="docs-status"></p>
+          </section>
+
+          <form class="panel stack" id="upload-form">
+            <div class="panel-head">
+              <div>
+                <h3>Upload</h3>
+                <p>Supported in this first pass: <code class="inline">.docx</code>, <code class="inline">.txt</code>, <code class="inline">.md</code>, <code class="inline">.csv</code>, <code class="inline">.json</code>, <code class="inline">.html</code>.</p>
+              </div>
+            </div>
+            <div class="grid-3">
+              <div class="field">
+                <label for="upload-title">Document title</label>
+                <input id="upload-title" type="text" placeholder="April 2026 Minutes">
+              </div>
+              <div class="field">
+                <label for="upload-year">Year</label>
+                <input id="upload-year" type="text" placeholder="2026">
+              </div>
+              <div class="field">
+                <label for="upload-month">Month</label>
+                <input id="upload-month" type="text" placeholder="April">
+              </div>
+            </div>
+            <div class="field">
+              <label for="upload-file">File</label>
+              <input id="upload-file" type="file" required>
+            </div>
+            <div class="actions">
+              <button class="btn" type="submit">Upload and save extracted text</button>
+            </div>
+            <p class="status" id="upload-status"></p>
+          </form>
+
+          <section class="panel stack">
+            <div class="panel-head">
+              <div>
+                <h3>All files</h3>
+                <p>Manage your archive with download, share, and delete actions.</p>
+              </div>
+            </div>
+            <div class="download-list" id="file-list"></div>
+            <p class="empty hidden" id="file-empty">No files in your archive yet.</p>
+            <p class="status" id="file-status"></p>
+          </section>
+        </section>
       </section>
     </main>
   </div>

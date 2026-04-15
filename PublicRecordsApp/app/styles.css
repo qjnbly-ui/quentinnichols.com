@@ -299,6 +299,43 @@ textarea {
   align-items: start;
 }
 
+.section-menu {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border-radius: 999px;
+  background: #e9ecef;
+  border: 1px solid rgba(15, 22, 32, 0.08);
+  width: min(420px, 100%);
+}
+
+.section-menu-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.85rem 1rem;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.section-menu-btn.is-active {
+  background: #123a33;
+  color: var(--white);
+  box-shadow: 0 10px 22px rgba(12, 18, 28, 0.14);
+}
+
+.section-view {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-view[hidden] {
+  display: none !important;
+}
+
 .dashboard-sidebar,
 .dashboard-main {
   display: grid;
@@ -666,7 +703,6 @@ code.inline {
   .grid-3,
   .search-row,
   .stats,
-  .dashboard-layout,
   .account-list,
   .auth-layout {
     grid-template-columns: 1fr;
@@ -739,6 +775,16 @@ code.inline {
 
   .auth-toggle-btn,
   .auth-toggle-btn.is-active {
+    border-radius: 14px;
+  }
+
+  .section-menu {
+    width: 100%;
+    border-radius: 18px;
+  }
+
+  .section-menu-btn,
+  .section-menu-btn.is-active {
     border-radius: 14px;
   }
 
