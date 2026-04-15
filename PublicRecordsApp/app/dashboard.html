@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Records Database Dashboard</title>
+  <meta name="description" content="Records Database dashboard for profile, billing, uploads, search, and downloads.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-row">
+          <div class="brand">
+            <span class="brand-badge">RD</span>
+            Records Database
+          </div>
+          <div class="topbar-links">
+            <a class="pill" href="/PublicRecordsApp/">Home</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel stack" id="setup-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Connect Supabase</h2>
+            <p>Add your project URL and anon key in <code class="inline">app/config.js</code> before using the app.</p>
+          </div>
+        </div>
+        <div class="notice">
+          <strong>Missing config.</strong> Copy <code class="inline">app/config.example.js</code> to
+          <code class="inline">app/config.js</code>, then paste your Supabase project URL and anon key.
+        </div>
+      </section>
+
+      <section class="panel stack hidden" id="dashboard-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Your records</h2>
+            <p>Your account, billing state, search, uploads, and downloads all live here.</p>
+          </div>
+          <div class="inline-actions">
+            <span class="user-badge" id="user-badge"></span>
+            <button class="btn secondary" id="refresh-docs" type="button">Refresh</button>
+            <button class="btn warn" id="signout-button" type="button">Sign out</button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Files</span>
+            <span class="stat-value" id="stat-files">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Ready</span>
+            <span class="stat-value" id="stat-ready">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Processing</span>
+            <span class="stat-value" id="stat-processing">0</span>
+          </div>
+        </div>
+
+        <div class="dashboard-layout">
+          <aside class="dashboard-sidebar">
+            <section class="account-card">
+              <div class="panel-head">
+                <div>
+                  <h3>Profile</h3>
+                  <p>Your account details are loaded from Supabase.</p>
+                </div>
+              </div>
+              <div class="account-list">
+                <div class="account-item">
+                  <span class="account-label">Name</span>
+                  <p class="account-value" id="account-name">-</p>
+                </div>
+                <div class="account-item">
+                  <span class="account-label">Organization</span>
+                  <p class="account-value" id="account-organization">-</p>
+                </div>
+                <div class="account-item">
+                  <span class="account-label">Role</span>
+                  <p class="account-value" id="account-role">-</p>
+                </div>
+                <div class="account-item">
+                  <span class="account-label">Plan</span>
+                  <p class="account-value" id="account-tier">Free</p>
+                </div>
+                <div class="account-item">
+                  <span class="account-label">Status</span>
+                  <p class="account-value" id="account-status">Active</p>
+                </div>
+                <div class="account-item">
+                  <span class="account-label">Document limit</span>
+                  <p class="account-value" id="account-limit">25</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="account-card">
+              <div class="panel-head">
+                <div>
+                  <h3>Billing</h3>
+                  <p>Prepared for future Stripe subscription syncing.</p>
+                </div>
+              </div>
+              <p class="account-note" id="billing-note">This account is on the free tier. Stripe customer and subscription IDs can be attached later without changing the account model.</p>
+              <div class="account-list">
+                <div class="account-item">
+                  <span class="account-label">Customer ID</span>
+                  <p class="account-value" id="account-customer-id">Not connected</p>
+                </div>
+                <div class="account-item">
+                  <span class="account-label">Subscription ID</span>
+                  <p class="account-value" id="account-subscription-id">Not connected</p>
+                </div>
+              </div>
+            </section>
+          </aside>
+
+          <div class="dashboard-main">
+            <section class="panel stack">
+              <div class="panel-head">
+                <div>
+                  <h3>Search</h3>
+                  <p>Search the extracted text saved with each document.</p>
+                </div>
+              </div>
+              <div class="search-row">
+                <div class="field">
+                  <label for="search-query">Keyword or phrase</label>
+                  <input id="search-query" type="search" placeholder="budget, grant, zoning, executive session">
+                </div>
+                <div class="field">
+                  <label for="search-status">Status</label>
+                  <select id="search-status">
+                    <option value="all">All statuses</option>
+                    <option value="ready">Ready</option>
+                    <option value="processing">Processing</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+                <div class="actions">
+                  <button class="btn secondary" id="search-reset" type="button">Reset</button>
+                </div>
+              </div>
+              <div class="doc-list" id="doc-list"></div>
+              <p class="empty hidden" id="doc-empty">No documents match the current filters.</p>
+              <p class="status" id="docs-status"></p>
+            </section>
+
+            <form class="panel stack" id="upload-form">
+              <div class="panel-head">
+                <div>
+                  <h3>Upload</h3>
+                  <p>Supported in this first pass: <code class="inline">.docx</code>, <code class="inline">.txt</code>, <code class="inline">.md</code>, <code class="inline">.csv</code>, <code class="inline">.json</code>, <code class="inline">.html</code>.</p>
+                </div>
+              </div>
+              <div class="grid-3">
+                <div class="field">
+                  <label for="upload-title">Document title</label>
+                  <input id="upload-title" type="text" placeholder="April 2026 Minutes">
+                </div>
+                <div class="field">
+                  <label for="upload-year">Year</label>
+                  <input id="upload-year" type="text" placeholder="2026">
+                </div>
+                <div class="field">
+                  <label for="upload-month">Month</label>
+                  <input id="upload-month" type="text" placeholder="April">
+                </div>
+              </div>
+              <div class="field">
+                <label for="upload-file">File</label>
+                <input id="upload-file" type="file" required>
+              </div>
+              <div class="actions">
+                <button class="btn" type="submit">Upload and save extracted text</button>
+              </div>
+              <p class="status" id="upload-status"></p>
+            </form>
+
+            <section class="panel stack">
+              <div class="panel-head">
+                <div>
+                  <h3>Downloads</h3>
+                  <p>Open recently added files directly from your archive.</p>
+                </div>
+              </div>
+              <div class="download-list" id="download-list"></div>
+              <p class="empty hidden" id="download-empty">No files are ready to download yet.</p>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="file-modal" id="file-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="file-modal-dialog">
+      <div class="file-modal-header">
+        <p class="file-modal-title" id="file-modal-title">File preview</p>
+        <div class="file-modal-actions">
+          <a class="file-modal-link" id="file-modal-download" href="#" target="_blank" rel="noopener">Download</a>
+          <button class="file-modal-close" id="file-modal-close" type="button">Close</button>
+        </div>
+      </div>
+      <div class="file-modal-body">
+        <iframe class="file-modal-frame" id="file-modal-frame" src="" title="File preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./dashboard.js"></script>
+</body>
+</html>

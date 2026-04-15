@@ -27,8 +27,13 @@ This matches your existing pattern of storing extracted text once and searching 
 
 ## Files to use
 
-- [app/index.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/index.html): app UI
-- [app/app.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/app.js): signup, login, upload, extraction, and search
+- [app/index.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/index.html): session router entrypoint
+- [app/login.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/login.html): auth page
+- [app/dashboard.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/dashboard.html): signed-in dashboard
+- [app/login.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/login.js): signup and sign-in logic
+- [app/dashboard.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/dashboard.js): profile, billing, upload, search, and downloads
+- [app/lib/supabase-client.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/lib/supabase-client.js): shared Supabase client helper
+- [app/styles.css](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/styles.css): shared app styles
 - [app/config.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/config.js): client config
 - [supabase/schema.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/schema.sql): tables, storage bucket, and RLS policies
 
