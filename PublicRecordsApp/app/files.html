@@ -50,13 +50,12 @@
         </div>
       </section>
 
-      <section class="panel stack hidden" id="files-panel">
+      <section class="panel hidden" id="files-panel">
         <div class="panel-head">
           <div>
             <h2>All files</h2>
-            <p>Manage your archive with preview, download, share, and delete actions.</p>
           </div>
-          <a class="btn secondary button-link" href="./dashboard.html?section=library">Back to library</a>
+          <a class="btn secondary button-link" href="./dashboard.html?section=library">Back to records</a>
         </div>
 
         <div class="download-list" id="file-list"></div>
@@ -72,11 +71,31 @@
         <p class="file-modal-title" id="file-modal-title">File preview</p>
         <div class="file-modal-actions">
           <a class="file-modal-link" id="file-modal-download" href="#" target="_blank" rel="noopener">Download</a>
+          <button class="file-modal-link" id="file-modal-share" type="button">Share</button>
+          <button class="file-modal-link file-modal-danger" id="file-modal-delete" type="button">Delete</button>
           <button class="file-modal-close" id="file-modal-close" type="button">Close</button>
         </div>
       </div>
       <div class="file-modal-body">
         <iframe class="file-modal-frame" id="file-modal-frame" src="" title="File preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-modal" id="delete-confirm-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="confirm-modal-dialog">
+      <div class="confirm-modal-header">
+        <div>
+          <p class="confirm-modal-kicker">Delete file</p>
+          <h3 class="confirm-modal-title">Remove this document?</h3>
+        </div>
+      </div>
+      <div class="confirm-modal-body">
+        <p class="confirm-modal-copy" id="delete-confirm-copy">This action cannot be undone.</p>
+        <div class="confirm-modal-actions">
+          <button class="btn secondary" id="delete-confirm-cancel" type="button">Cancel</button>
+          <button class="btn btn-delete-solid" id="delete-confirm-submit" type="button">Delete</button>
+        </div>
       </div>
     </div>
   </div>

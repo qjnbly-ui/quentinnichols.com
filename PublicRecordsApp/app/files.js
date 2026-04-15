@@ -14,11 +14,19 @@ const fileModal = document.getElementById("file-modal");
 const fileModalTitle = document.getElementById("file-modal-title");
 const fileModalFrame = document.getElementById("file-modal-frame");
 const fileModalDownload = document.getElementById("file-modal-download");
+const fileModalShare = document.getElementById("file-modal-share");
+const fileModalDelete = document.getElementById("file-modal-delete");
 const fileModalClose = document.getElementById("file-modal-close");
+const deleteConfirmModal = document.getElementById("delete-confirm-modal");
+const deleteConfirmCopy = document.getElementById("delete-confirm-copy");
+const deleteConfirmCancel = document.getElementById("delete-confirm-cancel");
+const deleteConfirmSubmit = document.getElementById("delete-confirm-submit");
 
 let supabase = null;
 let currentSession = null;
 let documentsCache = [];
+let pendingDeleteId = null;
+let activeModalDocumentId = null;
 
 function setMenuActive(section) {
   mobileMenuAccount.classList.toggle("is-active", section === "account");
@@ -99,13 +107,16 @@ function renderFiles() {
 
   documentsCache.forEach((doc) => {
     const item = document.createElement("article");
-    item.className = "download-item";
+    item.className = "download-item file-row";
+    item.setAttribute("data-open-id", doc.id);
+    item.setAttribute("role", "button");
+    item.setAttribute("tabindex", "0");
     item.innerHTML = `
-      <div>
+      <div class="file-row-main">
         <p class="download-name">${escapeHtml(doc.title || doc.original_filename || "Untitled document")}</p>
         <p class="download-meta">${escapeHtml(doc.original_filename || "Unknown file")}${doc.year ? ` · ${escapeHtml(doc.year)}` : ""}${doc.month ? ` · ${escapeHtml(doc.month)}` : ""}</p>
       </div>
-      <div class="doc-actions">
+      <div class="doc-actions file-row-actions">
         <button class="btn secondary" type="button" data-action="download" data-id="${doc.id}">Download</button>
         <button class="btn secondary" type="button" data-action="share" data-id="${doc.id}">Share</button>
         <button class="btn warn" type="button" data-action="delete" data-id="${doc.id}">Delete</button>
@@ -133,6 +144,7 @@ async function openFile(documentId) {
   if (!signed) return;
   const { doc, signedUrl } = signed;
 
+  activeModalDocumentId = documentId;
   fileModalTitle.textContent = doc.title || doc.original_filename || "File preview";
   fileModalFrame.src = buildPreviewUrl(doc, signedUrl);
   fileModalDownload.href = signedUrl;
@@ -141,10 +153,42 @@ async function openFile(documentId) {
   fileModal.setAttribute("aria-hidden", "false");
 }
 
+async function downloadFile(documentId) {
+  const signed = await createSignedUrlForDocument(documentId);
+  if (!signed) return;
+  const { doc, signedUrl } = signed;
+
+  const link = document.createElement("a");
+  link.href = signedUrl;
+  link.download = doc.original_filename || "download";
+  link.target = "_blank";
+  link.rel = "noopener";
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
 function closeFileModal() {
   fileModal.classList.remove("is-open");
   fileModal.setAttribute("aria-hidden", "true");
   fileModalFrame.src = "";
+  activeModalDocumentId = null;
+}
+
+function openDeleteConfirm(documentId) {
+  const doc = documentsCache.find((item) => item.id === documentId);
+  if (!doc) return;
+
+  pendingDeleteId = documentId;
+  deleteConfirmCopy.textContent = `Delete "${doc.title || doc.original_filename || "this file"}"? This action cannot be undone.`;
+  deleteConfirmModal.classList.add("is-open");
+  deleteConfirmModal.setAttribute("aria-hidden", "false");
+}
+
+function closeDeleteConfirm() {
+  pendingDeleteId = null;
+  deleteConfirmModal.classList.remove("is-open");
+  deleteConfirmModal.setAttribute("aria-hidden", "true");
 }
 
 async function shareFile(documentId) {
@@ -153,28 +197,6 @@ async function shareFile(documentId) {
   const { doc, signedUrl } = signed;
 
   if (navigator.share) {
-    try {
-      const response = await fetch(signedUrl);
-      if (response.ok) {
-        const blob = await response.blob();
-        const sharedFile = new File([blob], doc.original_filename || "document", {
-          type: blob.type || "application/octet-stream",
-        });
-
-        if (navigator.canShare && navigator.canShare({ files: [sharedFile] })) {
-          await navigator.share({
-            title: doc.title || doc.original_filename || "Shared file",
-            text: `Shared from Records Database: ${doc.title || doc.original_filename || "File"}`,
-            files: [sharedFile],
-          });
-          setStatus(fileStatus, "Share sheet opened.", "success");
-          return;
-        }
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") return;
-    }
-
     try {
       await navigator.share({
         title: doc.title || doc.original_filename || "Shared file",
@@ -201,23 +223,29 @@ async function deleteFile(documentId) {
   const doc = documentsCache.find((item) => item.id === documentId);
   if (!doc) return;
 
-  const confirmed = window.confirm(`Delete "${doc.title || doc.original_filename}"?`);
-  if (!confirmed) return;
-
   setStatus(fileStatus, "Deleting file...");
+  deleteConfirmSubmit.disabled = true;
+  deleteConfirmCancel.disabled = true;
 
   const { error: storageError } = await supabase.storage.from("documents").remove([doc.storage_path]);
   if (storageError) {
+    deleteConfirmSubmit.disabled = false;
+    deleteConfirmCancel.disabled = false;
     setStatus(fileStatus, storageError.message, "error");
     return;
   }
 
   const { error: deleteError } = await supabase.from("documents").delete().eq("id", documentId);
   if (deleteError) {
+    deleteConfirmSubmit.disabled = false;
+    deleteConfirmCancel.disabled = false;
     setStatus(fileStatus, deleteError.message, "error");
     return;
   }
 
+  deleteConfirmSubmit.disabled = false;
+  deleteConfirmCancel.disabled = false;
+  closeDeleteConfirm();
   closeFileModal();
   setStatus(fileStatus, "File deleted.", "success");
   await loadDocuments();
@@ -225,14 +253,22 @@ async function deleteFile(documentId) {
 
 async function handleFileAction(event) {
   const button = event.target.closest("button[data-action]");
-  if (!button) return;
-  const action = button.getAttribute("data-action");
-  const id = button.getAttribute("data-id");
-  if (!id || !action) return;
+  if (button) {
+    const action = button.getAttribute("data-action");
+    const id = button.getAttribute("data-id");
+    if (!id || !action) return;
 
-  if (action === "download") await openFile(id);
-  if (action === "share") await shareFile(id);
-  if (action === "delete") await deleteFile(id);
+    if (action === "download") await downloadFile(id);
+    if (action === "share") await shareFile(id);
+    if (action === "delete") openDeleteConfirm(id);
+    return;
+  }
+
+  const row = event.target.closest("[data-open-id]");
+  if (!row) return;
+  const id = row.getAttribute("data-open-id");
+  if (!id) return;
+  await openFile(id);
 }
 
 async function init() {
@@ -261,13 +297,42 @@ async function init() {
     window.location.href = "./dashboard.html?section=library";
   });
   fileList.addEventListener("click", handleFileAction);
+  fileList.addEventListener("keydown", async (event) => {
+    const row = event.target.closest("[data-open-id]");
+    if (!row) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    const id = row.getAttribute("data-open-id");
+    if (!id) return;
+    await openFile(id);
+  });
   fileModalClose.addEventListener("click", closeFileModal);
+  fileModalShare.addEventListener("click", async () => {
+    if (!activeModalDocumentId) return;
+    await shareFile(activeModalDocumentId);
+  });
+  fileModalDelete.addEventListener("click", () => {
+    if (!activeModalDocumentId) return;
+    openDeleteConfirm(activeModalDocumentId);
+  });
   fileModal.addEventListener("click", (event) => {
     if (event.target === fileModal) closeFileModal();
+  });
+  deleteConfirmCancel.addEventListener("click", closeDeleteConfirm);
+  deleteConfirmSubmit.addEventListener("click", async () => {
+    if (!pendingDeleteId) return;
+    await deleteFile(pendingDeleteId);
+  });
+  deleteConfirmModal.addEventListener("click", (event) => {
+    if (event.target === deleteConfirmModal) closeDeleteConfirm();
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && fileModal.classList.contains("is-open")) {
       closeFileModal();
+      return;
+    }
+    if (event.key === "Escape" && deleteConfirmModal.classList.contains("is-open")) {
+      closeDeleteConfirm();
       return;
     }
     if (event.key === "Escape") closeMobileMenu();

@@ -82,14 +82,6 @@
                 <span class="account-label">Status</span>
                 <p class="account-value" id="account-status">Active</p>
               </div>
-              <div class="account-item">
-                <span class="account-label">Document allowance</span>
-                <p class="account-value" id="account-limit">25 documents</p>
-              </div>
-              <div class="account-item">
-                <span class="account-label">Remaining</span>
-                <p class="account-value" id="account-remaining">25 documents</p>
-              </div>
             </div>
           </section>
 
@@ -109,28 +101,6 @@
             </div>
             <div class="billing-plan-picker hidden" id="billing-plan-picker">
               <div class="plan-grid" id="billing-plan-grid"></div>
-            </div>
-            <div class="billing-meta-grid">
-              <div class="account-item">
-                <span class="account-label">Profile ID</span>
-                <p class="account-value" id="account-profile-id">-</p>
-              </div>
-              <div class="account-item">
-                <span class="account-label">Current period end</span>
-                <p class="account-value" id="account-period-end">Not set</p>
-              </div>
-              <div class="account-item">
-                <span class="account-label">Customer ID</span>
-                <p class="account-value" id="account-customer-id">Not connected</p>
-              </div>
-              <div class="account-item">
-                <span class="account-label">Subscription ID</span>
-                <p class="account-value" id="account-subscription-id">Not connected</p>
-              </div>
-              <div class="account-item">
-                <span class="account-label">Price ID</span>
-                <p class="account-value" id="account-price-id">Not connected</p>
-              </div>
             </div>
           </section>
         </section>
@@ -220,6 +190,32 @@
           </div>
           <p class="status" id="profile-status"></p>
         </form>
+        <section class="danger-zone">
+          <div class="danger-zone-copy">
+            <p class="danger-zone-kicker">Delete account</p>
+            <p class="danger-zone-text">Permanently remove your account, uploaded files, and saved records.</p>
+          </div>
+          <button class="btn btn-delete-solid" id="open-delete-account-modal" type="button">Delete account</button>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-modal" id="delete-account-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="confirm-modal-dialog">
+      <div class="confirm-modal-header">
+        <div>
+          <p class="confirm-modal-kicker">Delete account</p>
+          <h3 class="confirm-modal-title">Permanently delete this account?</h3>
+        </div>
+      </div>
+      <div class="confirm-modal-body">
+        <p class="confirm-modal-copy">This will permanently delete your account, your uploaded files, and your saved records from Supabase. This cannot be undone.</p>
+        <div class="confirm-modal-actions">
+          <button class="btn secondary" id="delete-account-cancel" type="button">Cancel</button>
+          <button class="btn btn-delete-solid" id="delete-account-submit" type="button">Delete account</button>
+        </div>
+        <p class="status" id="delete-account-status"></p>
       </div>
     </div>
   </div>

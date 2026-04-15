@@ -21,6 +21,11 @@ const fileModalClose = document.getElementById("file-modal-close");
 const profileSettingsToggle = document.getElementById("profile-settings-toggle");
 const profileSettingsModal = document.getElementById("profile-settings-modal");
 const profileSettingsClose = document.getElementById("profile-settings-close");
+const openDeleteAccountModalButton = document.getElementById("open-delete-account-modal");
+const deleteAccountModal = document.getElementById("delete-account-modal");
+const deleteAccountCancel = document.getElementById("delete-account-cancel");
+const deleteAccountSubmit = document.getElementById("delete-account-submit");
+const deleteAccountStatus = document.getElementById("delete-account-status");
 const openUploadModalButton = document.getElementById("open-upload-modal");
 const uploadModal = document.getElementById("upload-modal");
 const uploadModalClose = document.getElementById("upload-modal-close");
@@ -30,13 +35,6 @@ const accountOrganization = document.getElementById("account-organization");
 const accountRole = document.getElementById("account-role");
 const accountTier = document.getElementById("account-tier");
 const accountStatus = document.getElementById("account-status");
-const accountLimit = document.getElementById("account-limit");
-const accountRemaining = document.getElementById("account-remaining");
-const accountCustomerId = document.getElementById("account-customer-id");
-const accountSubscriptionId = document.getElementById("account-subscription-id");
-const accountPriceId = document.getElementById("account-price-id");
-const accountProfileId = document.getElementById("account-profile-id");
-const accountPeriodEnd = document.getElementById("account-period-end");
 const currentPlanName = document.getElementById("current-plan-name");
 const currentPlanCopy = document.getElementById("current-plan-copy");
 const changePlanButton = document.getElementById("change-plan-button");
@@ -104,11 +102,24 @@ function setProfileSettingsOpen(isOpen) {
   profileSettingsModal.classList.toggle("is-open", isOpen);
   profileSettingsModal.setAttribute("aria-hidden", String(!isOpen));
   profileSettingsToggle.setAttribute("aria-expanded", String(isOpen));
+  if (!isOpen) {
+    setDeleteAccountModalOpen(false);
+  }
 }
 
 function setUploadModalOpen(isOpen) {
   uploadModal.classList.toggle("is-open", isOpen);
   uploadModal.setAttribute("aria-hidden", String(!isOpen));
+}
+
+function setDeleteAccountModalOpen(isOpen) {
+  deleteAccountModal.classList.toggle("is-open", isOpen);
+  deleteAccountModal.setAttribute("aria-hidden", String(!isOpen));
+  if (!isOpen) {
+    setStatus(deleteAccountStatus, "");
+    deleteAccountSubmit.disabled = false;
+    deleteAccountCancel.disabled = false;
+  }
 }
 
 function showSection(section) {
@@ -120,6 +131,7 @@ function showSection(section) {
   if (!isAccount) {
     setProfileSettingsOpen(false);
     setBillingPlanPickerOpen(false);
+    setDeleteAccountModalOpen(false);
   }
   if (!isLibrary) {
     setUploadModalOpen(false);
@@ -295,15 +307,6 @@ function renderProfile() {
   accountRole.textContent = profile?.role || "-";
   accountTier.textContent = tier;
   accountStatus.textContent = titleCase(profile?.account_status || "active");
-  accountLimit.textContent = `${limit} documents`;
-  accountRemaining.textContent = `${remaining} documents`;
-  accountProfileId.textContent = currentSession?.user?.id || profile?.id || "-";
-  accountPeriodEnd.textContent = profile?.subscription_current_period_end
-    ? formatDate(profile.subscription_current_period_end)
-    : "Not set";
-  accountCustomerId.textContent = profile?.stripe_customer_id || "Not connected";
-  accountSubscriptionId.textContent = profile?.stripe_subscription_id || "Not connected";
-  accountPriceId.textContent = profile?.stripe_price_id || "Not connected";
   renderBillingPlans(profile, remaining);
   profileFullNameInput.value = profile?.full_name || "";
   profileOrganizationInput.value = profile?.organization_name || "";
@@ -365,6 +368,26 @@ async function handleProfileSave(event) {
   };
   renderProfile();
   setStatus(profileStatus, "Profile updated.", "success");
+}
+
+async function deleteAccount() {
+  setStatus(deleteAccountStatus, "Deleting account...");
+  deleteAccountSubmit.disabled = true;
+  deleteAccountCancel.disabled = true;
+
+  const { data, error } = await supabase.functions.invoke("delete-account", {
+    body: {},
+  });
+
+  if (error || data?.error) {
+    deleteAccountSubmit.disabled = false;
+    deleteAccountCancel.disabled = false;
+    setStatus(deleteAccountStatus, error?.message || data?.error || "Unable to delete account.", "error");
+    return;
+  }
+
+  await supabase.auth.signOut();
+  window.location.replace("./login.html");
 }
 
 function renderDocuments() {
@@ -608,6 +631,7 @@ async function init() {
     const isOpen = profileSettingsToggle.getAttribute("aria-expanded") === "true";
     setProfileSettingsOpen(!isOpen);
   });
+  openDeleteAccountModalButton.addEventListener("click", () => setDeleteAccountModalOpen(true));
   profileForm.addEventListener("submit", handleProfileSave);
   uploadForm.addEventListener("submit", uploadDocument);
   searchQueryInput.addEventListener("input", renderDocuments);
@@ -630,6 +654,11 @@ async function init() {
   profileSettingsModal.addEventListener("click", (event) => {
     if (event.target === profileSettingsModal) setProfileSettingsOpen(false);
   });
+  deleteAccountCancel.addEventListener("click", () => setDeleteAccountModalOpen(false));
+  deleteAccountSubmit.addEventListener("click", deleteAccount);
+  deleteAccountModal.addEventListener("click", (event) => {
+    if (event.target === deleteAccountModal) setDeleteAccountModalOpen(false);
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && fileModal.classList.contains("is-open")) {
       closeFileModal();
@@ -641,6 +670,10 @@ async function init() {
     }
     if (event.key === "Escape" && profileSettingsModal.classList.contains("is-open")) {
       setProfileSettingsOpen(false);
+      return;
+    }
+    if (event.key === "Escape" && deleteAccountModal.classList.contains("is-open")) {
+      setDeleteAccountModalOpen(false);
       return;
     }
     if (event.key === "Escape") closeMobileMenu();
