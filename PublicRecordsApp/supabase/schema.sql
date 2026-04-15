@@ -3,8 +3,43 @@ create extension if not exists pgcrypto;
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text,
+  full_name text,
+  organization_name text,
+  role text,
+  subscription_tier text not null default 'free',
+  account_status text not null default 'active',
+  document_limit integer not null default 25,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  stripe_price_id text,
+  subscription_current_period_end timestamptz,
   created_at timestamptz not null default now()
 );
+
+alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists organization_name text;
+alter table public.profiles add column if not exists role text;
+alter table public.profiles add column if not exists subscription_tier text not null default 'free';
+alter table public.profiles add column if not exists account_status text not null default 'active';
+alter table public.profiles add column if not exists document_limit integer not null default 25;
+alter table public.profiles add column if not exists stripe_customer_id text;
+alter table public.profiles add column if not exists stripe_subscription_id text;
+alter table public.profiles add column if not exists stripe_price_id text;
+alter table public.profiles add column if not exists subscription_current_period_end timestamptz;
+
+alter table public.profiles
+  drop constraint if exists profiles_subscription_tier_check;
+
+alter table public.profiles
+  add constraint profiles_subscription_tier_check
+  check (subscription_tier in ('free', 'starter', 'organization'));
+
+alter table public.profiles
+  drop constraint if exists profiles_account_status_check;
+
+alter table public.profiles
+  add constraint profiles_account_status_check
+  check (account_status in ('active', 'trialing', 'past_due', 'canceled'));
 
 create table if not exists public.documents (
   id uuid primary key default gen_random_uuid(),

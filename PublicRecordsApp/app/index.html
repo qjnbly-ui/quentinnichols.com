@@ -258,6 +258,11 @@
       box-shadow: 0 12px 24px rgba(12, 18, 28, 0.14);
     }
 
+    .btn.block {
+      width: 100%;
+      justify-content: center;
+    }
+
     .btn.secondary {
       background: var(--white);
       color: var(--ink);
@@ -342,6 +347,52 @@
       color: var(--ink);
     }
 
+    .account-summary {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1rem;
+    }
+
+    .account-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--fog);
+      padding: 1rem;
+      display: grid;
+      gap: 0.7rem;
+    }
+
+    .account-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.8rem;
+    }
+
+    .account-item {
+      display: grid;
+      gap: 0.2rem;
+    }
+
+    .account-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--teal);
+    }
+
+    .account-value {
+      margin: 0;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .account-note {
+      margin: 0;
+      color: var(--slate);
+      font-size: 0.94rem;
+    }
+
     .search-row {
       display: grid;
       grid-template-columns: minmax(0, 1.4fr) 180px auto;
@@ -418,12 +469,224 @@
       border-radius: 6px;
     }
 
+    .auth-panel {
+      padding: clamp(1.2rem, 2.5vw, 1.8rem);
+    }
+
+    .auth-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 0.95fr) minmax(320px, 0.85fr);
+      gap: 1.15rem;
+      align-items: stretch;
+    }
+
+    .auth-intro {
+      border-radius: var(--radius-lg);
+      padding: clamp(1.4rem, 3vw, 2rem);
+      color: var(--white);
+      background:
+        radial-gradient(500px 240px at 15% 18%, rgba(23, 111, 102, 0.36), transparent 58%),
+        radial-gradient(360px 220px at 88% 14%, rgba(234, 155, 63, 0.28), transparent 55%),
+        linear-gradient(145deg, #0f1721 0%, #152131 52%, #101a26 100%);
+      display: grid;
+      gap: 1.2rem;
+      min-height: 100%;
+    }
+
+    .auth-kicker {
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .auth-intro h2 {
+      margin: 0;
+      font-family: "Fraunces", "Times New Roman", serif;
+      font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+      line-height: 1.05;
+    }
+
+    .auth-intro p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.78);
+      max-width: 34ch;
+    }
+
+    .auth-points {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: auto;
+    }
+
+    .auth-point {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.9rem 1rem;
+    }
+
+    .auth-point-title {
+      margin: 0 0 0.15rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.68);
+      font-weight: 700;
+    }
+
+    .auth-point-copy {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 0.96rem;
+    }
+
+    .auth-card {
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 42px rgba(12, 18, 28, 0.08);
+      padding: clamp(1.25rem, 2.2vw, 1.7rem);
+      display: grid;
+      gap: 1rem;
+      align-content: start;
+    }
+
+    .auth-card-head {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .auth-card-head h3 {
+      margin: 0;
+      font-family: "Fraunces", "Times New Roman", serif;
+      font-size: 1.55rem;
+    }
+
+    .auth-card-head p {
+      margin: 0;
+      color: var(--slate);
+    }
+
+    .auth-toggle {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.35rem;
+      padding: 0.35rem;
+      border-radius: 999px;
+      background: #e9ecef;
+      border: 1px solid rgba(15, 22, 32, 0.08);
+    }
+
+    .auth-toggle-btn {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.95rem 1rem;
+      background: transparent;
+      color: var(--ink-soft);
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .auth-toggle-btn.is-active {
+      background: #123a33;
+      color: var(--white);
+      box-shadow: 0 10px 22px rgba(12, 18, 28, 0.14);
+    }
+
+    .auth-form {
+      display: grid;
+      gap: 1rem;
+    }
+
     @media (max-width: 860px) {
       .grid-2,
       .grid-3,
       .search-row,
-      .stats {
+      .stats,
+      .account-summary,
+      .account-list {
         grid-template-columns: 1fr;
+      }
+
+      .auth-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .auth-intro p {
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar-inner,
+      .main {
+        width: min(100vw - 1.2rem, 1120px);
+      }
+
+      .topbar-inner {
+        padding: 1rem 0 1.35rem;
+      }
+
+      .topbar-row {
+        justify-content: center;
+        text-align: center;
+      }
+
+      .topbar-links {
+        justify-content: center;
+      }
+
+      .panel {
+        padding: 1.1rem;
+      }
+
+      .auth-panel {
+        padding: 0;
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+      }
+
+      .auth-intro,
+      .auth-card {
+        border-radius: 20px;
+      }
+
+      .auth-intro {
+        padding: 1.15rem 1.1rem;
+        gap: 0.85rem;
+        text-align: center;
+        justify-items: center;
+      }
+
+      .auth-intro h2 {
+        font-size: 1.55rem;
+      }
+
+      .auth-intro > .stack {
+        gap: 0.55rem;
+        justify-items: center;
+      }
+
+      .auth-intro > .stack p:last-child {
+        display: none;
+      }
+
+      .auth-points {
+        display: none;
+      }
+
+      .auth-toggle {
+        border-radius: 18px;
+      }
+
+      .auth-toggle-btn,
+      .auth-toggle-btn.is-active {
+        border-radius: 14px;
       }
     }
   </style>
@@ -439,16 +702,7 @@
           </div>
           <div class="topbar-links">
             <a class="pill" href="/PublicRecordsApp/">Home</a>
-            <a class="pill" href="/PublicRecordsApp/demo/">Demo</a>
           </div>
-        </div>
-        <div class="hero-copy">
-          <p class="eyebrow">Supabase App</p>
-          <h1>Private records management with login, uploads, and extracted-text search.</h1>
-          <p>
-            This MVP gives each signed-in user a private document library, stores files in Supabase Storage,
-            extracts text from supported uploads, and lets them search that saved text without rereading the original file every time.
-          </p>
         </div>
       </div>
     </header>
@@ -467,55 +721,84 @@
         </div>
       </section>
 
-      <section class="panel stack hidden" id="auth-panel">
-        <div class="panel-head">
-          <div>
-            <h2>Login</h2>
-            <p>Use email and password for the first pass. Magic links can be added later.</p>
+      <section class="panel auth-panel hidden" id="auth-panel">
+        <div class="auth-layout">
+          <div class="auth-intro">
+            <div class="stack">
+              <p class="auth-kicker">Records Database</p>
+              <h2>Records that stay organized and easy to search.</h2>
+              <p>Sign in to manage your document library, upload minutes and files, and keep extracted text ready for search.</p>
+            </div>
+            <div class="auth-points">
+              <div class="auth-point">
+                <p class="auth-point-title">Private by default</p>
+                <p class="auth-point-copy">Each account gets its own records space and private file access.</p>
+              </div>
+              <div class="auth-point">
+                <p class="auth-point-title">Upload once</p>
+                <p class="auth-point-copy">Save the original file and the extracted text together for faster retrieval later.</p>
+              </div>
+              <div class="auth-point">
+                <p class="auth-point-title">Ready for search</p>
+                <p class="auth-point-copy">Search the saved text instead of reprocessing the document every time.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="auth-card">
+            <div class="auth-card-head">
+              <h3 id="auth-title">Sign in</h3>
+              <p id="auth-subtitle">Use the account tied to your records library.</p>
+            </div>
+
+            <div class="auth-toggle" role="tablist" aria-label="Account options">
+              <button class="auth-toggle-btn is-active" id="show-signin-button" type="button" aria-pressed="true">Sign in</button>
+              <button class="auth-toggle-btn" id="show-signup-button" type="button" aria-pressed="false">Create account</button>
+            </div>
+
+            <form class="auth-form" id="signin-form">
+              <div class="field">
+                <label for="signin-email">Email</label>
+                <input id="signin-email" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="signin-password">Password</label>
+                <input id="signin-password" type="password" autocomplete="current-password" required>
+              </div>
+              <div class="actions">
+                <button class="btn block" type="submit">Sign in</button>
+              </div>
+            </form>
+
+            <form class="auth-form hidden" id="signup-form">
+              <div class="field">
+                <label for="signup-full-name">Full name</label>
+                <input id="signup-full-name" type="text" autocomplete="name" required>
+              </div>
+              <div class="field">
+                <label for="signup-organization">Organization name</label>
+                <input id="signup-organization" type="text" autocomplete="organization" required>
+              </div>
+              <div class="field">
+                <label for="signup-role">Role</label>
+                <input id="signup-role" type="text" placeholder="Secretary, Clerk, Board Member">
+              </div>
+              <div class="field">
+                <label for="signup-email">Email</label>
+                <input id="signup-email" type="email" autocomplete="email" required>
+              </div>
+              <div class="field">
+                <label for="signup-password">Password</label>
+                <input id="signup-password" type="password" autocomplete="new-password" minlength="8" required>
+              </div>
+              <div class="actions">
+                <button class="btn block" type="submit">Create account</button>
+              </div>
+            </form>
+
+            <p class="status" id="auth-status"></p>
           </div>
         </div>
-        <div class="grid-2">
-          <form class="panel stack" id="signup-form">
-            <div class="panel-head">
-              <div>
-                <h3>Create account</h3>
-                <p>New users get their own private storage path automatically.</p>
-              </div>
-            </div>
-            <div class="field">
-              <label for="signup-email">Email</label>
-              <input id="signup-email" type="email" autocomplete="email" required>
-            </div>
-            <div class="field">
-              <label for="signup-password">Password</label>
-              <input id="signup-password" type="password" autocomplete="new-password" minlength="8" required>
-            </div>
-            <div class="actions">
-              <button class="btn" type="submit">Create account</button>
-            </div>
-          </form>
-
-          <form class="panel stack" id="signin-form">
-            <div class="panel-head">
-              <div>
-                <h3>Sign in</h3>
-                <p>Same account system used for uploads, search, and future AI features.</p>
-              </div>
-            </div>
-            <div class="field">
-              <label for="signin-email">Email</label>
-              <input id="signin-email" type="email" autocomplete="email" required>
-            </div>
-            <div class="field">
-              <label for="signin-password">Password</label>
-              <input id="signin-password" type="password" autocomplete="current-password" required>
-            </div>
-            <div class="actions">
-              <button class="btn" type="submit">Sign in</button>
-            </div>
-          </form>
-        </div>
-        <p class="status" id="auth-status"></p>
       </section>
 
       <section class="panel stack hidden" id="app-panel">
@@ -546,6 +829,63 @@
           </div>
         </div>
 
+        <section class="account-summary">
+          <div class="account-card">
+            <div class="panel-head">
+              <div>
+                <h3>Account</h3>
+                <p>Your tier and account state are loaded from Supabase.</p>
+              </div>
+            </div>
+            <div class="account-list">
+              <div class="account-item">
+                <span class="account-label">Name</span>
+                <p class="account-value" id="account-name">-</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Organization</span>
+                <p class="account-value" id="account-organization">-</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Role</span>
+                <p class="account-value" id="account-role">-</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Plan</span>
+                <p class="account-value" id="account-tier">Free</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Status</span>
+                <p class="account-value" id="account-status">Active</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Document limit</span>
+                <p class="account-value" id="account-limit">25</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="account-card">
+            <div class="panel-head">
+              <div>
+                <h3>Billing readiness</h3>
+                <p>Profile fields are prepared for Stripe Checkout and subscriptions.</p>
+              </div>
+            </div>
+            <p class="account-note" id="billing-note">This account is on the free tier. Stripe customer and subscription IDs can be attached later without changing the account model.</p>
+            <div class="account-list">
+              <div class="account-item">
+                <span class="account-label">Customer ID</span>
+                <p class="account-value" id="account-customer-id">Not connected</p>
+              </div>
+              <div class="account-item">
+                <span class="account-label">Subscription ID</span>
+                <p class="account-value" id="account-subscription-id">Not connected</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <form class="panel stack" id="upload-form">
           <div class="panel-head">
             <div>
@@ -556,7 +896,7 @@
           <div class="grid-3">
             <div class="field">
               <label for="upload-title">Document title</label>
-              <input id="upload-title" type="text" placeholder="April 2026 Board Minutes">
+              <input id="upload-title" type="text" placeholder="April 2026 Minutes">
             </div>
             <div class="field">
               <label for="upload-year">Year</label>
@@ -572,7 +912,7 @@
             <input id="upload-file" type="file" required>
           </div>
           <div class="actions">
-            <button class="btn" type="submit">Upload and extract text</button>
+            <button class="btn" type="submit">Upload and save extracted text</button>
           </div>
           <p class="status" id="upload-status"></p>
         </form>

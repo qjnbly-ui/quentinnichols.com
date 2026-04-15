@@ -304,6 +304,66 @@
       color: var(--slate);
     }
 
+    .pricing-section {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .pricing-lede {
+      margin: 0 auto;
+      max-width: 720px;
+      text-align: center;
+      color: var(--slate);
+    }
+
+    .pricing-card {
+      display: grid;
+      gap: 0.9rem;
+      padding: 1.3rem;
+    }
+
+    .pricing-tier {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--teal);
+      font-weight: 700;
+    }
+
+    .pricing-price {
+      display: flex;
+      align-items: baseline;
+      gap: 0.35rem;
+      font-family: "Fraunces", "Times New Roman", serif;
+      color: var(--ink);
+    }
+
+    .pricing-price strong {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .pricing-price span {
+      color: var(--slate);
+      font-size: 0.96rem;
+    }
+
+    .pricing-copy {
+      margin: 0;
+      color: var(--slate);
+    }
+
+    .pricing-list {
+      margin: 0;
+      padding-left: 1.1rem;
+      color: var(--ink-soft);
+      display: grid;
+      gap: 0.45rem;
+    }
+
     .card .price {
       font-weight: 700;
       color: var(--ink);
@@ -500,11 +560,10 @@
     <div class="header-shell">
       <div class="header-top">
         <div class="header-logo">
-          <span>PR</span>
+          <span>RD</span>
           Records Database — by Quentin Nichols
         </div>
         <div class="header-actions">
-          <a class="header-pill" href="/">QuentinNichols.com</a>
           <a class="header-pill" href="/PublicRecordsApp/app/">App Login</a>
         </div>
       </div>
@@ -513,7 +572,7 @@
         <div class="hero-copy">
           <p class="hero-kicker">Record keeping made easy</p>
           <h1 class="hero-title">Records Database</h1>
-          <p class="hero-lede">Search, preview, and publish public records in seconds. Built for towns, boards, and nonprofits that want a clean, always-accessible archive.</p>
+          <p class="hero-lede">Upload, search, and open records in one place. Built for small organizations that need a clean, searchable archive.</p>
         </div>
       </div>
     </div>
@@ -521,14 +580,13 @@
 
   <main class="container">
     <section class="hero">
-      <h2>Make public records easy to find</h2>
-      <p>Search, preview, and download records in seconds. Built to keep recurring documents accessible.</p>
+      <h2>Keep records easy to find</h2>
+      <p>Upload, search, and download records from a simple archive built for recurring documents.</p>
       <div class="cta-row">
         <a class="cta" href="/PublicRecordsApp/demo/">Try a demo</a>
-        <a class="cta" href="/PublicRecordsApp/app/">Open app</a>
         <button class="cta link-btn" type="button" data-open-modal>Public example</button>
       </div>
-      <p class="page-subtitle">Preview a live public records site and return here anytime.</p>
+      <p class="page-subtitle">Try the demo or preview a live example and return here anytime.</p>
     </section>
 
     <section class="story-panel">
@@ -547,13 +605,55 @@
         <p>Open records in a built-in viewer or download the source file.</p>
       </article>
       <article class="card">
-        <h3>Simple Publishing</h3>
-        <p>Add new records without rebuilding the site. Keep archives organized.</p>
+        <h3>Simple Uploads</h3>
+        <p>Add DOCX and text-based files to your archive and keep extracted text searchable.</p>
       </article>
       <article class="card">
-        <h3>Branded for You</h3>
-        <p>Custom colors, logos, and labels for each organization.</p>
+        <h3>Private Accounts</h3>
+        <p>Each account gets its own private records space and document access.</p>
       </article>
+    </section>
+
+    <section class="pricing-section">
+      <h2 class="section-title">Simple pricing</h2>
+      <p class="pricing-lede">Start with a limited free archive, move up when you need more room, and keep the pricing tied to what the product actually supports today.</p>
+      <div class="grid">
+        <article class="card pricing-card">
+          <div class="pricing-tier">Free Tier</div>
+          <div class="pricing-price"><strong>$0</strong><span>/month</span></div>
+          <p class="pricing-copy">A small single-account archive for trying the workflow and keeping a limited document set searchable.</p>
+          <ul class="pricing-list">
+            <li>1 account</li>
+            <li>Up to 25 documents</li>
+            <li>DOCX and text-file uploads</li>
+            <li>Saved text extraction and keyword search</li>
+            <li>Private file access</li>
+          </ul>
+        </article>
+        <article class="card pricing-card">
+          <div class="pricing-tier">Starter</div>
+          <div class="pricing-price"><strong>$24</strong><span>/month</span></div>
+          <p class="pricing-copy">For a working archive that needs more room and a larger document library.</p>
+          <ul class="pricing-list">
+            <li>1 account</li>
+            <li>Up to 250 documents</li>
+            <li>Everything in Free</li>
+            <li>Larger searchable archive</li>
+            <li>More room for active record keeping</li>
+          </ul>
+        </article>
+        <article class="card pricing-card">
+          <div class="pricing-tier">Organization</div>
+          <div class="pricing-price"><strong>$89</strong><span>/month</span></div>
+          <p class="pricing-copy">For larger archives and future organization-level tools as the product expands.</p>
+          <ul class="pricing-list">
+            <li>Higher document limits</li>
+            <li>Priority access to larger archive features</li>
+            <li>Prepared for future organization tools</li>
+            <li>Priority access to new features</li>
+          </ul>
+        </article>
+      </div>
     </section>
 
   </main>

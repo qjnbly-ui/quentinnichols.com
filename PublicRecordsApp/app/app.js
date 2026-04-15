@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
+import JSZip from "https://esm.sh/jszip@3.10.1";
 
 const config = window.RECORDS_APP_CONFIG || {};
 const setupPanel = document.getElementById("setup-panel");
@@ -9,9 +10,22 @@ const authStatus = document.getElementById("auth-status");
 const uploadStatus = document.getElementById("upload-status");
 const docsStatus = document.getElementById("docs-status");
 const userBadge = document.getElementById("user-badge");
+const authTitle = document.getElementById("auth-title");
+const authSubtitle = document.getElementById("auth-subtitle");
+const accountName = document.getElementById("account-name");
+const accountOrganization = document.getElementById("account-organization");
+const accountRole = document.getElementById("account-role");
+const accountTier = document.getElementById("account-tier");
+const accountStatus = document.getElementById("account-status");
+const accountLimit = document.getElementById("account-limit");
+const accountCustomerId = document.getElementById("account-customer-id");
+const accountSubscriptionId = document.getElementById("account-subscription-id");
+const billingNote = document.getElementById("billing-note");
 
 const signupForm = document.getElementById("signup-form");
 const signinForm = document.getElementById("signin-form");
+const showSigninButton = document.getElementById("show-signin-button");
+const showSignupButton = document.getElementById("show-signup-button");
 const signoutButton = document.getElementById("signout-button");
 const uploadForm = document.getElementById("upload-form");
 const refreshButton = document.getElementById("refresh-docs");
@@ -35,6 +49,7 @@ const statProcessing = document.getElementById("stat-processing");
 let supabase = null;
 let currentSession = null;
 let documentsCache = [];
+let currentProfile = null;
 
 function setStatus(el, message, tone = "") {
   if (!el) return;
@@ -48,6 +63,27 @@ function show(el, visible) {
   el.classList.toggle("hidden", !visible);
 }
 
+function toggleSignup(visible) {
+  show(signupForm, visible);
+  show(signinForm, !visible);
+  showSignupButton?.classList.toggle("is-active", visible);
+  showSigninButton?.classList.toggle("is-active", !visible);
+  showSignupButton?.setAttribute("aria-pressed", String(visible));
+  showSigninButton?.setAttribute("aria-pressed", String(!visible));
+
+  if (authTitle) {
+    authTitle.textContent = visible ? "Create account" : "Sign in";
+  }
+
+  if (authSubtitle) {
+    authSubtitle.textContent = visible
+      ? "Create your account to start building your records library."
+      : "Use the account tied to your records library.";
+  }
+
+  setStatus(authStatus, "");
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -55,6 +91,78 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function cleanWhitespace(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function titleCase(value) {
+  return String(value || "")
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function decodeXmlEntities(value) {
+  return value
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&apos;", "'");
+}
+
+async function extractDocxText(file) {
+  const buffer = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(buffer);
+  const xmlFile = zip.file("word/document.xml");
+  if (!xmlFile) {
+    throw new Error("This DOCX file is missing word/document.xml.");
+  }
+
+  const xml = await xmlFile.async("string");
+  const paragraphs = xml.match(/<w:p[\s\S]*?<\/w:p>/g) || [];
+  const text = paragraphs
+    .map((paragraph) => {
+      const runs = paragraph.match(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g) || [];
+      return runs
+        .map((run) => run.replace(/<\/?w:t[^>]*>/g, ""))
+        .map((value) => decodeXmlEntities(value))
+        .join(" ");
+    })
+    .join("\n");
+
+  return cleanWhitespace(text);
+}
+
+async function extractTextFromFile(file) {
+  const lowerName = file.name.toLowerCase();
+
+  if (lowerName.endsWith(".docx")) {
+    return extractDocxText(file);
+  }
+
+  if (
+    lowerName.endsWith(".txt") ||
+    lowerName.endsWith(".md") ||
+    lowerName.endsWith(".csv") ||
+    lowerName.endsWith(".json") ||
+    lowerName.endsWith(".html") ||
+    lowerName.endsWith(".htm")
+  ) {
+    const text = await file.text();
+    return cleanWhitespace(text);
+  }
+
+  if (lowerName.endsWith(".doc")) {
+    throw new Error("Legacy .doc files are not supported in the simple browser version. Convert them to .docx first.");
+  }
+
+  if (lowerName.endsWith(".pdf")) {
+    throw new Error("PDF extraction is not set up in the simple browser version yet. Start with .docx or plain-text files.");
+  }
+
+  throw new Error("Unsupported file type. Use .docx, .txt, .md, .csv, .json, or .html.");
 }
 
 function snippetFromText(text, query) {
@@ -89,6 +197,108 @@ function statusCounts(docs) {
   const ready = docs.filter((doc) => doc.status === "ready").length;
   const processing = docs.filter((doc) => doc.status === "processing" || doc.status === "uploaded").length;
   return { ready, processing };
+}
+
+function getDocumentLimit(profile) {
+  if (profile?.document_limit) return Number(profile.document_limit);
+
+  if (profile?.subscription_tier === "starter") return 250;
+  if (profile?.subscription_tier === "organization") return 2500;
+  return 25;
+}
+
+function renderProfile() {
+  const profile = currentProfile;
+  const tier = titleCase(profile?.subscription_tier || "free");
+  const status = titleCase(profile?.account_status || "active");
+  const limit = getDocumentLimit(profile);
+
+  if (accountName) {
+    accountName.textContent = profile?.full_name || currentSession?.user?.email || "-";
+  }
+
+  if (accountOrganization) {
+    accountOrganization.textContent = profile?.organization_name || "-";
+  }
+
+  if (accountRole) {
+    accountRole.textContent = profile?.role || "-";
+  }
+
+  if (accountTier) {
+    accountTier.textContent = tier;
+  }
+
+  if (accountStatus) {
+    accountStatus.textContent = status;
+  }
+
+  if (accountLimit) {
+    accountLimit.textContent = `${limit} documents`;
+  }
+
+  if (accountCustomerId) {
+    accountCustomerId.textContent = profile?.stripe_customer_id || "Not connected";
+  }
+
+  if (accountSubscriptionId) {
+    accountSubscriptionId.textContent = profile?.stripe_subscription_id || "Not connected";
+  }
+
+  if (billingNote) {
+    billingNote.textContent = profile?.stripe_customer_id
+      ? "This account has Stripe billing metadata attached and is ready for subscription status syncing."
+      : "This account is on the free tier. Stripe customer and subscription IDs can be attached later without changing the account model.";
+  }
+
+  if (userBadge) {
+    if (currentSession?.user) {
+      userBadge.textContent = `${tier} · ${currentSession.user.email || currentSession.user.id}`;
+    } else {
+      userBadge.textContent = "";
+    }
+  }
+}
+
+async function syncProfileFromSession() {
+  if (!supabase || !currentSession?.user) return;
+
+  const metadata = currentSession.user.user_metadata || {};
+  const updates = {
+    email: currentSession.user.email || null,
+    full_name: metadata.full_name || null,
+    organization_name: metadata.organization_name || null,
+    role: metadata.role || null,
+  };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update(updates)
+    .eq("id", currentSession.user.id);
+
+  if (error) {
+    console.error("Profile sync failed", error.message);
+  }
+}
+
+async function loadProfile() {
+  if (!supabase || !currentSession?.user) return;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, email, full_name, organization_name, role, subscription_tier, account_status, document_limit, stripe_customer_id, stripe_subscription_id, stripe_price_id, subscription_current_period_end")
+    .eq("id", currentSession.user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Unable to load profile", error.message);
+    currentProfile = null;
+    renderProfile();
+    return;
+  }
+
+  currentProfile = data || null;
+  renderProfile();
 }
 
 function renderDocuments() {
@@ -136,7 +346,6 @@ function renderDocuments() {
       ${errorBlock}
       <div class="doc-actions">
         <button class="btn secondary" type="button" data-action="download" data-id="${doc.id}">Open file</button>
-        <button class="btn secondary" type="button" data-action="extract" data-id="${doc.id}">Run extraction</button>
       </div>
     `;
 
@@ -168,22 +377,6 @@ async function loadDocuments() {
   setStatus(docsStatus, `${documentsCache.length} document${documentsCache.length === 1 ? "" : "s"} loaded.`, "success");
 }
 
-async function runExtraction(documentId) {
-  if (!supabase) return;
-  setStatus(uploadStatus, "Running extraction...");
-  const { error } = await supabase.functions.invoke("ingest-document", {
-    body: { documentId },
-  });
-
-  if (error) {
-    setStatus(uploadStatus, error.message, "error");
-    return;
-  }
-
-  setStatus(uploadStatus, "Extraction finished.", "success");
-  await loadDocuments();
-}
-
 async function openFile(documentId) {
   const doc = documentsCache.find((item) => item.id === documentId);
   if (!doc) return;
@@ -204,6 +397,12 @@ async function uploadDocument(event) {
   event.preventDefault();
   if (!supabase || !currentSession?.user) return;
 
+  const documentLimit = getDocumentLimit(currentProfile);
+  if (documentsCache.length >= documentLimit) {
+    setStatus(uploadStatus, `Your ${titleCase(currentProfile?.subscription_tier || "free")} plan is limited to ${documentLimit} documents right now.`, "error");
+    return;
+  }
+
   const file = uploadFileInput.files?.[0];
   if (!file) {
     setStatus(uploadStatus, "Choose a file before uploading.", "error");
@@ -215,6 +414,16 @@ async function uploadDocument(event) {
   const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
   const storagePath = `${userId}/${timestamp}-${sanitizedName}`;
   const title = uploadTitleInput.value.trim() || file.name.replace(/\.[^.]+$/, "");
+  let extractedText = "";
+
+  setStatus(uploadStatus, "Extracting text in browser...");
+
+  try {
+    extractedText = await extractTextFromFile(file);
+  } catch (error) {
+    setStatus(uploadStatus, error instanceof Error ? error.message : "Text extraction failed.", "error");
+    return;
+  }
 
   setStatus(uploadStatus, "Uploading file...");
 
@@ -229,7 +438,7 @@ async function uploadDocument(event) {
 
   setStatus(uploadStatus, "Saving metadata...");
 
-  const { data: inserted, error: insertError } = await supabase
+  const { error: insertError } = await supabase
     .from("documents")
     .insert({
       user_id: userId,
@@ -240,29 +449,19 @@ async function uploadDocument(event) {
       file_size: file.size,
       year: uploadYearInput.value.trim() || null,
       month: uploadMonthInput.value.trim() || null,
-      status: "uploaded",
+      status: "ready",
+      processing_error: null,
+      extracted_text: extractedText,
     })
-    .select("id")
-    .single();
+    ;
 
-  if (insertError || !inserted?.id) {
+  if (insertError) {
     setStatus(uploadStatus, insertError?.message || "Document metadata insert failed.", "error");
     return;
   }
 
-  setStatus(uploadStatus, "File uploaded. Extracting text...");
+  setStatus(uploadStatus, "Upload complete.");
   uploadForm.reset();
-
-  const { error: ingestError } = await supabase.functions.invoke("ingest-document", {
-    body: { documentId: inserted.id },
-  });
-
-  if (ingestError) {
-    setStatus(uploadStatus, `Upload succeeded, but extraction failed: ${ingestError.message}`, "error");
-    await loadDocuments();
-    return;
-  }
-
   setStatus(uploadStatus, "Upload and text extraction complete.", "success");
   await loadDocuments();
 }
@@ -271,14 +470,48 @@ async function handleSignup(event) {
   event.preventDefault();
   if (!supabase) return;
 
+  const fullName = document.getElementById("signup-full-name").value.trim();
+  const organizationName = document.getElementById("signup-organization").value.trim();
+  const role = document.getElementById("signup-role").value.trim();
   const email = document.getElementById("signup-email").value.trim();
   const password = document.getElementById("signup-password").value;
   setStatus(authStatus, "Creating account...");
 
-  const { error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName,
+        organization_name: organizationName,
+        role,
+      },
+    },
+  });
+
   if (error) {
     setStatus(authStatus, error.message, "error");
     return;
+  }
+
+  if (data?.user && data?.session) {
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({
+        email,
+        full_name: fullName,
+        organization_name: organizationName,
+        role,
+        subscription_tier: "free",
+        account_status: "active",
+        document_limit: 25,
+      })
+      .eq("id", data.user.id);
+
+    if (profileError) {
+      setStatus(authStatus, `Account created, but profile save failed: ${profileError.message}`, "error");
+      return;
+    }
   }
 
   setStatus(authStatus, "Account created. Check your email if confirmation is enabled, then sign in.", "success");
@@ -320,10 +553,6 @@ async function handleDocAction(event) {
   if (action === "download") {
     await openFile(id);
   }
-
-  if (action === "extract") {
-    await runExtraction(id);
-  }
 }
 
 function renderSession(session) {
@@ -334,9 +563,13 @@ function renderSession(session) {
   show(appPanel, Boolean(config.supabaseUrl && config.supabaseAnonKey) && isAuthed);
 
   if (isAuthed) {
-    userBadge.textContent = session.user.email || session.user.id;
+    currentProfile = null;
+    renderProfile();
+    syncProfileFromSession().then(loadProfile);
     loadDocuments();
   } else {
+    currentProfile = null;
+    renderProfile();
     documentsCache = [];
     renderDocuments();
   }
@@ -345,6 +578,8 @@ function renderSession(session) {
 function attachEvents() {
   signupForm?.addEventListener("submit", handleSignup);
   signinForm?.addEventListener("submit", handleSignin);
+  showSigninButton?.addEventListener("click", () => toggleSignup(false));
+  showSignupButton?.addEventListener("click", () => toggleSignup(true));
   signoutButton?.addEventListener("click", handleSignout);
   uploadForm?.addEventListener("submit", uploadDocument);
   refreshButton?.addEventListener("click", loadDocuments);
@@ -368,6 +603,7 @@ async function init() {
   if (!hasConfig) return;
 
   supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+  toggleSignup(false);
   attachEvents();
 
   const { data, error } = await supabase.auth.getSession();

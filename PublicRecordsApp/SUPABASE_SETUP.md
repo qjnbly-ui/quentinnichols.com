@@ -1,58 +1,87 @@
 # Supabase Setup
 
-This repo now includes a first-pass authenticated app at [app/index.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/index.html) plus Supabase schema and ingestion scaffolding.
+This repo now includes a simple authenticated app at [app/index.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/index.html).
 
-## What this MVP does
+## Simplest deployment model
 
-- Users sign up and log in with Supabase Auth.
-- Each user uploads into their own private storage path: `auth.uid()/filename`.
-- A `documents` row stores metadata and extracted text.
-- The app searches the saved text, not the original file, which matches the pattern you described from the CAT minutes system.
+For the current MVP:
 
-Short version:
+- Vercel only hosts the static files
+- Supabase handles Auth, Database, and Storage
+- text extraction happens in the browser during upload
 
-> Upload file -> save metadata -> extract text once -> store extracted text -> search stored text later.
+That means you do **not** need:
 
-## Files added
+- a Vercel `/api/ingest-document` route
+- a Supabase Edge Function
+- the `service_role` key
 
-- [app/index.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/index.html): browser app UI
-- [app/app.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/app.js): auth, upload, search, and extraction calls
-- [app/config.example.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/config.example.js): client config template
-- [supabase/schema.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/schema.sql): tables, RLS, storage policies, and bucket creation
-- [supabase/functions/ingest-document/index.ts](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/functions/ingest-document/index.ts): text extraction function
+For now, the browser:
 
-## Create the Supabase project
+1. reads the file locally
+2. extracts text for supported file types
+3. uploads the original file to Supabase Storage
+4. saves the extracted text into the `documents` table
 
-Use a free project if you want to avoid paid compute while testing, or create it in your Pro organization if you want it under that org.
+This matches your existing pattern of storing extracted text once and searching that saved text later.
 
-Recommended project name:
+## Files to use
 
-- `records-database`
+- [app/index.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/index.html): app UI
+- [app/app.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/app.js): signup, login, upload, extraction, and search
+- [app/config.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/config.js): client config
+- [supabase/schema.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/schema.sql): tables, storage bucket, and RLS policies
 
-## Configure the project
+## What you need to configure
 
-1. In Supabase, create the project.
-2. Run the SQL in [supabase/schema.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/schema.sql) in the SQL editor.
-3. Deploy the edge function from [supabase/functions/ingest-document/index.ts](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/functions/ingest-document/index.ts).
-4. Copy [app/config.example.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/config.example.js) to `app/config.js` and paste in:
-   - Project URL
-   - Anon key
+You already have the two client-side values the app needs:
 
-## Recommended CLI commands
+- `supabaseUrl`
+- `supabaseAnonKey`
 
-If you install the Supabase CLI locally, the usual commands are:
+Those belong in [app/config.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/config.js).
 
-```bash
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-supabase functions deploy ingest-document
+You do **not** need to add anything to Vercel environment variables for this version unless you later add a real server-side API.
+
+## What still needs to be done in Supabase
+
+1. Make sure you ran [supabase/schema.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/schema.sql)
+2. In `Authentication -> Providers`, make sure email/password auth is enabled
+3. Deploy the site files to Vercel or your website
+4. Open `/app/`
+5. Create an account
+6. Upload a supported file
+
+If you already ran the schema before the signup form was expanded, also add these columns to `profiles`:
+
+```sql
+alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists organization_name text;
+alter table public.profiles add column if not exists role text;
+alter table public.profiles add column if not exists subscription_tier text not null default 'free';
+alter table public.profiles add column if not exists account_status text not null default 'active';
+alter table public.profiles add column if not exists document_limit integer not null default 25;
+alter table public.profiles add column if not exists stripe_customer_id text;
+alter table public.profiles add column if not exists stripe_subscription_id text;
+alter table public.profiles add column if not exists stripe_price_id text;
+alter table public.profiles add column if not exists subscription_current_period_end timestamptz;
 ```
 
-You can also paste the SQL manually in the dashboard if that is easier.
+Then run:
 
-## Supported extraction in this MVP
+```sql
+alter table public.profiles drop constraint if exists profiles_subscription_tier_check;
+alter table public.profiles
+  add constraint profiles_subscription_tier_check
+  check (subscription_tier in ('free', 'starter', 'organization'));
 
-Currently supported:
+alter table public.profiles drop constraint if exists profiles_account_status_check;
+alter table public.profiles
+  add constraint profiles_account_status_check
+  check (account_status in ('active', 'trialing', 'past_due', 'canceled'));
+```
+
+## Supported file types in the simple version
 
 - `.docx`
 - `.txt`
@@ -62,45 +91,34 @@ Currently supported:
 - `.html`
 - `.htm`
 
-Not implemented yet:
+Not supported yet:
 
-- `.pdf` text extraction
+- `.pdf`
 - scanned image OCR
-- legacy `.doc` extraction inside Supabase
+- legacy `.doc`
 
-Important note:
+For unsupported types, convert them to `.docx` first.
 
-Your existing CAT minutes pipeline used macOS `textutil` for `.doc`. That will not work inside a Supabase Edge Function. For now, convert `.doc` files to `.docx` before upload.
+## Why this is simpler
 
-## How the extraction function works
+Because extraction is happening in the browser, there is no private backend runtime to manage right now.
 
-The function follows the same general model as your existing CAT minutes process:
+That avoids:
 
-1. Look up the uploaded document row.
-2. Download the file from private Supabase Storage.
-3. If it is `.docx`, open the file as a zip archive.
-4. Read `word/document.xml`.
-5. Pull out the text runs.
-6. Normalize whitespace.
-7. Save the cleaned text back into `documents.extracted_text`.
-8. Mark the row as `ready`.
+- function deployment
+- secret management
+- service role access
+- `/api/...` routing
 
-That keeps extraction separate from search and later AI steps.
+## When you will eventually need a backend
 
-## How search works right now
+You should move extraction to a backend later if you add:
 
-Search is keyword-based over `documents.extracted_text` and title data already stored in Postgres.
+- PDF parsing
+- OCR
+- AI summaries
+- embeddings
+- document chat
+- long-running processing
 
-That means:
-
-- uploads are parsed once
-- search reads saved text
-- later AI can use the same saved text instead of reparsing files
-
-## Next steps I recommend
-
-1. Add an organization model so documents belong to a board/org instead of only one person.
-2. Add PDF extraction and OCR.
-3. Add chunking for long documents.
-4. Add AI summaries and question answering from extracted chunks.
-5. Add invites and shared access for multi-user boards.
+At that point, a Vercel API route is probably the easiest next step for you.
