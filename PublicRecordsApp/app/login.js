@@ -80,9 +80,6 @@ async function handleSignup(event) {
         full_name: fullName,
         organization_name: organizationName,
         role,
-        subscription_tier: "free",
-        account_status: "active",
-        document_limit: 25,
       })
       .eq("id", data.user.id);
 

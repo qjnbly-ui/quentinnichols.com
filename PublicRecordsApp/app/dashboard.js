@@ -1,21 +1,31 @@
 import JSZip from "https://esm.sh/jszip@3.10.1";
 import { createBrowserSupabase, hasConfig, getSessionOrNull } from "./lib/supabase-client.js";
+import { PLAN_ORDER, getPlanConfig, formatPlanName } from "./lib/plan-config.js";
 
 const setupPanel = document.getElementById("setup-panel");
 const dashboardPanel = document.getElementById("dashboard-panel");
 const uploadStatus = document.getElementById("upload-status");
 const docsStatus = document.getElementById("docs-status");
-const userBadge = document.getElementById("user-badge");
+const mobileLogoutButton = document.getElementById("mobile-logout-button");
+const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
+const mobileMenu = document.getElementById("mobile-menu");
+const mobileMenuAccount = document.getElementById("mobile-menu-account");
+const mobileMenuLibrary = document.getElementById("mobile-menu-library");
 const accountSection = document.getElementById("account-section");
 const librarySection = document.getElementById("library-section");
-const showAccountSectionButton = document.getElementById("show-account-section");
-const showLibrarySectionButton = document.getElementById("show-library-section");
 const fileModal = document.getElementById("file-modal");
 const fileModalTitle = document.getElementById("file-modal-title");
 const fileModalFrame = document.getElementById("file-modal-frame");
 const fileModalDownload = document.getElementById("file-modal-download");
 const fileModalClose = document.getElementById("file-modal-close");
+const profileSettingsToggle = document.getElementById("profile-settings-toggle");
+const profileSettingsModal = document.getElementById("profile-settings-modal");
+const profileSettingsClose = document.getElementById("profile-settings-close");
+const openUploadModalButton = document.getElementById("open-upload-modal");
+const uploadModal = document.getElementById("upload-modal");
+const uploadModalClose = document.getElementById("upload-modal-close");
 const accountName = document.getElementById("account-name");
+const accountEmail = document.getElementById("account-email");
 const accountOrganization = document.getElementById("account-organization");
 const accountRole = document.getElementById("account-role");
 const accountTier = document.getElementById("account-tier");
@@ -24,15 +34,20 @@ const accountLimit = document.getElementById("account-limit");
 const accountRemaining = document.getElementById("account-remaining");
 const accountCustomerId = document.getElementById("account-customer-id");
 const accountSubscriptionId = document.getElementById("account-subscription-id");
-const billingNote = document.getElementById("billing-note");
-const signoutButton = document.getElementById("signout-button");
+const accountPriceId = document.getElementById("account-price-id");
+const accountProfileId = document.getElementById("account-profile-id");
+const accountPeriodEnd = document.getElementById("account-period-end");
+const currentPlanName = document.getElementById("current-plan-name");
+const currentPlanCopy = document.getElementById("current-plan-copy");
+const changePlanButton = document.getElementById("change-plan-button");
+const billingPlanPicker = document.getElementById("billing-plan-picker");
+const billingPlanGrid = document.getElementById("billing-plan-grid");
 const profileForm = document.getElementById("profile-form");
 const profileFullNameInput = document.getElementById("profile-full-name");
 const profileOrganizationInput = document.getElementById("profile-organization");
 const profileRoleInput = document.getElementById("profile-role");
 const profileStatus = document.getElementById("profile-status");
 const uploadForm = document.getElementById("upload-form");
-const refreshButton = document.getElementById("refresh-docs");
 const searchQueryInput = document.getElementById("search-query");
 const searchYearSelect = document.getElementById("search-year");
 const searchResetButton = document.getElementById("search-reset");
@@ -42,17 +57,21 @@ const uploadMonthInput = document.getElementById("upload-month");
 const uploadFileInput = document.getElementById("upload-file");
 const docList = document.getElementById("doc-list");
 const docEmpty = document.getElementById("doc-empty");
-const fileList = document.getElementById("file-list");
-const fileEmpty = document.getElementById("file-empty");
-const fileStatus = document.getElementById("file-status");
-const statFiles = document.getElementById("stat-files");
-const statPlan = document.getElementById("stat-plan");
-const statRemaining = document.getElementById("stat-remaining");
 
 let supabase = null;
 let currentSession = null;
 let currentProfile = null;
 let documentsCache = [];
+
+function getInitialSection() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("section") === "library" ? "library" : "account";
+}
+
+function setMenuActive(section) {
+  mobileMenuAccount.classList.toggle("is-active", section === "account");
+  mobileMenuLibrary.classList.toggle("is-active", section === "library");
+}
 
 function setStatus(el, message, tone = "") {
   if (!el) return;
@@ -66,14 +85,46 @@ function show(el, visible) {
   el.classList.toggle("hidden", !visible);
 }
 
+function closeMobileMenu() {
+  if (!mobileMenu || !mobileMenuToggle) return;
+  mobileMenu.classList.remove("is-open");
+  mobileMenu.classList.add("hidden");
+  mobileMenuToggle.setAttribute("aria-expanded", "false");
+}
+
+function toggleMobileMenu() {
+  if (!mobileMenu || !mobileMenuToggle) return;
+  const nextOpen = !mobileMenu.classList.contains("is-open");
+  mobileMenu.classList.toggle("is-open", nextOpen);
+  mobileMenu.classList.toggle("hidden", !nextOpen);
+  mobileMenuToggle.setAttribute("aria-expanded", String(nextOpen));
+}
+
+function setProfileSettingsOpen(isOpen) {
+  profileSettingsModal.classList.toggle("is-open", isOpen);
+  profileSettingsModal.setAttribute("aria-hidden", String(!isOpen));
+  profileSettingsToggle.setAttribute("aria-expanded", String(isOpen));
+}
+
+function setUploadModalOpen(isOpen) {
+  uploadModal.classList.toggle("is-open", isOpen);
+  uploadModal.setAttribute("aria-hidden", String(!isOpen));
+}
+
 function showSection(section) {
   const isAccount = section === "account";
+  const isLibrary = section === "library";
   accountSection.hidden = !isAccount;
   librarySection.hidden = isAccount;
-  showAccountSectionButton.classList.toggle("is-active", isAccount);
-  showLibrarySectionButton.classList.toggle("is-active", !isAccount);
-  showAccountSectionButton.setAttribute("aria-pressed", String(isAccount));
-  showLibrarySectionButton.setAttribute("aria-pressed", String(!isAccount));
+  setMenuActive(section);
+  if (!isAccount) {
+    setProfileSettingsOpen(false);
+    setBillingPlanPickerOpen(false);
+  }
+  if (!isLibrary) {
+    setUploadModalOpen(false);
+  }
+  closeMobileMenu();
 }
 
 function escapeHtml(value) {
@@ -113,9 +164,48 @@ function formatDate(value) {
 
 function getDocumentLimit(profile) {
   if (profile?.document_limit) return Number(profile.document_limit);
-  if (profile?.subscription_tier === "starter") return 250;
-  if (profile?.subscription_tier === "organization") return 2500;
-  return 25;
+  return getPlanConfig(profile?.subscription_tier).documentLimit;
+}
+
+function setBillingPlanPickerOpen(isOpen) {
+  billingPlanPicker.classList.toggle("hidden", !isOpen);
+  changePlanButton.setAttribute("aria-expanded", String(isOpen));
+  changePlanButton.textContent = isOpen ? "Hide plans" : "Change plan";
+}
+
+function renderBillingPlans(profile, remaining) {
+  const activePlanId = profile?.subscription_tier || "free";
+  const activePlan = getPlanConfig(activePlanId);
+
+  currentPlanName.textContent = activePlan.name;
+  currentPlanCopy.textContent = `${activePlan.priceLabel} · ${activePlan.documentLimit} documents · ${remaining} remaining`;
+
+  billingPlanGrid.innerHTML = PLAN_ORDER.map((planId) => {
+    const plan = getPlanConfig(planId);
+    const isCurrent = planId === activePlanId;
+    const badge = isCurrent ? '<span class="plan-badge">Current</span>' : "";
+    const currentCopy = isCurrent
+      ? `<p class="plan-footnote">${remaining} document${remaining === 1 ? "" : "s"} remaining on this plan.</p>`
+      : "";
+
+    return `
+      <article class="plan-card${isCurrent ? " is-current" : ""}">
+        <div class="plan-card-head">
+          <div>
+            <p class="plan-name">${plan.name}</p>
+            <p class="plan-price">${plan.priceLabel}</p>
+          </div>
+          ${badge}
+        </div>
+        <p class="plan-summary">${plan.summary}</p>
+        <p class="plan-limit">${plan.documentLimit} documents</p>
+        <ul class="plan-features">
+          ${plan.features.map((feature) => `<li>${escapeHtml(feature)}</li>`).join("")}
+        </ul>
+        ${currentCopy}
+      </article>
+    `;
+  }).join("");
 }
 
 function buildPreviewUrl(doc, signedUrl) {
@@ -195,25 +285,26 @@ function snippetFromText(text, query) {
 
 function renderProfile() {
   const profile = currentProfile;
-  const tier = titleCase(profile?.subscription_tier || "free");
+  const tier = formatPlanName(profile?.subscription_tier || "free");
   const limit = getDocumentLimit(profile);
   const remaining = Math.max(limit - documentsCache.length, 0);
 
   accountName.textContent = profile?.full_name || currentSession?.user?.email || "-";
+  accountEmail.textContent = currentSession?.user?.email || profile?.email || "-";
   accountOrganization.textContent = profile?.organization_name || "-";
   accountRole.textContent = profile?.role || "-";
   accountTier.textContent = tier;
   accountStatus.textContent = titleCase(profile?.account_status || "active");
   accountLimit.textContent = `${limit} documents`;
   accountRemaining.textContent = `${remaining} documents`;
+  accountProfileId.textContent = currentSession?.user?.id || profile?.id || "-";
+  accountPeriodEnd.textContent = profile?.subscription_current_period_end
+    ? formatDate(profile.subscription_current_period_end)
+    : "Not set";
   accountCustomerId.textContent = profile?.stripe_customer_id || "Not connected";
   accountSubscriptionId.textContent = profile?.stripe_subscription_id || "Not connected";
-  billingNote.textContent = profile?.stripe_customer_id
-    ? "This account has Stripe billing metadata attached and is ready for subscription status syncing."
-    : "This account is on the free tier. Stripe customer and subscription IDs can be attached later without changing the account model.";
-  userBadge.textContent = `${tier} · ${currentSession?.user?.email || currentSession?.user?.id || ""}`;
-  statPlan.textContent = tier;
-  statRemaining.textContent = String(remaining);
+  accountPriceId.textContent = profile?.stripe_price_id || "Not connected";
+  renderBillingPlans(profile, remaining);
   profileFullNameInput.value = profile?.full_name || "";
   profileOrganizationInput.value = profile?.organization_name || "";
   profileRoleInput.value = profile?.role || "";
@@ -285,7 +376,6 @@ function renderDocuments() {
   if (!query) {
     show(docEmpty, true);
     docEmpty.textContent = "Type a keyword to search your documents.";
-    statFiles.textContent = String(documentsCache.length);
     renderProfile();
     return;
   }
@@ -330,7 +420,6 @@ function renderDocuments() {
     docList.append(card);
   });
 
-  statFiles.textContent = String(documentsCache.length);
   renderProfile();
 }
 
@@ -357,28 +446,6 @@ function updateYearFilterOptions() {
   });
 }
 
-function renderFiles() {
-  fileList.innerHTML = "";
-  show(fileEmpty, documentsCache.length === 0);
-
-  documentsCache.forEach((doc) => {
-    const item = document.createElement("article");
-    item.className = "download-item";
-    item.innerHTML = `
-      <div>
-        <p class="download-name">${escapeHtml(doc.title || doc.original_filename || "Untitled document")}</p>
-        <p class="download-meta">${escapeHtml(doc.original_filename || "Unknown file")}${doc.year ? ` · ${escapeHtml(doc.year)}` : ""}${doc.month ? ` · ${escapeHtml(doc.month)}` : ""}</p>
-      </div>
-      <div class="doc-actions">
-        <button class="btn secondary" type="button" data-action="download" data-id="${doc.id}">Download</button>
-        <button class="btn secondary" type="button" data-action="share" data-id="${doc.id}">Share</button>
-        <button class="btn warn" type="button" data-action="delete" data-id="${doc.id}">Delete</button>
-      </div>
-    `;
-    fileList.append(item);
-  });
-}
-
 async function loadDocuments() {
   setStatus(docsStatus, "Loading documents...");
   const { data, error } = await supabase
@@ -394,7 +461,6 @@ async function loadDocuments() {
   documentsCache = Array.isArray(data) ? data : [];
   updateYearFilterOptions();
   renderDocuments();
-  renderFiles();
   setStatus(docsStatus, `${documentsCache.length} document${documentsCache.length === 1 ? "" : "s"} loaded.`, "success");
 }
 
@@ -428,60 +494,6 @@ function closeFileModal() {
   fileModal.classList.remove("is-open");
   fileModal.setAttribute("aria-hidden", "true");
   fileModalFrame.src = "";
-}
-
-async function shareFile(documentId) {
-  const signed = await createSignedUrlForDocument(documentId);
-  if (!signed) return;
-  const { doc, signedUrl } = signed;
-
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: doc.title || doc.original_filename || "Shared file",
-        text: `Shared from Records Database: ${doc.title || doc.original_filename || "File"}`,
-        url: signedUrl,
-      });
-      setStatus(fileStatus, "Share sheet opened.", "success");
-      return;
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") return;
-    }
-  }
-
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(signedUrl);
-    setStatus(fileStatus, "Share link copied to clipboard.", "success");
-    return;
-  }
-
-  setStatus(fileStatus, "Sharing is not available on this device.", "error");
-}
-
-async function deleteFile(documentId) {
-  const doc = documentsCache.find((item) => item.id === documentId);
-  if (!doc) return;
-
-  const confirmed = window.confirm(`Delete "${doc.title || doc.original_filename}"?`);
-  if (!confirmed) return;
-
-  setStatus(fileStatus, "Deleting file...");
-
-  const { error: storageError } = await supabase.storage.from("documents").remove([doc.storage_path]);
-  if (storageError) {
-    setStatus(fileStatus, storageError.message, "error");
-    return;
-  }
-
-  const { error: deleteError } = await supabase.from("documents").delete().eq("id", documentId);
-  if (deleteError) {
-    setStatus(fileStatus, deleteError.message, "error");
-    return;
-  }
-
-  closeFileModal();
-  setStatus(fileStatus, "File deleted.", "success");
-  await loadDocuments();
 }
 
 async function uploadDocument(event) {
@@ -539,6 +551,7 @@ async function uploadDocument(event) {
 
   uploadForm.reset();
   setStatus(uploadStatus, "Upload and text extraction complete.", "success");
+  setUploadModalOpen(false);
   await loadDocuments();
 }
 
@@ -559,8 +572,6 @@ async function handleDocAction(event) {
   if (!id || !action) return;
 
   if (action === "download") await openFile(id);
-  if (action === "share") await shareFile(id);
-  if (action === "delete") await deleteFile(id);
 }
 
 async function init() {
@@ -582,12 +593,21 @@ async function init() {
   await syncProfileFromSession();
   await loadProfile();
   await loadDocuments();
-  showSection("library");
+  showSection(getInitialSection());
 
-  signoutButton.addEventListener("click", handleSignout);
-  refreshButton.addEventListener("click", loadDocuments);
-  showAccountSectionButton.addEventListener("click", () => showSection("account"));
-  showLibrarySectionButton.addEventListener("click", () => showSection("library"));
+  mobileLogoutButton.addEventListener("click", handleSignout);
+  mobileMenuToggle.addEventListener("click", toggleMobileMenu);
+  mobileMenuAccount.addEventListener("click", () => showSection("account"));
+  mobileMenuLibrary.addEventListener("click", () => showSection("library"));
+  changePlanButton.addEventListener("click", () => {
+    const isOpen = changePlanButton.getAttribute("aria-expanded") === "true";
+    setBillingPlanPickerOpen(!isOpen);
+  });
+  openUploadModalButton.addEventListener("click", () => setUploadModalOpen(true));
+  profileSettingsToggle.addEventListener("click", () => {
+    const isOpen = profileSettingsToggle.getAttribute("aria-expanded") === "true";
+    setProfileSettingsOpen(!isOpen);
+  });
   profileForm.addEventListener("submit", handleProfileSave);
   uploadForm.addEventListener("submit", uploadDocument);
   searchQueryInput.addEventListener("input", renderDocuments);
@@ -598,15 +618,39 @@ async function init() {
     renderDocuments();
   });
   docList.addEventListener("click", handleDocAction);
-  fileList.addEventListener("click", handleDocAction);
   fileModalClose.addEventListener("click", closeFileModal);
   fileModal.addEventListener("click", (event) => {
     if (event.target === fileModal) closeFileModal();
   });
+  uploadModalClose.addEventListener("click", () => setUploadModalOpen(false));
+  uploadModal.addEventListener("click", (event) => {
+    if (event.target === uploadModal) setUploadModalOpen(false);
+  });
+  profileSettingsClose.addEventListener("click", () => setProfileSettingsOpen(false));
+  profileSettingsModal.addEventListener("click", (event) => {
+    if (event.target === profileSettingsModal) setProfileSettingsOpen(false);
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && fileModal.classList.contains("is-open")) {
       closeFileModal();
+      return;
     }
+    if (event.key === "Escape" && uploadModal.classList.contains("is-open")) {
+      setUploadModalOpen(false);
+      return;
+    }
+    if (event.key === "Escape" && profileSettingsModal.classList.contains("is-open")) {
+      setProfileSettingsOpen(false);
+      return;
+    }
+    if (event.key === "Escape") closeMobileMenu();
+  });
+  document.addEventListener("click", (event) => {
+    if (!mobileMenu.classList.contains("is-open")) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (mobileMenu.contains(target) || mobileMenuToggle.contains(target)) return;
+    closeMobileMenu();
   });
 
   supabase.auth.onAuthStateChange((_event, session) => {

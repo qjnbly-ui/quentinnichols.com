@@ -98,10 +98,36 @@ begin
 end;
 $$;
 
+create or replace function public.protect_profile_billing_fields()
+returns trigger
+language plpgsql
+as $$
+begin
+  if auth.role() <> 'service_role' then
+    if new.subscription_tier is distinct from old.subscription_tier
+      or new.account_status is distinct from old.account_status
+      or new.document_limit is distinct from old.document_limit
+      or new.stripe_customer_id is distinct from old.stripe_customer_id
+      or new.stripe_subscription_id is distinct from old.stripe_subscription_id
+      or new.stripe_price_id is distinct from old.stripe_price_id
+      or new.subscription_current_period_end is distinct from old.subscription_current_period_end then
+      raise exception 'Billing fields are managed outside the client app.';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
 drop trigger if exists documents_set_updated_at on public.documents;
 create trigger documents_set_updated_at
 before update on public.documents
 for each row execute procedure public.set_updated_at();
+
+drop trigger if exists profiles_protect_billing_fields on public.profiles;
+create trigger profiles_protect_billing_fields
+before update on public.profiles
+for each row execute procedure public.protect_profile_billing_fields();
 
 alter table public.profiles enable row level security;
 alter table public.documents enable row level security;

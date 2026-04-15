@@ -32,10 +32,12 @@ This matches your existing pattern of storing extracted text once and searching 
 - [app/dashboard.html](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/dashboard.html): signed-in dashboard
 - [app/login.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/login.js): signup and sign-in logic
 - [app/dashboard.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/dashboard.js): profile, billing, upload, search, and downloads
+- [app/lib/plan-config.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/lib/plan-config.js): shared plan definitions and limits
 - [app/lib/supabase-client.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/lib/supabase-client.js): shared Supabase client helper
 - [app/styles.css](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/styles.css): shared app styles
 - [app/config.js](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/app/config.js): client config
 - [supabase/schema.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/schema.sql): tables, storage bucket, and RLS policies
+- [supabase/manual_billing_updates.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/manual_billing_updates.sql): pre-Stripe manual tier changes
 
 ## What you need to configure
 
@@ -56,6 +58,8 @@ You do **not** need to add anything to Vercel environment variables for this ver
 4. Open `/app/`
 5. Create an account
 6. Upload a supported file
+
+If billing fields were added before this pass, rerun [supabase/schema.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/schema.sql) so the new billing-protection trigger is installed.
 
 If you already ran the schema before the signup form was expanded, also add these columns to `profiles`:
 
@@ -127,3 +131,18 @@ You should move extraction to a backend later if you add:
 - long-running processing
 
 At that point, a Vercel API route is probably the easiest next step for you.
+
+## Pre-Stripe billing flow
+
+Right now:
+
+- the app enforces plan document limits
+- the UI reads tier, status, and Stripe metadata from `profiles`
+- signed-in users can edit profile fields only
+- billing fields are meant to be changed outside the client app
+
+Until Stripe is connected, use [supabase/manual_billing_updates.sql](/Users/quentinnichols/Documents/Websites/PublicRecordsApp/supabase/manual_billing_updates.sql) in Supabase SQL Editor to:
+
+- move an account between `free`, `starter`, and `organization`
+- change `account_status`
+- attach Stripe ids later when Stripe goes live

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Records Database Files</title>
+  <meta name="description" content="Records Database file management page.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-row dashboard-topbar-row">
+          <div class="brand">
+            <span class="brand-badge">RD</span>
+            Records Database
+          </div>
+          <button class="topbar-logout" id="mobile-logout-button" type="button">Logout</button>
+          <button class="menu-toggle" id="mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+        <div class="mobile-menu hidden" id="mobile-menu">
+          <div class="mobile-menu-head">
+            <p class="mobile-menu-title">Navigate</p>
+          </div>
+          <button class="mobile-menu-link" id="mobile-menu-account" type="button">Account</button>
+          <button class="mobile-menu-link" id="mobile-menu-library" type="button">Library</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel stack" id="setup-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Connect Supabase</h2>
+            <p>Add your project URL and anon key in <code class="inline">app/config.js</code> before using the app.</p>
+          </div>
+        </div>
+        <div class="notice">
+          <strong>Missing config.</strong> Copy <code class="inline">app/config.example.js</code> to
+          <code class="inline">app/config.js</code>, then paste your Supabase project URL and anon key.
+        </div>
+      </section>
+
+      <section class="panel stack hidden" id="files-panel">
+        <div class="panel-head">
+          <div>
+            <h2>All files</h2>
+            <p>Manage your archive with preview, download, share, and delete actions.</p>
+          </div>
+          <a class="btn secondary button-link" href="./dashboard.html?section=library">Back to library</a>
+        </div>
+
+        <div class="download-list" id="file-list"></div>
+        <p class="empty hidden" id="file-empty">No files in your archive yet.</p>
+        <p class="status" id="file-status"></p>
+      </section>
+    </main>
+  </div>
+
+  <div class="file-modal" id="file-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="file-modal-dialog">
+      <div class="file-modal-header">
+        <p class="file-modal-title" id="file-modal-title">File preview</p>
+        <div class="file-modal-actions">
+          <a class="file-modal-link" id="file-modal-download" href="#" target="_blank" rel="noopener">Download</a>
+          <button class="file-modal-close" id="file-modal-close" type="button">Close</button>
+        </div>
+      </div>
+      <div class="file-modal-body">
+        <iframe class="file-modal-frame" id="file-modal-frame" src="" title="File preview"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./files.js"></script>
+</body>
+</html>
