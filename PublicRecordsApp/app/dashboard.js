@@ -27,17 +27,15 @@ const mobileMenuLibrary = document.getElementById("mobile-menu-library");
 const accountSection = document.getElementById("account-section");
 const librarySection = document.getElementById("library-section");
 const accountLibraryContext = document.getElementById("account-library-context");
-const librarySectionContext = document.getElementById("library-section-context");
 const libraryAccessCard = document.getElementById("library-access-card");
+const librarySettingsSection = document.getElementById("library-settings-section");
 const organizationPrimaryColorField = document.getElementById("organization-primary-color-field");
 const organizationAccentColorField = document.getElementById("organization-accent-color-field");
 const organizationAdvancedSettings = document.getElementById("organization-advanced-settings");
+const libraryAccessCopy = document.getElementById("library-access-copy");
 const activeOrganizationSelect = document.getElementById("active-organization-select");
 const activeMembershipRole = document.getElementById("active-membership-role");
 const sharedLibraryCount = document.getElementById("shared-library-count");
-const libraryOrganizationSummary = document.getElementById("library-organization-summary");
-const librarySectionMembershipRole = document.getElementById("library-section-membership-role");
-const librarySectionSharedLibraryCount = document.getElementById("library-section-shared-library-count");
 const platformAdminLink = document.getElementById("platform-admin-link");
 const fileModal = document.getElementById("file-modal");
 const fileModalTitle = document.getElementById("file-modal-title");
@@ -528,11 +526,8 @@ function renderOrganizationSelector() {
     .join("");
 
   activeMembershipRole.textContent = isSupportView() ? "Master Admin Support View" : formatRoleLabel(getActiveRole());
-  libraryOrganizationSummary.value = activeMembership?.organization?.name || "";
-  librarySectionMembershipRole.textContent = isSupportView() ? "Master Admin Support View" : formatRoleLabel(getActiveRole());
   const ownLibraries = memberships.filter((item) => item.role === "account_owner").length;
   sharedLibraryCount.textContent = String(Math.max(memberships.length - ownLibraries, 0));
-  librarySectionSharedLibraryCount.textContent = sharedLibraryCount.textContent;
   activeOrganizationSelect.disabled = !hasMultipleLibraries();
 }
 
@@ -626,15 +621,18 @@ function renderProfile() {
   uploadIsPublicInput.disabled = !canUpload || !hasEmbeddedAccess();
 
   show(accountLibraryContext, showLibrarySwitcher);
-  show(librarySectionContext, showLibrarySwitcher);
   show(libraryAccessCard, true);
-  show(changePlanButton, !isFreePlan);
+  show(librarySettingsSection, !isFreePlan);
+  show(changePlanButton, canManageBilling(getActiveRole(), isPlatformAdminEmail(currentSession.user.email)));
   show(organizationPrimaryColorField, !isFreePlan);
   show(organizationAccentColorField, !isFreePlan);
   show(organizationAdvancedSettings, !isFreePlan);
   show(inviteManagementSection, !isFreePlan);
   show(memberManagementSection, !isFreePlan);
-  if (isFreePlan) {
+  libraryAccessCopy.textContent = isFreePlan
+    ? "Redeem invite codes for shared libraries."
+    : "Redeem invite codes and manage access for this library.";
+  if (!canManageBilling(getActiveRole(), isPlatformAdminEmail(currentSession.user.email))) {
     setBillingPlanPickerOpen(false);
   }
 
@@ -840,18 +838,44 @@ async function handleSignout() {
 async function handleProfileSave(event) {
   event.preventDefault();
   setStatus(profileStatus, "Saving profile...");
+  const organization = getActiveOrganization();
 
   const updates = {
     full_name: profileFullNameInput.value.trim() || null,
   };
 
-  const { error } = await supabase.from("profiles").update(updates).eq("id", currentSession.user.id);
-  if (error) {
-    setStatus(profileStatus, error.message, "error");
+  const [{ error: profileError }, organizationResult] = await Promise.all([
+    supabase.from("profiles").update(updates).eq("id", currentSession.user.id),
+    organization && canManageMembers(getActiveRole(), isPlatformAdminEmail(currentSession.user.email))
+      ? supabase
+          .from("organizations")
+          .update({
+            name: organizationNameInput.value.trim() || organization.name,
+          })
+          .eq("id", organization.id)
+          .select("id, name, slug, owner_user_id, subscription_tier, account_status, document_limit, storage_limit_mb, user_limit, public_embed_enabled, public_embed_token, transcript_preview_enabled, keyword_search_enabled, file_preview_cards_enabled, hosted_public_portal_enabled, branded_primary_color, branded_accent_color")
+          .single()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
+
+  if (profileError) {
+    setStatus(profileStatus, profileError.message, "error");
+    return;
+  }
+  if (organizationResult?.error) {
+    setStatus(profileStatus, organizationResult.error.message, "error");
     return;
   }
 
   currentProfile = { ...(currentProfile || {}), ...updates };
+  if (organizationResult?.data) {
+    activeMembership.organization = organizationResult.data;
+    memberships = memberships.map((membership) =>
+      membership.organization?.id === organizationResult.data.id
+        ? { ...membership, organization: organizationResult.data }
+        : membership
+    );
+  }
   renderProfile();
   setStatus(profileStatus, "Profile updated.", "success");
 }

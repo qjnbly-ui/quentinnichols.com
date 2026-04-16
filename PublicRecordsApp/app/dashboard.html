@@ -128,19 +128,15 @@
               </div>
           </section>
 
-          <section class="account-card">
+          <section class="account-card" id="library-settings-section">
             <div class="panel-head">
               <div>
                 <h3>Library settings</h3>
-                <p>Basic settings for the active library.</p>
+                <p>Settings for the active library.</p>
               </div>
             </div>
             <form class="stack" id="organization-settings-form">
               <div class="grid-3">
-                <div class="field">
-                  <label for="organization-name-input">Library name</label>
-                  <input id="organization-name-input" type="text">
-                </div>
                 <div class="field" id="organization-primary-color-field">
                   <label for="organization-primary-color">Primary color</label>
                   <input id="organization-primary-color" type="text" placeholder="#176f66">
@@ -183,7 +179,7 @@
             <div class="panel-head">
               <div>
                 <h3>Library access</h3>
-                <p>Redeem invite codes and manage who can work inside this library.</p>
+                <p id="library-access-copy">Redeem invite codes and manage access for this library.</p>
               </div>
             </div>
             <form class="stack" id="redeem-invite-form">
@@ -267,28 +263,6 @@
         </section>
 
         <section class="section-view" id="library-section">
-          <section class="account-card">
-            <div class="panel-head">
-              <div>
-                <h3>Library</h3>
-                <p>Upload, search, and manage the files in your active library.</p>
-              </div>
-            </div>
-            <div class="grid-3" id="library-section-context">
-              <div class="field">
-                <label for="library-organization-summary">Library</label>
-                <input id="library-organization-summary" type="text" readonly>
-              </div>
-              <div class="field">
-                <span class="field-title">Your access</span>
-                <p class="account-value" id="library-section-membership-role">-</p>
-              </div>
-              <div class="field">
-                <span class="field-title">Shared libraries</span>
-                <p class="account-value" id="library-section-shared-library-count">0</p>
-              </div>
-            </div>
-          </section>
           <div class="library-actions-grid">
             <div class="library-action-slot">
               <button class="btn" id="open-upload-modal" type="button">Upload</button>
@@ -358,6 +332,10 @@
           <div class="field">
             <label for="profile-full-name">Full name</label>
             <input id="profile-full-name" type="text" autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="organization-name-input">Library name</label>
+            <input id="organization-name-input" type="text" autocomplete="organization">
           </div>
           <div class="actions">
             <button class="btn" type="submit">Save profile</button>
