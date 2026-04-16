@@ -1,6 +1,21 @@
 {
   "redirects": [
     {
+      "source": "/PublicRecordsApp",
+      "destination": "https://n3xra.com",
+      "permanent": true
+    },
+    {
+      "source": "/PublicRecordsApp/",
+      "destination": "https://n3xra.com",
+      "permanent": true
+    },
+    {
+      "source": "/PublicRecordsApp/:path*",
+      "destination": "https://n3xra.com/:path*",
+      "permanent": true
+    },
+    {
       "source": "/projects/colechaseforjudge",
       "destination": "https://colechaseforjudge.com/",
       "permanent": true
