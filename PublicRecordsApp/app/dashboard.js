@@ -26,9 +26,18 @@ const mobileMenuAccount = document.getElementById("mobile-menu-account");
 const mobileMenuLibrary = document.getElementById("mobile-menu-library");
 const accountSection = document.getElementById("account-section");
 const librarySection = document.getElementById("library-section");
+const accountLibraryContext = document.getElementById("account-library-context");
+const librarySectionContext = document.getElementById("library-section-context");
+const libraryAccessCard = document.getElementById("library-access-card");
+const organizationPrimaryColorField = document.getElementById("organization-primary-color-field");
+const organizationAccentColorField = document.getElementById("organization-accent-color-field");
+const organizationAdvancedSettings = document.getElementById("organization-advanced-settings");
 const activeOrganizationSelect = document.getElementById("active-organization-select");
 const activeMembershipRole = document.getElementById("active-membership-role");
 const sharedLibraryCount = document.getElementById("shared-library-count");
+const libraryOrganizationSummary = document.getElementById("library-organization-summary");
+const librarySectionMembershipRole = document.getElementById("library-section-membership-role");
+const librarySectionSharedLibraryCount = document.getElementById("library-section-shared-library-count");
 const platformAdminLink = document.getElementById("platform-admin-link");
 const fileModal = document.getElementById("file-modal");
 const fileModalTitle = document.getElementById("file-modal-title");
@@ -82,6 +91,8 @@ const organizationSettingsStatus = document.getElementById("organization-setting
 const redeemInviteForm = document.getElementById("redeem-invite-form");
 const redeemInviteCodeInput = document.getElementById("redeem-invite-code");
 const redeemInviteStatus = document.getElementById("redeem-invite-status");
+const inviteManagementSection = document.getElementById("invite-management-section");
+const memberManagementSection = document.getElementById("member-management-section");
 const createInviteForm = document.getElementById("create-invite-form");
 const inviteRoleInput = document.getElementById("invite-role");
 const inviteMaxUsesInput = document.getElementById("invite-max-uses");
@@ -251,6 +262,14 @@ function getDocumentLimit() {
 
 function hasEmbeddedAccess() {
   return getActiveOrganization()?.subscription_tier === "organization";
+}
+
+function isFreePlanExperience() {
+  return getActiveOrganization()?.subscription_tier === "free" && !isSupportView();
+}
+
+function hasMultipleLibraries() {
+  return memberships.length > 1;
 }
 
 function getPlanLimits(planId) {
@@ -509,8 +528,12 @@ function renderOrganizationSelector() {
     .join("");
 
   activeMembershipRole.textContent = isSupportView() ? "Master Admin Support View" : formatRoleLabel(getActiveRole());
+  libraryOrganizationSummary.value = activeMembership?.organization?.name || "";
+  librarySectionMembershipRole.textContent = isSupportView() ? "Master Admin Support View" : formatRoleLabel(getActiveRole());
   const ownLibraries = memberships.filter((item) => item.role === "account_owner").length;
   sharedLibraryCount.textContent = String(Math.max(memberships.length - ownLibraries, 0));
+  librarySectionSharedLibraryCount.textContent = sharedLibraryCount.textContent;
+  activeOrganizationSelect.disabled = !hasMultipleLibraries();
 }
 
 function updateEmbedAccess() {
@@ -571,6 +594,8 @@ function renderBillingPlans() {
 
 function renderProfile() {
   const organization = getActiveOrganization();
+  const isFreePlan = isFreePlanExperience();
+  const showLibrarySwitcher = hasMultipleLibraries();
   const canEditSettings = canManageMembers(getActiveRole(), isPlatformAdminEmail(currentSession.user.email));
   const canEditLibrary = canManageMembers(getActiveRole(), isPlatformAdminEmail(currentSession.user.email));
   const canUpload = canManageLibrary(getActiveRole(), isPlatformAdminEmail(currentSession.user.email));
@@ -591,18 +616,31 @@ function renderProfile() {
   organizationFilePreviewCardsInput.checked = Boolean(organization?.file_preview_cards_enabled);
 
   organizationNameInput.disabled = !canEditLibrary;
-  organizationPrimaryColorInput.disabled = !canEditLibrary;
-  organizationAccentColorInput.disabled = !canEditLibrary;
-  organizationPublicEmbedInput.disabled = !canEditLibrary || !hasEmbeddedAccess();
-  organizationKeywordSearchInput.disabled = !canEditLibrary;
-  organizationFilePreviewCardsInput.disabled = !canEditLibrary;
+  organizationPrimaryColorInput.disabled = !canEditLibrary || isFreePlan;
+  organizationAccentColorInput.disabled = !canEditLibrary || isFreePlan;
+  organizationPublicEmbedInput.disabled = !canEditLibrary || !hasEmbeddedAccess() || isFreePlan;
+  organizationKeywordSearchInput.disabled = !canEditLibrary || isFreePlan;
+  organizationFilePreviewCardsInput.disabled = !canEditLibrary || isFreePlan;
   organizationSettingsSave.disabled = !canEditLibrary;
   openUploadModalButton.disabled = !canUpload;
   uploadIsPublicInput.disabled = !canUpload || !hasEmbeddedAccess();
 
+  show(accountLibraryContext, showLibrarySwitcher);
+  show(librarySectionContext, showLibrarySwitcher);
+  show(libraryAccessCard, true);
+  show(changePlanButton, !isFreePlan);
+  show(organizationPrimaryColorField, !isFreePlan);
+  show(organizationAccentColorField, !isFreePlan);
+  show(organizationAdvancedSettings, !isFreePlan);
+  show(inviteManagementSection, !isFreePlan);
+  show(memberManagementSection, !isFreePlan);
+  if (isFreePlan) {
+    setBillingPlanPickerOpen(false);
+  }
+
   Array.from(createInviteForm.elements).forEach((field) => {
     if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLButtonElement) {
-      field.disabled = !canEditSettings;
+      field.disabled = !canEditSettings || isFreePlan;
     }
   });
 
@@ -821,20 +859,25 @@ async function handleProfileSave(event) {
 async function handleOrganizationSettingsSave(event) {
   event.preventDefault();
   const organization = getActiveOrganization();
+  const isFreePlan = isFreePlanExperience();
   if (!organization) return;
   if (!canManageMembers(getActiveRole(), isPlatformAdminEmail(currentSession.user.email))) {
     setStatus(organizationSettingsStatus, "You do not have permission to change library settings.", "error");
     return;
   }
 
-  const updates = {
-    name: organizationNameInput.value.trim() || organization.name,
-    branded_primary_color: organizationPrimaryColorInput.value.trim() || null,
-    branded_accent_color: organizationAccentColorInput.value.trim() || null,
-    public_embed_enabled: hasEmbeddedAccess() ? organizationPublicEmbedInput.checked : false,
-    keyword_search_enabled: organizationKeywordSearchInput.checked,
-    file_preview_cards_enabled: organizationFilePreviewCardsInput.checked,
-  };
+  const updates = isFreePlan
+    ? {
+        name: organizationNameInput.value.trim() || organization.name,
+      }
+    : {
+        name: organizationNameInput.value.trim() || organization.name,
+        branded_primary_color: organizationPrimaryColorInput.value.trim() || null,
+        branded_accent_color: organizationAccentColorInput.value.trim() || null,
+        public_embed_enabled: hasEmbeddedAccess() ? organizationPublicEmbedInput.checked : false,
+        keyword_search_enabled: organizationKeywordSearchInput.checked,
+        file_preview_cards_enabled: organizationFilePreviewCardsInput.checked,
+      };
 
   setStatus(organizationSettingsStatus, "Saving library settings...");
   const { data, error } = await supabase

@@ -53,18 +53,18 @@
       <section class="panel hidden stack" id="files-panel">
         <div class="panel-head">
           <div>
-            <h2>All files</h2>
-            <p>Manage the documents in your active library.</p>
+            <h2>Library Files</h2>
+            <p>Browse and manage the files in the active library.</p>
           </div>
           <a class="btn secondary button-link" href="./dashboard.html?section=library">Back to records</a>
         </div>
 
-        <div class="grid-3">
-          <div class="field">
+        <div class="grid-3" id="files-library-context">
+          <div class="field" id="files-active-organization-field">
             <label for="active-organization-select">Active library</label>
             <select id="active-organization-select"></select>
           </div>
-          <div class="field">
+          <div class="field" id="files-active-membership-field">
             <span class="field-title">Your access</span>
             <p class="account-value" id="active-membership-role">-</p>
           </div>

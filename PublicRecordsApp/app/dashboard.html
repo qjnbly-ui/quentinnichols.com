@@ -53,33 +53,8 @@
       <section class="panel stack hidden" id="dashboard-panel">
         <div class="notice hidden" id="support-banner"></div>
 
-        <section class="account-card">
-          <div class="panel-head">
-            <div>
-              <h3>Library Context</h3>
-              <p>Switch between your own library and any shared libraries you belong to.</p>
-            </div>
-            <a class="btn secondary button-link hidden" id="platform-admin-link" href="./admin.html">Platform admin</a>
-          </div>
-          <div class="grid-3">
-            <div class="field">
-              <label for="active-organization-select">Active library</label>
-              <select id="active-organization-select"></select>
-            </div>
-            <div class="field">
-              <span class="field-title">Your access</span>
-              <p class="account-value" id="active-membership-role">-</p>
-            </div>
-            <div class="field">
-              <span class="field-title">Shared libraries</span>
-              <p class="account-value" id="shared-library-count">0</p>
-            </div>
-          </div>
-          <p class="status" id="context-status"></p>
-        </section>
-
         <section class="section-view" id="account-section" hidden>
-          <section class="account-card">
+          <section class="account-card" id="library-settings-card">
             <div class="account-top">
               <h3>Profile</h3>
               <button class="btn secondary profile-settings-button" id="profile-settings-toggle" type="button" aria-expanded="false">Profile settings</button>
@@ -110,13 +85,31 @@
                 <p class="account-value" id="account-status">Active</p>
               </div>
             </div>
+            <div class="grid-3" id="account-library-context">
+              <div class="field">
+                <label for="active-organization-select">Library</label>
+                <select id="active-organization-select"></select>
+              </div>
+              <div class="field">
+                <span class="field-title">Your access</span>
+                <p class="account-value" id="active-membership-role">-</p>
+              </div>
+              <div class="field">
+                <span class="field-title">Shared libraries</span>
+                <p class="account-value" id="shared-library-count">0</p>
+              </div>
+            </div>
+            <div class="actions">
+              <a class="btn secondary button-link hidden" id="platform-admin-link" href="./admin.html">Platform admin</a>
+            </div>
+            <p class="status" id="context-status"></p>
           </section>
 
           <section class="account-card">
             <div class="panel-head">
               <div>
-                <h3>Library settings</h3>
-                <p>These settings apply to the active library only.</p>
+                <h3>Billing</h3>
+                <p>Plan details for the active library.</p>
               </div>
             </div>
             <div class="current-plan-card">
@@ -130,8 +123,17 @@
                 <button class="btn secondary" id="change-plan-button" type="button" aria-expanded="false">Change plan</button>
               </div>
             </div>
-            <div class="billing-plan-picker hidden" id="billing-plan-picker">
-              <div class="plan-grid" id="billing-plan-grid"></div>
+              <div class="billing-plan-picker hidden" id="billing-plan-picker">
+                <div class="plan-grid" id="billing-plan-grid"></div>
+              </div>
+          </section>
+
+          <section class="account-card">
+            <div class="panel-head">
+              <div>
+                <h3>Library settings</h3>
+                <p>Basic settings for the active library.</p>
+              </div>
             </div>
             <form class="stack" id="organization-settings-form">
               <div class="grid-3">
@@ -139,16 +141,16 @@
                   <label for="organization-name-input">Library name</label>
                   <input id="organization-name-input" type="text">
                 </div>
-                <div class="field">
+                <div class="field" id="organization-primary-color-field">
                   <label for="organization-primary-color">Primary color</label>
                   <input id="organization-primary-color" type="text" placeholder="#176f66">
                 </div>
-                <div class="field">
+                <div class="field" id="organization-accent-color-field">
                   <label for="organization-accent-color">Accent color</label>
                   <input id="organization-accent-color" type="text" placeholder="#ea9b3f">
                 </div>
               </div>
-              <div class="inline-actions setting-toggles">
+              <div class="inline-actions setting-toggles" id="organization-advanced-settings">
                 <label class="toggle-pill">
                   <input id="organization-public-embed" type="checkbox">
                   <span>Public embed enabled</span>
@@ -177,7 +179,7 @@
             </div>
           </section>
 
-          <section class="account-card">
+          <section class="account-card" id="library-access-card">
             <div class="panel-head">
               <div>
                 <h3>Library access</h3>
@@ -195,7 +197,7 @@
               <p class="status" id="redeem-invite-status"></p>
             </form>
 
-            <div class="stack">
+            <div class="stack" id="invite-management-section">
               <div class="panel-head compact-head">
                 <div>
                   <h3>Invite codes</h3>
@@ -240,7 +242,7 @@
               </div>
             </div>
 
-            <div class="stack">
+            <div class="stack" id="member-management-section">
               <div class="panel-head compact-head">
                 <div>
                   <h3>Members</h3>
@@ -265,6 +267,28 @@
         </section>
 
         <section class="section-view" id="library-section">
+          <section class="account-card">
+            <div class="panel-head">
+              <div>
+                <h3>Library</h3>
+                <p>Upload, search, and manage the files in your active library.</p>
+              </div>
+            </div>
+            <div class="grid-3" id="library-section-context">
+              <div class="field">
+                <label for="library-organization-summary">Library</label>
+                <input id="library-organization-summary" type="text" readonly>
+              </div>
+              <div class="field">
+                <span class="field-title">Your access</span>
+                <p class="account-value" id="library-section-membership-role">-</p>
+              </div>
+              <div class="field">
+                <span class="field-title">Shared libraries</span>
+                <p class="account-value" id="library-section-shared-library-count">0</p>
+              </div>
+            </div>
+          </section>
           <div class="library-actions-grid">
             <div class="library-action-slot">
               <button class="btn" id="open-upload-modal" type="button">Upload</button>

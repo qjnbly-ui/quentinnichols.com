@@ -18,6 +18,11 @@ create table if not exists public.profiles (
   updated_at timestamptz not null default now()
 );
 
+alter table public.profiles add column if not exists email text;
+alter table public.profiles add column if not exists full_name text;
+alter table public.profiles add column if not exists created_at timestamptz not null default now();
+alter table public.profiles add column if not exists updated_at timestamptz not null default now();
+
 create table if not exists public.platform_admins (
   user_id uuid primary key references auth.users (id) on delete cascade,
   email text not null unique,
@@ -33,7 +38,7 @@ create table if not exists public.organizations (
   account_status text not null default 'active',
   document_limit integer not null default 25,
   storage_limit_mb integer not null default 512,
-  user_limit integer not null default 2,
+  user_limit integer not null default 1,
   public_embed_enabled boolean not null default false,
   public_embed_token text unique default encode(gen_random_bytes(12), 'hex'),
   transcript_preview_enabled boolean not null default false,
@@ -185,6 +190,8 @@ create or replace function public.is_platform_admin()
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select
     coalesce(auth.jwt() ->> 'email', '') = 'quentin@quentinnichols.com'
@@ -199,6 +206,8 @@ create or replace function public.organization_role(target_organization_id uuid)
 returns text
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select om.role
   from public.organization_memberships om
@@ -211,6 +220,8 @@ create or replace function public.can_view_organization(target_organization_id u
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select
     public.is_platform_admin()
@@ -226,6 +237,8 @@ create or replace function public.can_manage_members(target_organization_id uuid
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select
     public.is_platform_admin()
@@ -242,6 +255,8 @@ create or replace function public.can_manage_org_settings(target_organization_id
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select
     public.is_platform_admin()
@@ -258,6 +273,8 @@ create or replace function public.can_manage_billing(target_organization_id uuid
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select
     public.is_platform_admin()
@@ -274,6 +291,8 @@ create or replace function public.can_manage_documents(target_organization_id uu
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select
     public.is_platform_admin()
@@ -463,6 +482,15 @@ as $$
 begin
   if not public.can_manage_members(input_organization_id) then
     raise exception 'Not allowed to manage invite codes for this library.';
+  end if;
+
+  if exists (
+    select 1
+    from public.organizations
+    where id = input_organization_id
+      and subscription_tier = 'free'
+  ) then
+    raise exception 'Invite codes are not available on the Free plan.';
   end if;
 
   return query

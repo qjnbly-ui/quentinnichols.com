@@ -15,6 +15,8 @@ const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
 const mobileMenu = document.getElementById("mobile-menu");
 const mobileMenuAccount = document.getElementById("mobile-menu-account");
 const mobileMenuLibrary = document.getElementById("mobile-menu-library");
+const filesActiveOrganizationField = document.getElementById("files-active-organization-field");
+const filesActiveMembershipField = document.getElementById("files-active-membership-field");
 const activeOrganizationSelect = document.getElementById("active-organization-select");
 const activeMembershipRole = document.getElementById("active-membership-role");
 const documentCount = document.getElementById("document-count");
@@ -92,6 +94,14 @@ function getActiveOrganization() {
   return activeMembership?.organization || null;
 }
 
+function isFreePlanExperience() {
+  return getActiveOrganization()?.subscription_tier === "free";
+}
+
+function hasMultipleLibraries() {
+  return memberships.length > 1;
+}
+
 function renderOrganizationSelector() {
   const currentId = getActiveOrganization()?.id || "";
   activeOrganizationSelect.innerHTML = memberships
@@ -102,6 +112,9 @@ function renderOrganizationSelector() {
     .join("");
   activeMembershipRole.textContent = formatRoleLabel(activeMembership?.role || "viewer");
   fileModalDelete.disabled = !canManageLibrary(activeMembership?.role, isPlatformAdminEmail(currentSession.user.email));
+  show(filesActiveOrganizationField, hasMultipleLibraries());
+  show(filesActiveMembershipField, hasMultipleLibraries());
+  activeOrganizationSelect.disabled = !hasMultipleLibraries();
 }
 
 async function bootstrapAccess() {
