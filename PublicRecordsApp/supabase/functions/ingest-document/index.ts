@@ -127,7 +127,7 @@ Deno.serve(async (request) => {
 
     const { data: document, error: documentError } = await adminClient
       .from("documents")
-      .select("id, user_id, original_filename, storage_path")
+      .select("id, organization_id, original_filename, storage_path")
       .eq("id", documentId)
       .single();
 
@@ -135,7 +135,19 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: documentError?.message || "Document not found." }, 404);
     }
 
-    if (document.user_id !== user.id) {
+    const { data: membership, error: membershipError } = await adminClient
+      .from("organization_memberships")
+      .select("id")
+      .eq("organization_id", document.organization_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const isPlatformAdmin = String(user.email || "").toLowerCase() === "quentin@quentinnichols.com";
+    if (membershipError) {
+      return jsonResponse({ error: membershipError.message }, 400);
+    }
+
+    if (!membership && !isPlatformAdmin) {
       return jsonResponse({ error: "You do not have access to this document." }, 403);
     }
 

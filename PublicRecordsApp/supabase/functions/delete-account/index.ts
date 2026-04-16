@@ -53,10 +53,21 @@ Deno.serve(async (request) => {
       return jsonResponse({ error: userError?.message || "Unable to resolve user." }, 401);
     }
 
+    const { data: ownedOrganizations, error: ownedOrganizationsError } = await adminClient
+      .from("organizations")
+      .select("id")
+      .eq("owner_user_id", user.id);
+
+    if (ownedOrganizationsError) {
+      return jsonResponse({ error: ownedOrganizationsError.message }, 400);
+    }
+
+    const ownedOrganizationIds = (ownedOrganizations || []).map((org) => org.id);
+
     const { data: documents, error: documentsError } = await adminClient
       .from("documents")
       .select("storage_path")
-      .eq("user_id", user.id);
+      .in("organization_id", ownedOrganizationIds.length ? ownedOrganizationIds : ["00000000-0000-0000-0000-000000000000"]);
 
     if (documentsError) {
       return jsonResponse({ error: documentsError.message }, 400);
@@ -70,6 +81,17 @@ Deno.serve(async (request) => {
       const { error: storageError } = await adminClient.storage.from("documents").remove(storagePaths);
       if (storageError) {
         return jsonResponse({ error: storageError.message }, 400);
+      }
+    }
+
+    if (ownedOrganizationIds.length) {
+      const { error: deleteOrganizationsError } = await adminClient
+        .from("organizations")
+        .delete()
+        .in("id", ownedOrganizationIds);
+
+      if (deleteOrganizationsError) {
+        return jsonResponse({ error: deleteOrganizationsError.message }, 400);
       }
     }
 

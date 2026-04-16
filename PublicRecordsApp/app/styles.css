@@ -521,6 +521,41 @@ textarea {
   color: var(--slate);
 }
 
+.current-plan-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.embed-access-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  border: 1px solid rgba(234, 155, 63, 0.2);
+  background:
+    radial-gradient(220px 110px at 92% 14%, rgba(234, 155, 63, 0.12), transparent 60%),
+    linear-gradient(180deg, #fffefb 0%, #f9fafc 100%);
+}
+
+.embed-access-title,
+.embed-access-copy {
+  margin: 0;
+}
+
+.embed-access-title {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.embed-access-copy {
+  margin-top: 0.22rem;
+  color: var(--slate);
+}
+
 .billing-plan-picker {
   display: grid;
 }
@@ -582,6 +617,70 @@ textarea {
 .plan-limit {
   font-weight: 700;
   color: var(--ink-soft);
+}
+
+.compact-head {
+  margin-bottom: 0;
+}
+
+.setting-toggles {
+  align-items: stretch;
+}
+
+.toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(15, 22, 32, 0.1);
+  background: var(--fog);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.toggle-pill input {
+  width: auto;
+  margin: 0;
+}
+
+.table-shell {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.85rem 0.95rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(15, 22, 32, 0.08);
+  vertical-align: middle;
+}
+
+.data-table th {
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--teal);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.is-selected-row {
+  background: rgba(23, 111, 102, 0.06);
+}
+
+.admin-topbar-button {
+  display: inline-flex;
 }
 
 .plan-badge {
@@ -927,6 +1026,58 @@ code.inline {
   text-align: center;
 }
 
+.embed-body {
+  min-height: auto;
+  background:
+    radial-gradient(760px 360px at 8% 10%, rgba(23, 111, 102, 0.1), transparent 58%),
+    linear-gradient(180deg, #f8fafc 0%, #edf2f7 100%);
+}
+
+.embed-shell {
+  width: min(1120px, calc(100vw - 1.4rem));
+  margin: 0 auto;
+  padding: 0.7rem 0;
+}
+
+.embed-head h1 {
+  margin: 0;
+  font-family: "Fraunces", "Times New Roman", serif;
+  font-size: clamp(1.55rem, 2.4vw, 2rem);
+}
+
+.embed-records-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.embed-record-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #fff;
+  padding: 0.95rem 1rem;
+  display: grid;
+  gap: 0.8rem;
+}
+
+.embed-record-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.embed-record-main {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.embed-record-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
 .file-modal {
   position: fixed;
   inset: 0;
@@ -1142,6 +1293,11 @@ code.inline {
   padding: 1.1rem 1.15rem 1.2rem;
 }
 
+#embed-code {
+  min-height: 140px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
 .library-actions-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1161,7 +1317,8 @@ code.inline {
   .auth-layout,
   .plan-grid,
   .billing-meta-grid,
-  .current-plan-card {
+  .current-plan-card,
+  .embed-access-card {
     grid-template-columns: 1fr;
   }
 
@@ -1189,6 +1346,10 @@ code.inline {
   .file-row-main {
     flex: 1 1 auto;
     min-width: 0;
+  }
+
+  .current-plan-actions {
+    justify-content: flex-start;
   }
 
   .download-name {
@@ -1321,6 +1482,10 @@ code.inline {
 
   .file-modal-frame {
     height: 68vh;
+  }
+
+  .embed-search-row {
+    grid-template-columns: 1fr;
   }
 
   .confirm-modal-header {

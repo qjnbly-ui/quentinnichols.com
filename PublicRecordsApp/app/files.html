@@ -50,16 +50,32 @@
         </div>
       </section>
 
-      <section class="panel hidden" id="files-panel">
+      <section class="panel hidden stack" id="files-panel">
         <div class="panel-head">
           <div>
             <h2>All files</h2>
+            <p>Manage the documents in your active library.</p>
           </div>
           <a class="btn secondary button-link" href="./dashboard.html?section=library">Back to records</a>
         </div>
 
+        <div class="grid-3">
+          <div class="field">
+            <label for="active-organization-select">Active library</label>
+            <select id="active-organization-select"></select>
+          </div>
+          <div class="field">
+            <span class="field-title">Your access</span>
+            <p class="account-value" id="active-membership-role">-</p>
+          </div>
+          <div class="field">
+            <span class="field-title">Document count</span>
+            <p class="account-value" id="document-count">0</p>
+          </div>
+        </div>
+
         <div class="download-list" id="file-list"></div>
-        <p class="empty hidden" id="file-empty">No files in your archive yet.</p>
+        <p class="empty hidden" id="file-empty">No files in this library yet.</p>
         <p class="status" id="file-status"></p>
       </section>
     </main>

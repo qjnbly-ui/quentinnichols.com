@@ -1,4 +1,12 @@
 import { createBrowserSupabase, hasConfig, getSessionOrNull } from "./lib/supabase-client.js";
+import {
+  buildMembershipMap,
+  canManageLibrary,
+  formatRoleLabel,
+  isPlatformAdminEmail,
+  resolveActiveOrganization,
+  setStoredActiveOrganizationId,
+} from "./lib/orgs.js";
 
 const setupPanel = document.getElementById("setup-panel");
 const filesPanel = document.getElementById("files-panel");
@@ -7,6 +15,9 @@ const mobileMenuToggle = document.getElementById("mobile-menu-toggle");
 const mobileMenu = document.getElementById("mobile-menu");
 const mobileMenuAccount = document.getElementById("mobile-menu-account");
 const mobileMenuLibrary = document.getElementById("mobile-menu-library");
+const activeOrganizationSelect = document.getElementById("active-organization-select");
+const activeMembershipRole = document.getElementById("active-membership-role");
+const documentCount = document.getElementById("document-count");
 const fileList = document.getElementById("file-list");
 const fileEmpty = document.getElementById("file-empty");
 const fileStatus = document.getElementById("file-status");
@@ -24,14 +35,11 @@ const deleteConfirmSubmit = document.getElementById("delete-confirm-submit");
 
 let supabase = null;
 let currentSession = null;
+let memberships = [];
+let activeMembership = null;
 let documentsCache = [];
 let pendingDeleteId = null;
 let activeModalDocumentId = null;
-
-function setMenuActive(section) {
-  mobileMenuAccount.classList.toggle("is-active", section === "account");
-  mobileMenuLibrary.classList.toggle("is-active", section === "library");
-}
 
 function setStatus(el, message, tone = "") {
   if (!el) return;
@@ -58,6 +66,11 @@ function toggleMobileMenu() {
   mobileMenuToggle.setAttribute("aria-expanded", String(nextOpen));
 }
 
+function setMenuActive(section) {
+  mobileMenuAccount.classList.toggle("is-active", section === "account");
+  mobileMenuLibrary.classList.toggle("is-active", section === "library");
+}
+
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -75,6 +88,53 @@ function buildPreviewUrl(doc, signedUrl) {
   return signedUrl;
 }
 
+function getActiveOrganization() {
+  return activeMembership?.organization || null;
+}
+
+function renderOrganizationSelector() {
+  const currentId = getActiveOrganization()?.id || "";
+  activeOrganizationSelect.innerHTML = memberships
+    .map((membership) => {
+      const selected = membership.organization?.id === currentId ? " selected" : "";
+      return `<option value="${escapeHtml(membership.organization?.id || "")}"${selected}>${escapeHtml(membership.organization?.name || "Untitled library")}</option>`;
+    })
+    .join("");
+  activeMembershipRole.textContent = formatRoleLabel(activeMembership?.role || "viewer");
+  fileModalDelete.disabled = !canManageLibrary(activeMembership?.role, isPlatformAdminEmail(currentSession.user.email));
+}
+
+async function bootstrapAccess() {
+  const { error: bootstrapError } = await supabase.rpc("bootstrap_organization", {
+    input_organization_name: null,
+    input_invite_code: null,
+  });
+  if (bootstrapError) throw bootstrapError;
+
+  const { data, error } = await supabase
+    .from("organization_memberships")
+    .select(`
+      id,
+      organization_id,
+      role,
+      organization:organizations(
+        id,
+        name,
+        subscription_tier,
+        account_status,
+        owner_user_id
+      )
+    `)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+
+  memberships = buildMembershipMap(data || []);
+  activeMembership = resolveActiveOrganization(memberships);
+  if (!activeMembership) throw new Error("No libraries available for this account.");
+  setStoredActiveOrganizationId(activeMembership.organization.id);
+}
+
 async function handleSignout() {
   const { error } = await supabase.auth.signOut();
   if (error) {
@@ -85,10 +145,14 @@ async function handleSignout() {
 }
 
 async function loadDocuments() {
+  const organization = getActiveOrganization();
+  if (!organization) return;
+
   setStatus(fileStatus, "Loading files...");
   const { data, error } = await supabase
     .from("documents")
-    .select("id, title, original_filename, storage_path, year, month, created_at")
+    .select("id, title, original_filename, storage_path, year, month, is_public, created_at")
+    .eq("organization_id", organization.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -97,6 +161,7 @@ async function loadDocuments() {
   }
 
   documentsCache = Array.isArray(data) ? data : [];
+  documentCount.textContent = String(documentsCache.length);
   renderFiles();
   setStatus(fileStatus, `${documentsCache.length} file${documentsCache.length === 1 ? "" : "s"} loaded.`, "success");
 }
@@ -106,6 +171,7 @@ function renderFiles() {
   show(fileEmpty, documentsCache.length === 0);
 
   documentsCache.forEach((doc) => {
+    const canEdit = canManageLibrary(activeMembership?.role, isPlatformAdminEmail(currentSession.user.email));
     const item = document.createElement("article");
     item.className = "download-item file-row";
     item.setAttribute("data-open-id", doc.id);
@@ -114,12 +180,13 @@ function renderFiles() {
     item.innerHTML = `
       <div class="file-row-main">
         <p class="download-name">${escapeHtml(doc.title || doc.original_filename || "Untitled document")}</p>
-        <p class="download-meta">${escapeHtml(doc.original_filename || "Unknown file")}${doc.year ? ` · ${escapeHtml(doc.year)}` : ""}${doc.month ? ` · ${escapeHtml(doc.month)}` : ""}</p>
+        <p class="download-meta">${escapeHtml(doc.original_filename || "Unknown file")}${doc.year ? ` · ${escapeHtml(doc.year)}` : ""}${doc.month ? ` · ${escapeHtml(doc.month)}` : ""}${doc.is_public ? " · Public" : " · Private"}</p>
       </div>
       <div class="doc-actions file-row-actions">
         <button class="btn secondary" type="button" data-action="download" data-id="${doc.id}">Download</button>
         <button class="btn secondary" type="button" data-action="share" data-id="${doc.id}">Share</button>
-        <button class="btn warn" type="button" data-action="delete" data-id="${doc.id}">Delete</button>
+        <button class="btn secondary" type="button" data-action="toggle-public" data-id="${doc.id}"${canEdit ? "" : " disabled"}>${doc.is_public ? "Make private" : "Make public"}</button>
+        <button class="btn warn" type="button" data-action="delete" data-id="${doc.id}"${canEdit ? "" : " disabled"}>Delete</button>
       </div>
     `;
     fileList.append(item);
@@ -251,6 +318,20 @@ async function deleteFile(documentId) {
   await loadDocuments();
 }
 
+async function togglePublic(documentId) {
+  const doc = documentsCache.find((item) => item.id === documentId);
+  if (!doc) return;
+
+  const { error } = await supabase.from("documents").update({ is_public: !doc.is_public }).eq("id", documentId);
+  if (error) {
+    setStatus(fileStatus, error.message, "error");
+    return;
+  }
+
+  setStatus(fileStatus, `Document is now ${doc.is_public ? "private" : "public"}.`, "success");
+  await loadDocuments();
+}
+
 async function handleFileAction(event) {
   const button = event.target.closest("button[data-action]");
   if (button) {
@@ -261,6 +342,7 @@ async function handleFileAction(event) {
     if (action === "download") await downloadFile(id);
     if (action === "share") await shareFile(id);
     if (action === "delete") openDeleteConfirm(id);
+    if (action === "toggle-public") await togglePublic(id);
     return;
   }
 
@@ -269,6 +351,16 @@ async function handleFileAction(event) {
   const id = row.getAttribute("data-open-id");
   if (!id) return;
   await openFile(id);
+}
+
+async function handleOrganizationChange() {
+  const nextOrganizationId = activeOrganizationSelect.value;
+  const nextMembership = memberships.find((membership) => membership.organization?.id === nextOrganizationId);
+  if (!nextMembership) return;
+  activeMembership = nextMembership;
+  setStoredActiveOrganizationId(nextOrganizationId);
+  renderOrganizationSelector();
+  await loadDocuments();
 }
 
 async function init() {
@@ -283,9 +375,17 @@ async function init() {
     return;
   }
 
+  if (isPlatformAdminEmail(currentSession.user.email)) {
+    window.location.replace("./admin.html");
+    return;
+  }
+
+  await bootstrapAccess();
+
   show(setupPanel, false);
   show(filesPanel, true);
   setMenuActive("library");
+  renderOrganizationSelector();
   await loadDocuments();
 
   mobileLogoutButton.addEventListener("click", handleSignout);
@@ -296,6 +396,7 @@ async function init() {
   mobileMenuLibrary.addEventListener("click", () => {
     window.location.href = "./dashboard.html?section=library";
   });
+  activeOrganizationSelect.addEventListener("change", handleOrganizationChange);
   fileList.addEventListener("click", handleFileAction);
   fileList.addEventListener("keydown", async (event) => {
     const row = event.target.closest("[data-open-id]");

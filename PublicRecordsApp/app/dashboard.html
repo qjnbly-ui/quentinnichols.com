@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Records Database Dashboard</title>
-  <meta name="description" content="Records Database dashboard for profile, billing, uploads, search, and file management.">
+  <meta name="description" content="Records Database dashboard for organization access, billing, invites, uploads, search, and file management.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
@@ -51,6 +51,33 @@
       </section>
 
       <section class="panel stack hidden" id="dashboard-panel">
+        <div class="notice hidden" id="support-banner"></div>
+
+        <section class="account-card">
+          <div class="panel-head">
+            <div>
+              <h3>Library Context</h3>
+              <p>Switch between your own library and any shared libraries you belong to.</p>
+            </div>
+            <a class="btn secondary button-link hidden" id="platform-admin-link" href="./admin.html">Platform admin</a>
+          </div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="active-organization-select">Active library</label>
+              <select id="active-organization-select"></select>
+            </div>
+            <div class="field">
+              <span class="field-title">Your access</span>
+              <p class="account-value" id="active-membership-role">-</p>
+            </div>
+            <div class="field">
+              <span class="field-title">Shared libraries</span>
+              <p class="account-value" id="shared-library-count">0</p>
+            </div>
+          </div>
+          <p class="status" id="context-status"></p>
+        </section>
+
         <section class="section-view" id="account-section" hidden>
           <section class="account-card">
             <div class="account-top">
@@ -67,11 +94,11 @@
                 <p class="account-value" id="account-email">-</p>
               </div>
               <div class="account-item">
-                <span class="account-label">Organization</span>
+                <span class="account-label">Active library</span>
                 <p class="account-value" id="account-organization">-</p>
               </div>
               <div class="account-item">
-                <span class="account-label">Role</span>
+                <span class="account-label">Library role</span>
                 <p class="account-value" id="account-role">-</p>
               </div>
               <div class="account-item">
@@ -88,19 +115,151 @@
           <section class="account-card">
             <div class="panel-head">
               <div>
-                <h3>Billing</h3>
+                <h3>Library settings</h3>
+                <p>These settings apply to the active library only.</p>
               </div>
             </div>
-            <div class="current-plan-card" id="current-plan-card">
+            <div class="current-plan-card">
               <div>
                 <p class="account-label">Current plan</p>
                 <p class="current-plan-name" id="current-plan-name">Free</p>
                 <p class="current-plan-copy" id="current-plan-copy">25 documents included.</p>
               </div>
-              <button class="btn secondary" id="change-plan-button" type="button" aria-expanded="false">Change plan</button>
+              <div class="current-plan-actions">
+                <button class="btn secondary hidden" id="open-embed-modal" type="button">Get embedded</button>
+                <button class="btn secondary" id="change-plan-button" type="button" aria-expanded="false">Change plan</button>
+              </div>
             </div>
             <div class="billing-plan-picker hidden" id="billing-plan-picker">
               <div class="plan-grid" id="billing-plan-grid"></div>
+            </div>
+            <form class="stack" id="organization-settings-form">
+              <div class="grid-3">
+                <div class="field">
+                  <label for="organization-name-input">Library name</label>
+                  <input id="organization-name-input" type="text">
+                </div>
+                <div class="field">
+                  <label for="organization-primary-color">Primary color</label>
+                  <input id="organization-primary-color" type="text" placeholder="#176f66">
+                </div>
+                <div class="field">
+                  <label for="organization-accent-color">Accent color</label>
+                  <input id="organization-accent-color" type="text" placeholder="#ea9b3f">
+                </div>
+              </div>
+              <div class="inline-actions setting-toggles">
+                <label class="toggle-pill">
+                  <input id="organization-public-embed" type="checkbox">
+                  <span>Public embed enabled</span>
+                </label>
+                <label class="toggle-pill">
+                  <input id="organization-keyword-search" type="checkbox">
+                  <span>Keyword search</span>
+                </label>
+                <label class="toggle-pill">
+                  <input id="organization-file-preview-cards" type="checkbox">
+                  <span>File preview cards</span>
+                </label>
+              </div>
+              <div class="actions">
+                <button class="btn" id="organization-settings-save" type="submit">Save library settings</button>
+              </div>
+              <p class="status" id="organization-settings-status"></p>
+            </form>
+            <div class="embed-access-card hidden" id="embed-access-card">
+              <div>
+                <p class="account-label">Embedded records view</p>
+                <p class="embed-access-title">Search and files together in one read-only view.</p>
+                <p class="embed-access-copy">Only documents marked public are shown in the embedded library.</p>
+              </div>
+              <button class="btn secondary" id="open-embed-card-button" type="button">Get embedded</button>
+            </div>
+          </section>
+
+          <section class="account-card">
+            <div class="panel-head">
+              <div>
+                <h3>Library access</h3>
+                <p>Redeem invite codes and manage who can work inside this library.</p>
+              </div>
+            </div>
+            <form class="stack" id="redeem-invite-form">
+              <div class="field">
+                <label for="redeem-invite-code">Join shared library with code</label>
+                <input id="redeem-invite-code" type="text" placeholder="Enter invite code">
+              </div>
+              <div class="actions">
+                <button class="btn secondary" type="submit">Redeem code</button>
+              </div>
+              <p class="status" id="redeem-invite-status"></p>
+            </form>
+
+            <div class="stack">
+              <div class="panel-head compact-head">
+                <div>
+                  <h3>Invite codes</h3>
+                </div>
+              </div>
+              <form class="stack" id="create-invite-form">
+                <div class="grid-3">
+                  <div class="field">
+                    <label for="invite-role">Role</label>
+                    <select id="invite-role">
+                      <option value="viewer">Viewer</option>
+                      <option value="editor">Editor</option>
+                      <option value="account_admin">Account Admin</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="invite-max-uses">Uses</label>
+                    <input id="invite-max-uses" type="text" value="1">
+                  </div>
+                  <div class="field">
+                    <label for="invite-expires-at">Expires at</label>
+                    <input id="invite-expires-at" type="text" placeholder="Optional ISO date">
+                  </div>
+                </div>
+                <div class="actions">
+                  <button class="btn secondary" type="submit">Create invite code</button>
+                </div>
+                <p class="status" id="create-invite-status"></p>
+              </form>
+              <div class="table-shell">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Role</th>
+                      <th>Uses</th>
+                      <th>Expires</th>
+                    </tr>
+                  </thead>
+                  <tbody id="invite-list"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="panel-head compact-head">
+                <div>
+                  <h3>Members</h3>
+                </div>
+              </div>
+              <div class="table-shell">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="member-list"></tbody>
+                </table>
+              </div>
+              <p class="status" id="member-status"></p>
             </div>
           </section>
         </section>
@@ -110,7 +269,6 @@
             <div class="library-action-slot">
               <button class="btn" id="open-upload-modal" type="button">Upload</button>
             </div>
-
             <div class="library-action-slot">
               <a class="btn secondary button-link" href="./files.html">All files</a>
             </div>
@@ -120,7 +278,7 @@
             <div class="panel-head">
               <div>
                 <h3>Search</h3>
-                <p>Search the extracted text saved with each document.</p>
+                <p>Search the extracted text saved with each document in the active library.</p>
               </div>
             </div>
             <div class="search-row">
@@ -177,14 +335,6 @@
             <label for="profile-full-name">Full name</label>
             <input id="profile-full-name" type="text" autocomplete="name">
           </div>
-          <div class="field">
-            <label for="profile-organization">Organization name</label>
-            <input id="profile-organization" type="text" autocomplete="organization">
-          </div>
-          <div class="field">
-            <label for="profile-role">Role</label>
-            <input id="profile-role" type="text">
-          </div>
           <div class="actions">
             <button class="btn" type="submit">Save profile</button>
           </div>
@@ -193,7 +343,7 @@
         <section class="danger-zone">
           <div class="danger-zone-copy">
             <p class="danger-zone-kicker">Delete account</p>
-            <p class="danger-zone-text">Permanently remove your account, uploaded files, and saved records.</p>
+            <p class="danger-zone-text">Permanently remove your account and any libraries you own.</p>
           </div>
           <button class="btn btn-delete-solid" id="open-delete-account-modal" type="button">Delete account</button>
         </section>
@@ -210,12 +360,42 @@
         </div>
       </div>
       <div class="confirm-modal-body">
-        <p class="confirm-modal-copy">This will permanently delete your account, your uploaded files, and your saved records from Supabase. This cannot be undone.</p>
+        <p class="confirm-modal-copy">This will permanently delete your personal account and any libraries you own. Shared-library access granted by other organizations will also be removed.</p>
         <div class="confirm-modal-actions">
           <button class="btn secondary" id="delete-account-cancel" type="button">Cancel</button>
           <button class="btn btn-delete-solid" id="delete-account-submit" type="button">Delete account</button>
         </div>
         <p class="status" id="delete-account-status"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-modal" id="embed-modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="settings-modal-dialog">
+      <div class="settings-modal-header">
+        <div>
+          <p class="settings-modal-kicker">Embedded records</p>
+          <h3 class="settings-modal-title">Add the embedded view</h3>
+        </div>
+        <button class="settings-modal-close" id="embed-modal-close" type="button">Close</button>
+      </div>
+      <div class="settings-modal-body">
+        <div class="stack">
+          <p class="account-note">This embedded view only shows records marked public inside the active library.</p>
+          <div class="field">
+            <label for="embed-preview-url">Embed page URL</label>
+            <input id="embed-preview-url" type="text" readonly>
+          </div>
+          <div class="field">
+            <label for="embed-code">Iframe code</label>
+            <textarea id="embed-code" readonly></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn secondary" id="copy-embed-code" type="button">Copy code</button>
+            <a class="btn secondary button-link" id="open-embed-preview" href="./embed.html" target="_blank" rel="noopener">Open view</a>
+          </div>
+          <p class="status" id="embed-status"></p>
+        </div>
       </div>
     </div>
   </div>
@@ -249,6 +429,12 @@
           <div class="field">
             <label for="upload-file">File</label>
             <input id="upload-file" type="file" required>
+          </div>
+          <div class="field">
+            <label class="toggle-pill">
+              <input id="upload-is-public" type="checkbox">
+              <span>Publish to public embed</span>
+            </label>
           </div>
           <div class="actions">
             <button class="btn" type="submit">Upload and save extracted text</button>
