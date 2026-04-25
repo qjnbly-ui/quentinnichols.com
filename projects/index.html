@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Projects</title>
+  <title>Projects | Quentin Nichols</title>
+  <meta name="description" content="Projects built by Quentin Nichols across software, websites, and media, with services provided through N3XRA LLC." />
   <link rel="stylesheet" href="/style.css" />
   <style>
     body.bly-page {
@@ -52,6 +53,11 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 26px;
+    }
+
+    .projects-intro {
+      max-width: 680px;
+      margin: -16px auto 0;
     }
 
     @media (max-width: 820px) {
@@ -167,6 +173,13 @@
       max-width: 720px;
       margin: 0 auto;
       text-align: center;
+    }
+
+    .work-logo {
+      display: block;
+      width: min(150px, 52vw);
+      height: auto;
+      margin: 0 auto 20px;
     }
 
     .work-title {
@@ -333,6 +346,18 @@
       flex-wrap: wrap;
     }
 
+    .projects-footer {
+      padding: 0 20px 34px;
+      color: rgba(245, 242, 234, 0.58);
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .projects-footer p {
+      margin: 0;
+    }
+
     @media (max-width: 720px) {
       .bly-stage {
         min-height: calc(100vh - 68px);
@@ -347,6 +372,11 @@
 
       .bly-grid {
         gap: 18px;
+      }
+
+      .projects-intro {
+        margin-top: -18px;
+        font-size: 15px;
       }
 
       .bly-card-media {
@@ -442,7 +472,10 @@
         <!-- Heading -->
         <header class="page-head">
           <h1 class="page-title">Projects</h1>
-          <p class="page-sub">Maintained by Quentin Nichols</p>
+          <p class="page-sub">Built by Quentin Nichols</p>
+          <p class="page-intro projects-intro">
+            A collection of projects I have built across software, websites, and media, with a focus on clear systems that are useful in real life.
+          </p>
         </header>
 
         <!-- Feature Cards -->
@@ -521,15 +554,16 @@
       <!-- ============ Work With Me Section ============ -->
       <section class="work-with-me">
         <div class="work-inner js-inquiry-widget" data-endpoint="/api/project-inquiry">
+          <img src="/assets/MAINLOGO.png" alt="N3XRA" class="work-logo" loading="lazy" decoding="async">
           <h2 class="work-title">Work With Me</h2>
           <p class="work-text">
-            I design and build systems that help communities, organizations, and small teams operate better.
+            I take on select projects where I help build and improve websites, tools, and systems.
           </p>
           <p class="work-text">
-            This includes custom websites, internal tools, automation systems, and data dashboards.
+            This includes custom websites, internal tools, automation setups, and anything that helps your work run smoother.
           </p>
           <p class="work-text">
-            If you have an idea or a problem that needs a solution, I can help build it.
+            If you have something you want built, improved, or figured out, I’m available to help.
           </p>
 
           <ul class="work-list">
@@ -604,6 +638,9 @@
       </div>
     </section>
   </main>
+  <footer class="projects-footer">
+    <p>Projects are built by Quentin Nichols. Services are provided through N3XRA LLC.</p>
+  </footer>
   <script src="/assets/nav.js"></script>
   <script src="/assets/inquiry-form.js"></script>
 </body>
