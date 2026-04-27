@@ -1,3 +1,5 @@
+const { isAllowedEmail } = require("./_auth-allowlist");
+
 function parseJson(req) {
   return new Promise((resolve, reject) => {
     if (req.body && typeof req.body === "object") {
@@ -76,6 +78,14 @@ module.exports = async function handler(req, res) {
       res.statusCode = upstream.status || 401;
       res.setHeader("Content-Type", "application/json");
       res.end(JSON.stringify({ error: payload?.msg || payload?.error_description || payload?.error || "Login failed." }));
+      return;
+    }
+
+    const authenticatedEmail = payload?.user?.email || "";
+    if (!isAllowedEmail(authenticatedEmail)) {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "This account is not authorized for portal access." }));
       return;
     }
 

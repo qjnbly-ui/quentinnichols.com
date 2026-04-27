@@ -1,3 +1,5 @@
+const { isAllowedEmail } = require("./_auth-allowlist");
+
 function parseCookies(cookieHeader) {
   const out = {};
   if (!cookieHeader) return out;
@@ -91,6 +93,10 @@ module.exports = async function handler(req, res) {
     let userResponse = await fetchUser(supabaseUrl, supabaseAnonKey, accessToken);
     if (userResponse.ok) {
       const user = await userResponse.json();
+      if (!isAllowedEmail(user?.email)) {
+        unauthenticated();
+        return;
+      }
       res.setHeader("Cache-Control", "no-store");
       res.statusCode = 200;
       res.setHeader("Content-Type", "application/json");
@@ -122,6 +128,10 @@ module.exports = async function handler(req, res) {
     }
 
     const user = await userResponse.json();
+    if (!isAllowedEmail(user?.email)) {
+      unauthenticated();
+      return;
+    }
     res.setHeader("Set-Cookie", [
       cookie("sb_access_token", newAccess, accessMaxAge),
       cookie("sb_refresh_token", newRefresh, refreshMaxAge),

@@ -1,5 +1,24 @@
 const PROTECTED_PATHS = ["/portal", "/blog/private"];
 
+function getAllowedEmails() {
+  const raw = process.env.ALLOWED_PORTAL_EMAILS || "quentin@quentinnichols.com";
+  return new Set(
+    raw
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isAllowedEmail(value) {
+  const allowed = getAllowedEmails();
+  return allowed.has(normalizeEmail(value));
+}
+
 function parseCookies(cookieHeader) {
   const out = {};
   if (!cookieHeader) return out;
@@ -87,6 +106,13 @@ export default async function middleware(request) {
   try {
     const userResponse = await fetchUser(supabaseUrl, supabaseAnonKey, accessToken);
     if (userResponse.ok) {
+      const user = await userResponse.json().catch(() => null);
+      if (!isAllowedEmail(user?.email)) {
+        const denied = loginRedirect(requestUrl);
+        denied.headers.append("Set-Cookie", clearCookie("sb_access_token"));
+        denied.headers.append("Set-Cookie", clearCookie("sb_refresh_token"));
+        return denied;
+      }
       return fetch(request);
     }
 
@@ -103,6 +129,14 @@ export default async function middleware(request) {
     const freshUser = await fetchUser(supabaseUrl, supabaseAnonKey, refreshPayload.access_token);
     if (!freshUser.ok) {
       return loginRedirect(requestUrl);
+    }
+
+    const user = await freshUser.json().catch(() => null);
+    if (!isAllowedEmail(user?.email)) {
+      const denied = loginRedirect(requestUrl);
+      denied.headers.append("Set-Cookie", clearCookie("sb_access_token"));
+      denied.headers.append("Set-Cookie", clearCookie("sb_refresh_token"));
+      return denied;
     }
 
     const response = await fetch(request);
