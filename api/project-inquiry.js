@@ -32,7 +32,7 @@ function buildEmailShell(contentHtml) {
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;max-width:640px;background:#111111;border:1px solid rgba(255,255,255,0.12);border-radius:24px;overflow:hidden;">
               <tr>
                 <td align="center" style="padding:28px 24px 18px;background:linear-gradient(180deg,#131313,#0a0a0a);border-bottom:1px solid rgba(255,255,255,0.08);">
-                  <img src="https://www.quentinnichols.com/assets/Watermark%20(1)%20copy.png" alt="Quentin Nichols" width="120" style="display:block;width:120px;max-width:120px;height:auto;margin:0 auto 14px;">
+                  <img src="https://www.quentinnichols.com/assets/NEWLOGO.png" alt="Quentin Nichols" width="120" style="display:block;width:120px;max-width:120px;height:auto;margin:0 auto 14px;">
                   <div style="margin-top:8px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:0.24em;text-transform:uppercase;color:#b9ae95;">quentinnichols.com</div>
                 </td>
               </tr>
