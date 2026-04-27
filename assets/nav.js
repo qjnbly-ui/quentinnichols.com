@@ -76,16 +76,8 @@
   };
 
   const getStoredSessionHint = () => {
-    if (window.siteAuth?.getStoredSession) {
-      return window.siteAuth.getStoredSession();
-    }
-
-    try {
-      const raw = window.localStorage.getItem("sb-mgxdiolwevcgwgzhzttd-auth-token");
-      return raw ? JSON.parse(raw) : null;
-    } catch (_error) {
-      return null;
-    }
+    if (!window.siteAuth?.getStoredSession) return null;
+    return window.siteAuth.getStoredSession();
   };
 
   setActionLink(getStoredSessionHint());

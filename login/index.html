@@ -63,6 +63,14 @@
     const passwordInput = document.getElementById("password");
     const loginButton = document.getElementById("login-button");
     const message = document.getElementById("message");
+    const nextParam = new URLSearchParams(window.location.search).get("next");
+
+    function getPostLoginDestination() {
+      if (typeof nextParam === "string" && nextParam.startsWith("/")) {
+        return nextParam;
+      }
+      return "/portal/";
+    }
 
     function setMessage(text, state = "") {
       message.innerText = text;
@@ -103,7 +111,7 @@
 
         console.log("Logged in:", data);
         setMessage("Login successful. Redirecting...", "success");
-        window.location.href = "/portal/";
+        window.location.href = getPostLoginDestination();
       } catch (error) {
         setMessage("Login failed. Please try again.", "error");
         console.log("Unexpected login error:", error);
@@ -119,7 +127,7 @@
 
     window.siteAuth.getSession().then((session) => {
       if (session) {
-        window.location.href = "/portal/";
+        window.location.href = getPostLoginDestination();
       }
     }).catch((error) => {
       console.log("Session lookup failed:", error);
