@@ -36,12 +36,15 @@
 
     const progress = clamp((window.scrollY || window.pageYOffset || 0) / finishScroll, 0, 1);
     const easedProgress = ease(progress);
+    const navControlsProgress = clamp((easedProgress - 0.06) / 0.5, 0, 1);
     const brightness = startBrightness + (endBrightness - startBrightness) * easedProgress;
     const overlayOpacity = 1 - (1 - endOverlayOpacity) * easedProgress;
 
     hero.style.setProperty("--hero-text-opacity", (1 - easedProgress).toFixed(3));
     hero.style.setProperty("--hero-image-brightness", brightness.toFixed(3));
     hero.style.setProperty("--hero-overlay-opacity", overlayOpacity.toFixed(3));
+    nav.style.setProperty("--home-nav-controls-opacity", navControlsProgress.toFixed(3));
+    nav.classList.toggle("home-controls-active", navControlsProgress > 0.01);
     heroText.style.pointerEvents = easedProgress > 0.98 ? "none" : "";
   };
 

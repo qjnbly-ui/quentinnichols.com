@@ -8,10 +8,30 @@
   const spacer = siteNav.querySelector(".nav-spacer");
   if (!summary || !panel || !spacer) return;
 
-  const blogLink = panel.querySelector('a[href="/blog/"]');
-  if (blogLink) {
-    blogLink.remove();
-  }
+  const footerMarkup =
+    'Designed & Built by <a href="https://n3xra.co" target="_blank" rel="noopener">N3XRA</a>';
+
+  const ensureSiteFooter = () => {
+    const existingProjectsFooter = document.querySelector(".projects-footer p");
+    if (existingProjectsFooter) {
+      existingProjectsFooter.innerHTML = footerMarkup;
+      return;
+    }
+
+    let globalFooter = document.querySelector(".site-global-footer");
+    if (!globalFooter) {
+      globalFooter = document.createElement("footer");
+      globalFooter.className = "site-global-footer";
+      const paragraph = document.createElement("p");
+      globalFooter.appendChild(paragraph);
+      document.body.appendChild(globalFooter);
+    }
+
+    const paragraph = globalFooter.querySelector("p") || globalFooter;
+    paragraph.innerHTML = footerMarkup;
+  };
+
+  ensureSiteFooter();
 
   const normalizePath = (path) => {
     if (!path) return "/";
