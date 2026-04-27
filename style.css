@@ -4341,9 +4341,12 @@ body.nav-menu-open {
   display: grid;
   gap: 0.45rem;
   margin-top: 0.1rem;
+  justify-items: center;
+  text-align: center;
 }
 
 .auth-label-text {
+  display: block;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -4364,5 +4367,6 @@ body.nav-menu-open {
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.45;
+  text-align: center;
   color: rgba(245, 242, 234, 0.56);
 }

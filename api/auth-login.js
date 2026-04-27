@@ -79,11 +79,24 @@ module.exports = async function handler(req, res) {
       }),
     });
 
-    const payload = await upstream.json().catch(() => ({}));
+    const raw = await upstream.text().catch(() => "");
+    let payload = {};
+    try {
+      payload = raw ? JSON.parse(raw) : {};
+    } catch (_error) {
+      payload = {};
+    }
     if (!upstream.ok || !payload?.access_token || !payload?.refresh_token) {
+      const upstreamError =
+        payload?.msg ||
+        payload?.error_description ||
+        payload?.error ||
+        payload?.message ||
+        (raw && raw.trim() ? raw.trim() : "") ||
+        `Login failed (${upstream.status || 401}).`;
       res.statusCode = upstream.status || 401;
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ error: payload?.msg || payload?.error_description || payload?.error || "Login failed." }));
+      res.end(JSON.stringify({ error: upstreamError }));
       return;
     }
 
