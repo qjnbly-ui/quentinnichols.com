@@ -10,75 +10,104 @@
   <link rel="stylesheet" href="/style.css" />
   <style>
     :root{
-      --bg: #000000;
-
-      /* dark, warm */
-      --panel: rgba(18,18,18,.92);
-      --stroke: rgba(255,255,255,.12);
-      --text: #f5f2ea;
-      --muted: rgba(245,242,234,.72);
-
-      --row: linear-gradient(135deg, rgba(24,24,24,.96), rgba(16,16,16,.94));
-      --rowHover: linear-gradient(135deg, rgba(30,30,30,.98), rgba(20,20,20,.96));
-
-      --shadow: 0 18px 55px rgba(0,0,0,.6);
-      --blur: blur(14px);
+      --contact-bg: #050709;
+      --contact-card: rgba(12, 15, 20, 0.9);
+      --contact-card-strong: rgba(16, 20, 27, 0.98);
+      --contact-border: rgba(244, 241, 234, 0.14);
+      --contact-border-strong: rgba(244, 241, 234, 0.25);
+      --contact-text: #f5f2ea;
+      --contact-muted: rgba(245, 242, 234, 0.7);
+      --contact-shadow: 0 26px 64px rgba(0, 0, 0, 0.62);
+      --contact-blur: blur(12px);
     }
 
     *{ box-sizing:border-box; }
 
     body{
       margin:0;
-      background: var(--bg);
-      color:var(--text);
+      color: var(--contact-text);
       font-family: var(--font-body);
+      background:
+        radial-gradient(700px 380px at 12% -6%, rgba(70, 98, 133, 0.24), transparent 70%),
+        radial-gradient(540px 320px at 90% 6%, rgba(154, 97, 64, 0.2), transparent 72%),
+        linear-gradient(180deg, #050709 0%, #020305 100%);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
 
     .page{
-      min-height:100vh;
+      min-height: 100vh;
       display:flex;
       justify-content:center;
-      padding: var(--nav-content-pad) 12px 22px;
+      padding: clamp(1rem, 3vw, 1.75rem) 16px 30px;
     }
 
     .page-head{
-      margin: 6px auto 12px;
+      width: min(860px, calc(100% - 32px));
+      margin: 0 auto 34px;
+      text-align: center;
     }
 
-    .wrap{ width:min(720px, 100%); }
+    .page-title{
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--contact-text);
+      text-shadow: 0 10px 34px rgba(0, 0, 0, 0.5);
+    }
+
+    .wrap{ width:min(860px, 100%); }
 
     .panel{
-      background: var(--panel);
-      border: 1px solid var(--stroke);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
+      position: relative;
       overflow:hidden;
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
+      border-radius: 24px;
+      border: 1px solid var(--contact-border);
+      background: var(--contact-card);
+      box-shadow: var(--contact-shadow);
+      backdrop-filter: var(--contact-blur);
+      -webkit-backdrop-filter: var(--contact-blur);
+      isolation: isolate;
+    }
+
+    .panel::before{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(460px 260px at 0% 0%, rgba(66, 96, 130, 0.18), transparent 74%),
+        radial-gradient(500px 280px at 100% 0%, rgba(118, 76, 50, 0.16), transparent 76%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .top,
+    .content {
+      position: relative;
+      z-index: 1;
     }
 
     .top{
-      padding: 14px 14px 12px;
+      padding: 18px 20px 16px;
       display:flex;
-      gap:12px;
+      gap:14px;
       align-items:center;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      background: rgba(20,20,20,.85);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
+      border-bottom: 1px solid rgba(245, 242, 234, 0.1);
+      background: linear-gradient(180deg, rgba(20, 25, 33, 0.7), rgba(12, 15, 20, 0.45));
     }
 
     .avatar{
-      width:56px;
-      height:56px;
-      border-radius: 16px;
+      width:64px;
+      height:64px;
+      border-radius: 18px;
       overflow:hidden;
-      border: 1px solid rgba(255,255,255,.12);
-      background: #1b1b1b;
+      border: 1px solid rgba(245, 242, 234, 0.22);
+      background: #11151b;
       flex: 0 0 auto;
-      box-shadow: 0 10px 22px rgba(0,0,0,.55);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.48);
     }
 
     .avatar img{
@@ -90,174 +119,234 @@
     }
 
     .title h1{
-      margin:0;
-      font-size: 18px;
-      letter-spacing: .2px;
-      line-height:1.15;
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(26px, 4vw, 38px);
+      font-weight: 600;
+      line-height: 1.06;
+      letter-spacing: 0.02em;
+      color: var(--contact-text);
     }
 
     .title .tag{
-      margin-top:4px;
-      font-size: 11px;
-      letter-spacing: .22em;
+      margin-top:6px;
+      font-size: 12px;
+      letter-spacing: 0.28em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: var(--contact-muted);
     }
 
-    .content{ padding: 10px 10px 14px; }
+    .content{ padding: 16px 16px 22px; }
 
-    .section{ margin: 10px 0 12px; }
+    .section{ margin: 14px 0 16px; }
 
     .sectionHead{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:10px;
-      padding: 6px 6px 8px;
-      color: var(--text);
+      padding: 0 6px 10px;
+      color: var(--contact-text);
+    }
+
+    .sectionHead:empty{
+      display:none;
     }
 
     .sectionHead .name{
-      font-weight: 760;
-      letter-spacing: .2px;
-      font-size: 13px;
+      font-size: 12px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      font-weight: 650;
+      color: rgba(245, 242, 234, 0.9);
     }
 
     .sectionHead .hint{
-      font-size: 12px;
-      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--contact-muted);
     }
 
     .list{
       display:flex;
       flex-direction:column;
-      gap:10px;
-      padding: 0 4px;
+      gap:11px;
+      padding: 0 2px;
     }
 
     a.row, button.rowBtn{
-      text-decoration:none;
-      color: inherit;
       display:flex;
       align-items:center;
-      gap: 12px;
-      padding: 12px 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: var(--row);
-      transition: transform .08s ease, border-color .18s ease, background .18s ease;
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
+      gap: 14px;
+      width: 100%;
+      padding: 14px 14px;
+      border-radius: 18px;
+      border: 1px solid var(--contact-border);
+      background:
+        linear-gradient(140deg, rgba(22, 27, 35, 0.92), rgba(12, 16, 22, 0.88)),
+        linear-gradient(180deg, rgba(245, 242, 234, 0.04), rgba(245, 242, 234, 0));
+      color: inherit;
+      text-decoration:none;
+      transition: transform 0.14s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      backdrop-filter: var(--contact-blur);
+      -webkit-backdrop-filter: var(--contact-blur);
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.3);
     }
 
     a.row:hover, button.rowBtn:hover{
-      transform: translateY(-1px);
-      border-color: rgba(255,255,255,.3);
-      background: var(--rowHover);
+      transform: translateY(-2px);
+      border-color: var(--contact-border-strong);
+      background:
+        linear-gradient(140deg, rgba(28, 34, 44, 0.95), rgba(16, 20, 28, 0.92)),
+        linear-gradient(180deg, rgba(245, 242, 234, 0.06), rgba(245, 242, 234, 0));
+      box-shadow: 0 24px 42px rgba(0, 0, 0, 0.42);
     }
 
-    /* icon */
+    button.rowBtn{
+      cursor:pointer;
+    }
+
     .icon{
-      width:44px;
-      height:44px;
+      width:46px;
+      height:46px;
       border-radius: 999px;
       display:grid;
       place-items:center;
       flex: 0 0 auto;
-      border: 1px solid rgba(255,255,255,.18);
-      background: linear-gradient(135deg, #222222, #1a1a1a);
-      backdrop-filter: var(--blur);
-      -webkit-backdrop-filter: var(--blur);
+      border: 1px solid rgba(245, 242, 234, 0.22);
+      background: linear-gradient(145deg, #1d2631, #111822);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
     }
 
     .icon img, .icon svg{
       width:22px;
       height:22px;
       display:block;
-      filter: drop-shadow(0 3px 8px rgba(0,0,0,.18));
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,.28));
     }
 
     .icon img.website-icon {
-      width: 32px;
-      height: 32px;
+      width: 33px;
+      height: 33px;
       border-radius: 999px;
       object-fit: cover;
     }
 
     .iconMail{
-      background: radial-gradient(26px 26px at 30% 25%, rgba(96,165,250,.25), rgba(20,20,20,.9));
-      border: 1px solid rgba(96,165,250,.28);
+      background: radial-gradient(26px 26px at 30% 25%, rgba(72, 144, 245, 0.34), rgba(17, 24, 33, 0.98));
+      border-color: rgba(113, 173, 255, 0.32);
     }
 
     .iconPhone{
-      background: radial-gradient(26px 26px at 30% 25%, rgba(34,197,94,.25), rgba(20,20,20,.9));
-      border: 1px solid rgba(34,197,94,.24);
+      background: radial-gradient(26px 26px at 30% 25%, rgba(32, 182, 108, 0.34), rgba(16, 23, 31, 0.98));
+      border-color: rgba(72, 212, 141, 0.3);
     }
 
     .meta{ min-width:0; flex: 1 1 auto; }
+
     .meta .label{
       margin:0;
-      font-size: 15px;
-      font-weight: 760;
-      line-height:1.1;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.12;
+      color: rgba(245, 242, 234, 0.95);
     }
+
     .meta .sub{
-      margin: 4px 0 0;
-      font-size: 12px;
-      color: var(--muted);
+      margin: 5px 0 0;
+      font-size: 13px;
+      color: var(--contact-muted);
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
+      letter-spacing: 0.01em;
     }
 
     .chev{
-      opacity:.65;
-      font-size: 18px;
+      opacity: 0.68;
+      font-size: 20px;
+      line-height: 1;
       padding: 0 4px;
       flex:0 0 auto;
     }
 
-    /* Download row = special */
     .downloadRow{
       justify-content:center;
-      gap:10px;
+      gap:12px;
       text-align:center;
-      font-weight: 800;
-      letter-spacing: .02em;
+      border: 1px solid rgba(211, 229, 255, 0.3);
+      background:
+        linear-gradient(130deg, rgba(24, 38, 56, 0.95), rgba(12, 18, 26, 0.92)),
+        linear-gradient(180deg, rgba(211, 229, 255, 0.08), rgba(211, 229, 255, 0));
+      box-shadow: 0 20px 42px rgba(0, 0, 0, 0.5);
     }
+
     .downloadRow .dlText{
-      font-size: 15px;
-      font-weight: 820;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
+
     .downloadRow .icon{
-      width:40px;
-      height:40px;
-      background: rgba(255,255,255,.08);
+      width:42px;
+      height:42px;
+      border-color: rgba(211, 229, 255, 0.42);
+      background: rgba(211, 229, 255, 0.12);
     }
 
-    button.rowBtn{
-      width:100%;
-      cursor:pointer;
-      border: 1px solid rgba(255,255,255,.16);
-    }
-
-    /* subtle divider between personal + org */
     .divider{
-      margin: 14px 6px 6px;
-      border-top: 1px solid rgba(255,255,255,.12);
-      opacity:.9;
+      margin: 18px 6px 8px;
+      border-top: 1px solid rgba(245, 242, 234, 0.14);
+      opacity: 0.9;
     }
 
-    /* tighten on small phones */
-    @media (max-width: 420px){
-      .page{ padding: calc(var(--nav-content-pad) - 10px) 10px 18px; }
-      .content{ padding: 8px 8px 12px; }
-      .top{ padding: 12px 12px 10px; }
-      .avatar{ width:52px; height:52px; border-radius: 15px; }
-      .title h1{ font-size: 17px; }
-      a.row, button.rowBtn{ padding: 11px 11px; border-radius: 15px; }
-      .icon{ width:42px; height:42px; }
-      .meta .label{ font-size: 14px; }
+    @media (max-width: 700px){
+      .page{
+        padding: clamp(0.75rem, 2.6vw, 1.25rem) 12px 22px;
+      }
+
+      .page-head{
+        width: min(860px, calc(100% - 24px));
+        margin: 0 auto 16px;
+      }
+
+      .content{
+        padding: 12px 11px 16px;
+      }
+
+      .top{
+        padding: 14px 14px 12px;
+      }
+
+      .avatar{
+        width:56px;
+        height:56px;
+        border-radius: 16px;
+      }
+
+      .title h1{
+        font-size: 30px;
+      }
+
+      .title .tag{
+        font-size: 10px;
+        letter-spacing: 0.2em;
+      }
+
+      a.row, button.rowBtn{
+        border-radius: 16px;
+        padding: 12px 12px;
+      }
+
+      .icon{
+        width:44px;
+        height:44px;
+      }
+
+      .meta .label{
+        font-size: 15px;
+      }
     }
   </style>
   <!-- Google tag (gtag.js) -->
@@ -295,11 +384,11 @@
     <div class="nav-spacer" aria-hidden="true"></div>
   </div>
 </nav>
-  <header class="page-head">
-    <h1 class="page-title">Contact</h1>
-      </header>
   <div class="page">
     <main class="wrap">
+      <header class="page-head">
+        <h1 class="page-title">Contact</h1>
+      </header>
       <section class="panel">
         <header class="top">
           <div class="avatar" aria-hidden="true">

@@ -84,9 +84,6 @@
         </div>
       </section>
 
-      <div class="portal-actions">
-        <button class="portal-button" id="logout-button" onclick="logout()">Logout</button>
-      </div>
     </section>
   </main>
 
@@ -95,11 +92,46 @@
 
   <script>
     const portalStatus = document.getElementById("portal-status");
-    const logoutButton = document.getElementById("logout-button");
+    const navAction = document.querySelector(".nav-spacer .nav-action-link");
+    let isLoggingOut = false;
+    let navObserver = null;
 
     function setPortalStatus(session) {
       const email = session?.user?.email;
       portalStatus.textContent = email ? `Signed in as ${email}` : "Signed in";
+    }
+
+    function applyPortalNavAction() {
+      if (!navAction || isLoggingOut) return;
+      if (navAction.textContent !== "Logout") {
+        navAction.textContent = "Logout";
+      }
+      if (navAction.getAttribute("href") !== "#") {
+        navAction.setAttribute("href", "#");
+      }
+      if (navAction.getAttribute("aria-label") !== "Log out") {
+        navAction.setAttribute("aria-label", "Log out");
+      }
+    }
+
+    function setupPortalNavAction() {
+      if (!navAction) return;
+
+      applyPortalNavAction();
+
+      navAction.addEventListener("click", async (event) => {
+        event.preventDefault();
+        await logout();
+      });
+
+      navObserver = new MutationObserver(() => {
+        applyPortalNavAction();
+      });
+      navObserver.observe(navAction, {
+        childList: true,
+        characterData: true,
+        subtree: true
+      });
     }
 
     async function checkAuth() {
@@ -114,12 +146,20 @@
     }
 
     async function logout() {
-      logoutButton.disabled = true;
-      logoutButton.textContent = "Signing Out...";
+      if (isLoggingOut) return;
+      isLoggingOut = true;
+      if (navAction) {
+        if (navObserver) {
+          navObserver.disconnect();
+        }
+        navAction.textContent = "Signing Out...";
+        navAction.style.pointerEvents = "none";
+      }
       await window.siteAuth.logout();
       window.location.href = "/";
     }
 
+    setupPortalNavAction();
     checkAuth().catch((error) => {
       console.log("Portal auth check failed:", error);
       window.location.href = "/login/";
