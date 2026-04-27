@@ -56,12 +56,12 @@
     throw new Error(payload?.error || "Unable to fetch session.");
   }
 
-  async function login(email, password) {
+  async function login(email, password, captchaToken = "") {
     const response = await fetch("/api/auth-login", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, captchaToken }),
     });
 
     const payload = await parseJson(response);

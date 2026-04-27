@@ -4336,3 +4336,33 @@ body.nav-menu-open {
     font-size: clamp(24px, 7vw, 32px);
   }
 }
+
+.auth-turnstile-wrap {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.1rem;
+}
+
+.auth-label-text {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(245, 242, 234, 0.72);
+}
+
+#auth-turnstile {
+  display: flex;
+  justify-content: center;
+  min-height: 66px;
+}
+
+#auth-turnstile > * {
+  margin: 0 auto;
+}
+
+.auth-turnstile-note {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: rgba(245, 242, 234, 0.56);
+}

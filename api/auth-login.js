@@ -56,6 +56,8 @@ module.exports = async function handler(req, res) {
     const body = await parseJson(req);
     const email = String(body.email || "").trim();
     const password = String(body.password || "");
+    const captchaToken = String(body.captchaToken || "").trim();
+
     if (!email || !password) {
       res.statusCode = 400;
       res.setHeader("Content-Type", "application/json");
@@ -70,7 +72,11 @@ module.exports = async function handler(req, res) {
         apikey: supabaseAnonKey,
         Authorization: `Bearer ${supabaseAnonKey}`,
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        ...(captchaToken ? { captcha_token: captchaToken } : {}),
+      }),
     });
 
     const payload = await upstream.json().catch(() => ({}));
