@@ -35,6 +35,47 @@ function cookie(name, value, maxAgeSeconds) {
   ].join("; ");
 }
 
+function getClientIp(req) {
+  const forwarded = req.headers["x-forwarded-for"];
+  if (typeof forwarded !== "string" || !forwarded.trim()) return "";
+  return forwarded.split(",")[0].trim();
+}
+
+async function verifyTurnstile(captchaToken, req) {
+  const secret = String(process.env.TURNSTILE_SECRET_KEY || "").trim();
+  if (!secret) {
+    return { ok: false, error: "Missing TURNSTILE_SECRET_KEY." };
+  }
+  if (!captchaToken) {
+    return { ok: false, error: "Complete the security check first." };
+  }
+
+  const payload = new URLSearchParams();
+  payload.set("secret", secret);
+  payload.set("response", captchaToken);
+  const remoteIp = getClientIp(req);
+  if (remoteIp) payload.set("remoteip", remoteIp);
+
+  try {
+    const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: payload.toString(),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result?.success) {
+      const codes = Array.isArray(result?.["error-codes"]) ? result["error-codes"].join(", ") : "";
+      return {
+        ok: false,
+        error: codes ? `Captcha verification failed: ${codes}.` : "Captcha verification failed.",
+      };
+    }
+    return { ok: true };
+  } catch (_error) {
+    return { ok: false, error: "Captcha verification request failed." };
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.statusCode = 405;
@@ -65,10 +106,11 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    if (!captchaToken) {
+    const captchaResult = await verifyTurnstile(captchaToken, req);
+    if (!captchaResult.ok) {
       res.statusCode = 400;
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ error: "Complete the security check first." }));
+      res.end(JSON.stringify({ error: captchaResult.error }));
       return;
     }
 
@@ -82,7 +124,6 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         email,
         password,
-        ...(captchaToken ? { captcha_token: captchaToken } : {}),
       }),
     });
 
