@@ -65,6 +65,13 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    if (!captchaToken) {
+      res.statusCode = 400;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "Complete the security check first." }));
+      return;
+    }
+
     const upstream = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: "POST",
       headers: {

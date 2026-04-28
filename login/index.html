@@ -140,6 +140,9 @@
     async function login() {
       const email = emailInput.value.trim();
       const password = passwordInput.value;
+      if (!captchaToken && window.turnstile && captchaWidgetId !== null) {
+        captchaToken = String(window.turnstile.getResponse(captchaWidgetId) || "").trim();
+      }
 
       if (!email || !password) {
         setMessage("Enter your email and password to continue.", "error");
