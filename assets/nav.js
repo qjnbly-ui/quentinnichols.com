@@ -159,7 +159,12 @@
   loadAuth()
     .then(async (auth) => {
       if (!auth) return;
-      setActionLink(await auth.getSession());
+      const hintedSession = auth.getStoredSession?.();
+      if (hintedSession) {
+        setActionLink(await auth.getSession());
+      } else {
+        setActionLink(null);
+      }
       await auth.onAuthStateChange((session) => {
         setActionLink(session);
       });

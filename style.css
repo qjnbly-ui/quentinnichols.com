@@ -2184,7 +2184,7 @@ body.nav-menu-open {
 
 .home-map-card--photo {
   grid-column: span 7;
-  --home-map-card-image: url("/photography/images/ClientGalleries.jpg");
+  --home-map-card-image: url("/photography/landscapes/OregonCoast.jpg");
   --home-map-accent: rgba(236, 165, 110, 0.22);
 }
 

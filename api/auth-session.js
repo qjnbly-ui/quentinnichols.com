@@ -79,7 +79,7 @@ module.exports = async function handler(req, res) {
   const unauthenticated = () => {
     res.setHeader("Set-Cookie", [clearCookie("sb_access_token"), clearCookie("sb_refresh_token")]);
     res.setHeader("Cache-Control", "no-store");
-    res.statusCode = 401;
+    res.statusCode = 200;
     res.setHeader("Content-Type", "application/json");
     res.end(JSON.stringify({ session: null }));
   };
