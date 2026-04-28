@@ -1,9 +1,5 @@
-const BUCKET = "quentinnichols.com";
-const PREFIX_CANDIDATES = [
-  "photography",
-  "quentinnichols.com/photography",
-  "quentinnichols.com/quentinnichols.com/photography",
-];
+const BUCKET = "quentinnicholswebsite";
+const ROOT_PREFIX = "photography";
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 
 function isImageName(name) {
@@ -65,31 +61,24 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const imageMap = new Map();
-    const addObjects = (objects, category, rootPrefix) => {
+    const [landscapes, portraits] = await Promise.all([
+      listObjects(supabaseUrl, supabaseAnonKey, `${ROOT_PREFIX}/landscapes`),
+      listObjects(supabaseUrl, supabaseAnonKey, `${ROOT_PREFIX}/portraits`),
+    ]);
+
+    const normalize = (objects, category) =>
       objects
         .filter((item) => item && isImageName(item.name))
-        .forEach((item) => {
-          const objectPath = `${rootPrefix}/${category}/${item.name}`;
-          const url = buildPublicUrl(supabaseUrl, BUCKET, objectPath);
-          imageMap.set(url, {
+        .map((item) => {
+          const objectPath = `${ROOT_PREFIX}/${category}/${item.name}`;
+          return {
             category,
             name: item.name,
-            url,
-          });
+            url: buildPublicUrl(supabaseUrl, BUCKET, objectPath),
+          };
         });
-    };
 
-    for (const rootPrefix of PREFIX_CANDIDATES) {
-      const [landscapes, portraits] = await Promise.all([
-        listObjects(supabaseUrl, supabaseAnonKey, `${rootPrefix}/landscapes`),
-        listObjects(supabaseUrl, supabaseAnonKey, `${rootPrefix}/portraits`),
-      ]);
-      addObjects(landscapes, "landscapes", rootPrefix);
-      addObjects(portraits, "portraits", rootPrefix);
-    }
-
-    const images = Array.from(imageMap.values());
+    const images = [...normalize(landscapes, "landscapes"), ...normalize(portraits, "portraits")];
     images.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
 
     res.setHeader("Cache-Control", "no-store");
