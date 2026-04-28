@@ -1,5 +1,9 @@
 const BUCKET = "quentinnichols.com";
-const ROOT_PREFIX = "quentinnichols.com/photography";
+const PREFIX_CANDIDATES = [
+  "photography",
+  "quentinnichols.com/photography",
+  "quentinnichols.com/quentinnichols.com/photography",
+];
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif"]);
 
 function isImageName(name) {
@@ -61,24 +65,31 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const [landscapes, portraits] = await Promise.all([
-      listObjects(supabaseUrl, supabaseAnonKey, `${ROOT_PREFIX}/landscapes`),
-      listObjects(supabaseUrl, supabaseAnonKey, `${ROOT_PREFIX}/portraits`),
-    ]);
-
-    const normalize = (objects, category) =>
+    const imageMap = new Map();
+    const addObjects = (objects, category, rootPrefix) => {
       objects
         .filter((item) => item && isImageName(item.name))
-        .map((item) => {
-          const objectPath = `${ROOT_PREFIX}/${category}/${item.name}`;
-          return {
+        .forEach((item) => {
+          const objectPath = `${rootPrefix}/${category}/${item.name}`;
+          const url = buildPublicUrl(supabaseUrl, BUCKET, objectPath);
+          imageMap.set(url, {
             category,
             name: item.name,
-            url: buildPublicUrl(supabaseUrl, BUCKET, objectPath),
-          };
+            url,
+          });
         });
+    };
 
-    const images = [...normalize(landscapes, "landscapes"), ...normalize(portraits, "portraits")];
+    for (const rootPrefix of PREFIX_CANDIDATES) {
+      const [landscapes, portraits] = await Promise.all([
+        listObjects(supabaseUrl, supabaseAnonKey, `${rootPrefix}/landscapes`),
+        listObjects(supabaseUrl, supabaseAnonKey, `${rootPrefix}/portraits`),
+      ]);
+      addObjects(landscapes, "landscapes", rootPrefix);
+      addObjects(portraits, "portraits", rootPrefix);
+    }
+
+    const images = Array.from(imageMap.values());
     images.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
 
     res.setHeader("Cache-Control", "no-store");

@@ -56,10 +56,13 @@
 
       const payload = await response.json();
       const images = Array.isArray(payload?.images) ? payload.images : [];
-      if (images.length === 0) return;
+      if (images.length === 0) {
+        grid.innerHTML = "";
+        return;
+      }
       render(images);
     } catch (_error) {
-      // Keep server-rendered fallback if fetch fails.
+      // Leave the grid empty if feed loading fails.
     }
   }
 
