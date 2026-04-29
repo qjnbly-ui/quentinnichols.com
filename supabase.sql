@@ -23,4 +23,22 @@ BEGIN
 END
 $$;
 
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'storage'
+      AND tablename = 'objects'
+      AND policyname = 'Allow public read of quentinnicholswebsite'
+  ) THEN
+    CREATE POLICY "Allow public read of quentinnicholswebsite"
+    ON storage.objects
+    FOR SELECT
+    TO anon, authenticated
+    USING (bucket_id = 'quentinnicholswebsite');
+  END IF;
+END
+$$;
+
 COMMIT;
