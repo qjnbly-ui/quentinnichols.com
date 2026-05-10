@@ -1,5 +1,6 @@
 const fs = require("fs/promises");
 const path = require("path");
+const { enforceRateLimit } = require("./_rate-limit");
 
 const MODEL = "llama-3.3-70b-versatile";
 const MAX_CONTEXT_TOKENS = 100000;
@@ -54,6 +55,16 @@ When sharing site links, use Markdown with human-readable titles (e.g., [Photogr
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+
+  const askRate = enforceRateLimit(req, res, {
+    keyPrefix: "ask",
+    windowMs: Number(process.env.ASK_RATE_LIMIT_WINDOW_MS || 60_000),
+    limit: Number(process.env.ASK_RATE_LIMIT_MAX || 20),
+  });
+  if (!askRate.allowed) {
+    res.status(429).json({ error: "Rate limit exceeded. Please try again shortly." });
     return;
   }
 

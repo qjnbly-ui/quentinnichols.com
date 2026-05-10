@@ -84,6 +84,7 @@
               <textarea id="chat-message" rows="2" placeholder="What themes keep showing up in my writing?" required></textarea>
               <button type="submit">Send</button>
             </div>
+            <p class="ai-audio-status" id="audio-status" role="status" aria-live="polite">Audio: idle</p>
             <p class="ai-hint">Your messages stay on this device. Responses are generated on-demand.</p>
           </form>
         </div>
@@ -97,6 +98,12 @@
     const form = document.getElementById("chat-form");
     const input = document.getElementById("chat-message");
     const clearBtn = document.getElementById("clear-chat");
+    const audioStatus = document.getElementById("audio-status");
+
+    function setAudioStatus(text) {
+      if (!audioStatus) return;
+      audioStatus.textContent = `Audio: ${text}`;
+    }
 
     function createLinkedText(text) {
       const container = document.createElement("span");
@@ -254,15 +261,37 @@
     if (closeBtn) {
       closeBtn.addEventListener("click", () => {
         document.body.classList.remove("ai-chat-open");
+        document.body.classList.remove("ai-keyboard-open");
       });
     }
 
     input.addEventListener("focus", () => {
       document.body.classList.add("ai-chat-open");
+      document.body.classList.add("ai-keyboard-open");
       setTimeout(() => {
         input.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 150);
     });
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        document.body.classList.remove("ai-keyboard-open");
+      }, 140);
+    });
+
+    function syncKeyboardClass() {
+      if (!window.visualViewport || window.innerWidth > 720) return;
+      const keyboardLikelyOpen = window.visualViewport.height < window.innerHeight * 0.82;
+      if (keyboardLikelyOpen) {
+        document.body.classList.add("ai-keyboard-open");
+      } else if (document.activeElement !== input) {
+        document.body.classList.remove("ai-keyboard-open");
+      }
+    }
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", syncKeyboardClass);
+      window.visualViewport.addEventListener("scroll", syncKeyboardClass);
+    }
 
     async function requestSpeech(text, signal) {
       const response = await fetch("/api/tts", {
@@ -274,11 +303,22 @@
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "TTS request failed");
+        let parsed = null;
+        try {
+          parsed = JSON.parse(errorText);
+        } catch (_err) {}
+        const message = parsed?.error || errorText || "TTS request failed";
+        const details = parsed?.details || parsed?.attempts?.[0]?.details || "";
+        throw new Error(details ? `${message}: ${details}` : message);
       }
 
       const blob = await response.blob();
-      return URL.createObjectURL(blob);
+      return {
+        url: URL.createObjectURL(blob),
+        source: response.headers.get("X-TTS-Source") || "upstream",
+        model: response.headers.get("X-TTS-Model") || "",
+        voice: response.headers.get("X-TTS-Voice") || "",
+      };
     }
 
     let activePlayback = null;
@@ -295,6 +335,33 @@
       let currentUrl = null;
       let currentFetch = null;
       let nextFetch = null;
+      let currentUtterance = null;
+      let usingBrowserTts = false;
+
+      function speakWithBrowserTts() {
+        if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
+          return Promise.reject(new Error("Browser speech synthesis unavailable"));
+        }
+
+        return new Promise((resolve, reject) => {
+          usingBrowserTts = true;
+          controls.progress.hidden = true;
+          setAudioStatus("fallback voice (browser)");
+          const utterance = new SpeechSynthesisUtterance(cleaned);
+          utterance.rate = 1.03;
+          currentUtterance = utterance;
+          utterance.onend = () => {
+            currentUtterance = null;
+            resolve();
+          };
+          utterance.onerror = () => {
+            currentUtterance = null;
+            reject(new Error("Browser speech synthesis failed"));
+          };
+          window.speechSynthesis.cancel();
+          window.speechSynthesis.speak(utterance);
+        });
+      }
 
       function flushBuffer(nextText) {
         if ((buffer + nextText).length <= maxChunk) {
@@ -351,6 +418,10 @@
           currentAudio.pause();
           currentAudio.currentTime = 0;
         }
+        if (usingBrowserTts && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+          currentUtterance = null;
+        }
         if (currentUrl) {
           URL.revokeObjectURL(currentUrl);
           currentUrl = null;
@@ -359,11 +430,13 @@
         controls.stop.hidden = true;
         controls.progress.hidden = true;
         controls.progress.value = 0;
+        setAudioStatus("idle");
       };
 
       controls.listen.textContent = "Playing";
       controls.stop.hidden = false;
       controls.progress.hidden = false;
+      setAudioStatus("loading");
 
       (async () => {
         const startFetch = (chunk) => {
@@ -382,7 +455,13 @@
         while (!stopped && index < chunks.length && currentFetch) {
           let audioUrl;
           try {
-            audioUrl = await currentFetch.promise;
+            const speech = await currentFetch.promise;
+            audioUrl = speech.url;
+            const meta = [];
+            if (speech.source) meta.push(speech.source);
+            if (speech.model) meta.push(speech.model);
+            if (speech.voice) meta.push(speech.voice);
+            setAudioStatus(meta.length ? `playing (${meta.join(" | ")})` : "playing");
           } catch (err) {
             if (stopped) break;
             throw err;
@@ -430,7 +509,21 @@
           index += 1;
         }
       })()
-        .catch(() => {})
+        .catch(async (err) => {
+          if (stopped) return;
+          try {
+            await speakWithBrowserTts();
+          } catch (fallbackErr) {
+            const message = err?.message || fallbackErr?.message || "Audio playback failed";
+            controls.listen.textContent = "Audio unavailable";
+            controls.listen.title = message;
+            setAudioStatus(`unavailable (${message})`);
+            setTimeout(() => {
+              controls.listen.textContent = "Listen";
+              controls.listen.title = "";
+            }, 2400);
+          }
+        })
         .finally(() => {
           stop();
         });
