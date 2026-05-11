@@ -1,9 +1,14 @@
-async function readJsonBody(req) {
-  if (req.body && typeof req.body === "object") return req.body;
+async function readRawBody(req) {
   const buffers = [];
   for await (const chunk of req) buffers.push(chunk);
-  if (!buffers.length) return {};
-  return JSON.parse(Buffer.concat(buffers).toString("utf8"));
+  return Buffer.concat(buffers);
+}
+
+async function readJsonBody(req) {
+  if (req.body && typeof req.body === "object") return req.body;
+  const raw = await readRawBody(req);
+  if (!raw.length) return {};
+  return JSON.parse(raw.toString("utf8"));
 }
 
 module.exports = async (req, res) => {
@@ -15,16 +20,34 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const body = await readJsonBody(req);
-    const audioBase64 = String(body.audio || "");
-    const mimeType = String(body.mimeType || "audio/webm");
-    const language = String(body.language || "en").trim();
+    const contentType = String(req.headers["content-type"] || "").toLowerCase();
+    const languageHeader = String(req.headers["x-stt-language"] || "en").trim();
+    const mimeHeader = String(req.headers["x-audio-mime"] || "audio/webm").trim();
+    let audioBuffer = Buffer.alloc(0);
+    let mimeType = mimeHeader;
+    let language = languageHeader || "en";
 
-    if (!audioBase64) {
-      res.statusCode = 400;
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ error: "Missing audio" }));
-      return;
+    if (contentType.includes("application/json")) {
+      const body = await readJsonBody(req);
+      const audioBase64 = String(body.audio || "");
+      mimeType = String(body.mimeType || mimeType);
+      language = String(body.language || language);
+      if (!audioBase64) {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "Missing audio" }));
+        return;
+      }
+      audioBuffer = Buffer.from(audioBase64, "base64");
+    } else {
+      audioBuffer = await readRawBody(req);
+      if (!audioBuffer.length) {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "Missing audio payload" }));
+        return;
+      }
+      if (contentType.startsWith("audio/")) mimeType = contentType.split(";")[0];
     }
 
     const apiKey = process.env.GROQ_API_KEY;
@@ -35,7 +58,6 @@ module.exports = async (req, res) => {
       return;
     }
 
-    const audioBuffer = Buffer.from(audioBase64, "base64");
     if (!audioBuffer.length) {
       res.statusCode = 400;
       res.setHeader("Content-Type", "application/json");
@@ -52,13 +74,17 @@ module.exports = async (req, res) => {
     formData.append("response_format", "json");
     formData.append("language", language || "en");
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
     const response = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },
       body: formData,
+      signal: controller.signal,
     });
+    clearTimeout(timer);
 
     if (!response.ok) {
       const errorText = await response.text();

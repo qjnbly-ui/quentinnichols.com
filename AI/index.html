@@ -258,18 +258,14 @@
     }
 
     async function transcribeAudio(blob) {
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-      let binary = "";
-      for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
-      const base64 = btoa(binary);
       const response = await fetch("/api/stt", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          audio: base64,
-          mimeType: blob.type || "audio/webm",
-          language: "en",
-        }),
+        headers: {
+          "Content-Type": blob.type || "audio/webm",
+          "X-Audio-Mime": blob.type || "audio/webm",
+          "X-STT-Language": "en",
+        },
+        body: blob,
       });
 
       if (!response.ok) {
@@ -600,6 +596,12 @@
       return recordingStream;
     }
 
+    function releaseRecordingStream() {
+      if (!recordingStream) return;
+      recordingStream.getTracks().forEach((track) => track.stop());
+      recordingStream = null;
+    }
+
     async function startRecording() {
       if (recording) return;
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
@@ -645,6 +647,7 @@
       });
       mediaRecorder.stop();
       mediaRecorder = null;
+      releaseRecordingStream();
       setAudioStatus("Transcribing...");
 
       try {
@@ -664,6 +667,7 @@
         setAudioStatus("Idle");
       } catch (err) {
         setAudioStatus(`Voice error: ${err?.message || "transcription failed"}`);
+        releaseRecordingStream();
       }
     }
 
@@ -677,6 +681,20 @@
         }
       });
     }
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        if (recording && mediaRecorder) {
+          try {
+            mediaRecorder.stop();
+          } catch (_err) {}
+          mediaRecorder = null;
+          recording = false;
+          voiceBtn.textContent = "Start Voice";
+        }
+        releaseRecordingStream();
+      }
+    });
 
     clearBtn.addEventListener("click", () => {
       if (!confirm("Clear this chat from your device?")) return;
