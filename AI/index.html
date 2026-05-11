@@ -257,26 +257,40 @@
       return data.reply || "Sorry, I couldn't generate a response.";
     }
 
-    async function sendVoiceTurn(blob) {
-      const formData = new FormData();
-      const mimeType = blob.type || "audio/webm";
-      const fileName = mimeType.includes("mp4") ? "speech.m4a" : mimeType.includes("ogg") ? "speech.ogg" : "speech.webm";
-      formData.append("audio", blob, fileName);
-      formData.append("mimeType", mimeType);
-      formData.append(
-        "messages",
-        JSON.stringify(
-          messages.map((msg) => ({
-            role: msg.role,
-            content: msg.text,
-          }))
-        )
-      );
-
-      const response = await fetch("/api/voice", {
-        method: "POST",
-        body: formData,
+    function blobToBase64(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = String(reader.result || "");
+          resolve(result.includes(",") ? result.split(",").pop() : result);
+        };
+        reader.onerror = () => reject(new Error("Could not read audio"));
+        reader.readAsDataURL(blob);
       });
+    }
+
+    async function sendVoiceTurn(blob) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000);
+      const audio = await blobToBase64(blob);
+      let response;
+      try {
+        response = await fetch("/api/voice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            audio,
+            mimeType: blob.type || "audio/webm",
+            messages: messages.map((msg) => ({
+              role: msg.role,
+              content: msg.text,
+            })),
+          }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -558,6 +572,24 @@
       return { stop };
     }
 
+    async function playLatestAssistantReply(index) {
+      await unlockAudioPlayback();
+      const row = log.children[index];
+      const controlsWrap = row?.querySelector(".ai-bubble-controls");
+      const controls = {
+        listen: controlsWrap?.querySelector(".ai-tts"),
+        stop: controlsWrap?.querySelector(".ai-tts-stop"),
+        progress: controlsWrap?.querySelector(".ai-tts-progress"),
+      };
+      if (!controls.listen || !controls.stop || !controls.progress) return;
+      if (activePlayback) {
+        activePlayback.stop();
+        activePlayback = null;
+      }
+      controls.listen.textContent = "Playing";
+      activePlayback = playSpeechQueue(messages[index].text, controls);
+    }
+
     log.addEventListener("click", async (event) => {
       const btn = event.target.closest(".ai-tts");
       if (!btn) return;
@@ -675,10 +707,10 @@
           return;
         }
         messages.push({ role: "user", text });
-        messages.push({ role: "assistant", text: reply || "Sorry, something went wrong. Please try again." });
+        const assistantIndex = messages.push({ role: "assistant", text: reply || "Sorry, something went wrong. Please try again." }) - 1;
         render(messages);
         saveMessages(messages);
-        setAudioStatus("Idle");
+        await playLatestAssistantReply(assistantIndex);
       } catch (err) {
         setAudioStatus(`Voice error: ${err?.message || "request failed"}`);
         releaseRecordingStream();

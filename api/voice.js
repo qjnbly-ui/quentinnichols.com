@@ -14,6 +14,13 @@ async function readRawBody(req) {
   return Buffer.concat(buffers);
 }
 
+async function readJsonBody(req) {
+  if (req.body && typeof req.body === "object") return req.body;
+  const raw = await readRawBody(req);
+  if (!raw.length) return {};
+  return JSON.parse(raw.toString("utf8"));
+}
+
 async function readMultipartForm(req) {
   const contentType = String(req.headers["content-type"] || "");
   const raw = await readRawBody(req);
@@ -90,8 +97,8 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
-async function transcribeAudio(apiKey, audioFile, mimeType) {
-  const audioBuffer = Buffer.from(await audioFile.arrayBuffer());
+async function transcribeAudio(apiKey, audioInput, mimeType) {
+  const audioBuffer = Buffer.isBuffer(audioInput) ? audioInput : Buffer.from(await audioInput.arrayBuffer());
   const fileExt = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
   const formData = new FormData();
   formData.append("file", new Blob([audioBuffer], { type: mimeType }), `speech.${fileExt}`);
@@ -180,18 +187,38 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const form = await readMultipartForm(req);
-    const audioFile = form.get("audio");
-    if (!audioFile || typeof audioFile.arrayBuffer !== "function") {
-      res.statusCode = 400;
-      res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({ error: "Missing audio" }));
-      return;
+    const contentType = String(req.headers["content-type"] || "").toLowerCase();
+    let audioInput = null;
+    let mimeType = "audio/webm";
+    let messages = [];
+
+    if (contentType.includes("application/json")) {
+      const body = await readJsonBody(req);
+      const audioBase64 = String(body.audio || "");
+      if (!audioBase64) {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "Missing audio" }));
+        return;
+      }
+      audioInput = Buffer.from(audioBase64, "base64");
+      mimeType = String(body.mimeType || mimeType);
+      messages = normalizeMessages(body.messages || []);
+    } else {
+      const form = await readMultipartForm(req);
+      const audioFile = form.get("audio");
+      if (!audioFile || typeof audioFile.arrayBuffer !== "function") {
+        res.statusCode = 400;
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify({ error: "Missing audio" }));
+        return;
+      }
+      audioInput = audioFile;
+      mimeType = String(audioFile.type || form.get("mimeType") || mimeType);
+      messages = normalizeMessages(JSON.parse(String(form.get("messages") || "[]")));
     }
 
-    const messages = normalizeMessages(JSON.parse(String(form.get("messages") || "[]")));
-    const mimeType = String(audioFile.type || form.get("mimeType") || "audio/webm");
-    const text = await transcribeAudio(apiKey, audioFile, mimeType);
+    const text = await transcribeAudio(apiKey, audioInput, mimeType);
     if (!text) {
       res.statusCode = 200;
       res.setHeader("Content-Type", "application/json");
