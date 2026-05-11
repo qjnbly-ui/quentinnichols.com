@@ -53,9 +53,6 @@
 
     <section class="ai-chat" aria-label="AI chat">
       <div class="ai-inner">
-        <div class="ai-mobile-intro">
-          <button class="ai-open" type="button" id="open-chat">Open AI</button>
-        </div>
         <div class="ai-card">
           <div class="ai-toolbar">
             <div class="ai-toolbar-actions">
@@ -70,11 +67,11 @@
             <div class="ai-input-row">
               <textarea id="chat-message" rows="2" placeholder="What themes keep showing up in my writing?" required></textarea>
               <div class="ai-input-actions">
-                <button type="button" id="voice-button" class="ai-voice-btn" aria-label="Hold to talk">Hold to Talk</button>
+                <button type="button" id="voice-button" class="ai-voice-btn" aria-label="Start voice input">Start Voice</button>
                 <button type="submit">Send</button>
               </div>
             </div>
-            <p class="ai-audio-status" id="audio-status" role="status" aria-live="polite" hidden></p>
+            <p class="ai-audio-status" id="audio-status" role="status" aria-live="polite"></p>
           </form>
         </div>
       </div>
@@ -95,10 +92,11 @@
     let recording = false;
     let recordingChunks = [];
     let recordingStream = null;
+    let recordMimeType = "";
 
     function setAudioStatus(text) {
       if (!audioStatus) return;
-      audioStatus.textContent = text;
+      audioStatus.textContent = String(text || "");
     }
 
     async function unlockAudioPlayback() {
@@ -596,6 +594,12 @@
       await submitUserMessage(input.value);
     });
 
+    async function ensureRecordingStream() {
+      if (recordingStream) return recordingStream;
+      recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      return recordingStream;
+    }
+
     async function startRecording() {
       if (recording) return;
       if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
@@ -603,46 +607,52 @@
         return;
       }
       try {
-        recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        await ensureRecordingStream();
         recordingChunks = [];
-        mediaRecorder = new MediaRecorder(recordingStream);
+        recordMimeType = MediaRecorder.isTypeSupported("audio/mp4")
+          ? "audio/mp4"
+          : MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+          ? "audio/webm;codecs=opus"
+          : "";
+        mediaRecorder = recordMimeType ? new MediaRecorder(recordingStream, { mimeType: recordMimeType }) : new MediaRecorder(recordingStream);
         mediaRecorder.addEventListener("dataavailable", (event) => {
           if (event.data && event.data.size > 0) recordingChunks.push(event.data);
         });
-        mediaRecorder.start();
+        mediaRecorder.start(250);
         recording = true;
-        voiceBtn.textContent = "Release to Send";
+        voiceBtn.textContent = "Stop Voice";
         setAudioStatus("Listening...");
-      } catch (_err) {
-        setAudioStatus("Mic blocked");
+      } catch (err) {
+        voiceBtn.textContent = "Start Voice";
+        setAudioStatus(`Mic error: ${err?.message || "permission denied or unavailable"}`);
       }
     }
 
     async function stopRecordingAndSend() {
       if (!recording || !mediaRecorder) return;
       recording = false;
-      voiceBtn.textContent = "Hold to Talk";
+      voiceBtn.textContent = "Start Voice";
 
       const done = new Promise((resolve) => {
         mediaRecorder.addEventListener(
           "stop",
           () => {
-            const blob = new Blob(recordingChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+            const blob = new Blob(recordingChunks, { type: mediaRecorder.mimeType || recordMimeType || "audio/webm" });
             resolve(blob);
           },
           { once: true }
         );
       });
       mediaRecorder.stop();
-      if (recordingStream) {
-        recordingStream.getTracks().forEach((track) => track.stop());
-      }
       mediaRecorder = null;
-      recordingStream = null;
       setAudioStatus("Transcribing...");
 
       try {
         const blob = await done;
+        if (!blob || blob.size === 0) {
+          setAudioStatus("No audio captured");
+          return;
+        }
         const text = await transcribeAudio(blob);
         if (!text) {
           setAudioStatus("No speech detected");
@@ -652,29 +662,19 @@
         setAudioStatus("Sending...");
         await submitUserMessage(text);
         setAudioStatus("Idle");
-      } catch (_err) {
-        setAudioStatus("Voice error");
+      } catch (err) {
+        setAudioStatus(`Voice error: ${err?.message || "transcription failed"}`);
       }
     }
 
     if (voiceBtn) {
-      const begin = (event) => {
+      voiceBtn.addEventListener("click", async (event) => {
         event.preventDefault();
-        startRecording();
-      };
-      const end = (event) => {
-        event.preventDefault();
-        stopRecordingAndSend();
-      };
-      voiceBtn.addEventListener("mousedown", begin);
-      voiceBtn.addEventListener("mouseup", end);
-      voiceBtn.addEventListener("mouseleave", () => {
-        if (recording) stopRecordingAndSend();
-      });
-      voiceBtn.addEventListener("touchstart", begin, { passive: false });
-      voiceBtn.addEventListener("touchend", end, { passive: false });
-      voiceBtn.addEventListener("touchcancel", () => {
-        if (recording) stopRecordingAndSend();
+        if (!recording) {
+          await startRecording();
+        } else {
+          await stopRecordingAndSend();
+        }
       });
     }
 

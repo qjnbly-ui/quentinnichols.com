@@ -3733,15 +3733,7 @@ body.nav-menu-open {
   }
 
   .ai-mobile-intro {
-    display: block;
-  }
-
-  .ai-card {
     display: none;
-  }
-
-  body.ai-chat-open .ai-card {
-    display: flex;
   }
 
   .ai-input-row {
@@ -3928,6 +3920,7 @@ body.nav-menu-open {
   background: #111111;
   color: var(--text);
   font: inherit;
+  font-size: 16px;
 }
 
 .auth-input::placeholder {
@@ -4068,6 +4061,7 @@ body.nav-menu-open {
   border: 1px solid rgba(244, 241, 234, 0.16);
   background: linear-gradient(180deg, rgba(19, 24, 32, 0.9), rgba(12, 16, 22, 0.94));
   color: var(--text);
+  font-size: 16px;
 }
 
 .auth-page .auth-input:focus {
