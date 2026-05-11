@@ -46,12 +46,7 @@
     <section class="ai-hero">
       <div class="ai-inner">
         <div class="ai-title-wrap">
-          <p class="ai-kicker">Quentin Nichols</p>
           <h1 class="ai-title">AI Studio</h1>
-          <p class="ai-subtitle">
-            A private, local-first chat experience grounded in the writing, photography, and projects on this site.
-            Use it to connect themes, find stories, or revisit moments.
-          </p>
         </div>
       </div>
     </section>
@@ -59,17 +54,10 @@
     <section class="ai-chat" aria-label="AI chat">
       <div class="ai-inner">
         <div class="ai-mobile-intro">
-          <p class="ai-subtitle">
-            Open the AI chat for a focused, full-screen experience with your chat history and message input.
-          </p>
           <button class="ai-open" type="button" id="open-chat">Open AI</button>
         </div>
         <div class="ai-card">
           <div class="ai-toolbar">
-            <div class="ai-status-wrap">
-              <span class="ai-status">Memory: saved on this device</span>
-              <span class="ai-status ai-status--dot">Live answers</span>
-            </div>
             <div class="ai-toolbar-actions">
               <button class="ai-clear" type="button" id="clear-chat">Clear chat</button>
               <button class="ai-close" type="button" id="close-chat" aria-label="Close AI chat">Close</button>
@@ -79,13 +67,14 @@
           <div class="ai-log" id="chat-log" aria-live="polite"></div>
 
           <form class="ai-input" id="chat-form">
-            <label class="ai-label" for="chat-message">Ask about posts, photography, or reflections</label>
             <div class="ai-input-row">
               <textarea id="chat-message" rows="2" placeholder="What themes keep showing up in my writing?" required></textarea>
-              <button type="submit">Send</button>
+              <div class="ai-input-actions">
+                <button type="button" id="voice-button" class="ai-voice-btn" aria-label="Hold to talk">Hold to Talk</button>
+                <button type="submit">Send</button>
+              </div>
             </div>
-            <p class="ai-audio-status" id="audio-status" role="status" aria-live="polite">Idle</p>
-            <p class="ai-hint">Your messages stay on this device. Responses are generated on-demand.</p>
+            <p class="ai-audio-status" id="audio-status" role="status" aria-live="polite" hidden></p>
           </form>
         </div>
       </div>
@@ -99,8 +88,13 @@
     const input = document.getElementById("chat-message");
     const clearBtn = document.getElementById("clear-chat");
     const audioStatus = document.getElementById("audio-status");
+    const voiceBtn = document.getElementById("voice-button");
     let audioUnlocked = false;
     let unlockAttempted = false;
+    let mediaRecorder = null;
+    let recording = false;
+    let recordingChunks = [];
+    let recordingStream = null;
 
     function setAudioStatus(text) {
       if (!audioStatus) return;
@@ -263,6 +257,56 @@
 
       const data = await response.json();
       return data.reply || "Sorry, I couldn't generate a response.";
+    }
+
+    async function transcribeAudio(blob) {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      let binary = "";
+      for (let i = 0; i < bytes.length; i += 1) binary += String.fromCharCode(bytes[i]);
+      const base64 = btoa(binary);
+      const response = await fetch("/api/stt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          audio: base64,
+          mimeType: blob.type || "audio/webm",
+          language: "en",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Transcription request failed");
+      }
+
+      const data = await response.json();
+      return String(data?.text || "").trim();
+    }
+
+    async function submitUserMessage(text) {
+      const trimmed = String(text || "").trim();
+      if (!trimmed) return;
+      document.body.classList.add("ai-chat-open");
+      messages.push({ role: "user", text: trimmed });
+      const payloadMessages = messages.map((msg) => ({
+        role: msg.role,
+        content: msg.text,
+      }));
+      const pendingIndex = messages.push({ role: "assistant", text: "Thinking..." }) - 1;
+      render(messages);
+      saveMessages(messages);
+      input.value = "";
+      input.focus();
+
+      try {
+        const reply = await sendMessage(payloadMessages);
+        messages[pendingIndex].text = reply;
+      } catch (err) {
+        messages[pendingIndex].text = "Sorry, something went wrong. Please try again.";
+      }
+
+      render(messages);
+      saveMessages(messages);
     }
 
     const openBtn = document.getElementById("open-chat");
@@ -549,30 +593,90 @@
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const text = input.value.trim();
-      if (!text) return;
-      document.body.classList.add("ai-chat-open");
-      messages.push({ role: "user", text });
-      const payloadMessages = messages.map((msg) => ({
-        role: msg.role,
-        content: msg.text,
-      }));
-      const pendingIndex = messages.push({ role: "assistant", text: "Thinking..." }) - 1;
-      render(messages);
-      saveMessages(messages);
-      input.value = "";
-      input.focus();
+      await submitUserMessage(input.value);
+    });
+
+    async function startRecording() {
+      if (recording) return;
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        setAudioStatus("Mic unsupported");
+        return;
+      }
+      try {
+        recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        recordingChunks = [];
+        mediaRecorder = new MediaRecorder(recordingStream);
+        mediaRecorder.addEventListener("dataavailable", (event) => {
+          if (event.data && event.data.size > 0) recordingChunks.push(event.data);
+        });
+        mediaRecorder.start();
+        recording = true;
+        voiceBtn.textContent = "Release to Send";
+        setAudioStatus("Listening...");
+      } catch (_err) {
+        setAudioStatus("Mic blocked");
+      }
+    }
+
+    async function stopRecordingAndSend() {
+      if (!recording || !mediaRecorder) return;
+      recording = false;
+      voiceBtn.textContent = "Hold to Talk";
+
+      const done = new Promise((resolve) => {
+        mediaRecorder.addEventListener(
+          "stop",
+          () => {
+            const blob = new Blob(recordingChunks, { type: mediaRecorder.mimeType || "audio/webm" });
+            resolve(blob);
+          },
+          { once: true }
+        );
+      });
+      mediaRecorder.stop();
+      if (recordingStream) {
+        recordingStream.getTracks().forEach((track) => track.stop());
+      }
+      mediaRecorder = null;
+      recordingStream = null;
+      setAudioStatus("Transcribing...");
 
       try {
-        const reply = await sendMessage(payloadMessages);
-        messages[pendingIndex].text = reply;
-      } catch (err) {
-        messages[pendingIndex].text = "Sorry, something went wrong. Please try again.";
+        const blob = await done;
+        const text = await transcribeAudio(blob);
+        if (!text) {
+          setAudioStatus("No speech detected");
+          return;
+        }
+        input.value = text;
+        setAudioStatus("Sending...");
+        await submitUserMessage(text);
+        setAudioStatus("Idle");
+      } catch (_err) {
+        setAudioStatus("Voice error");
       }
+    }
 
-      render(messages);
-      saveMessages(messages);
-    });
+    if (voiceBtn) {
+      const begin = (event) => {
+        event.preventDefault();
+        startRecording();
+      };
+      const end = (event) => {
+        event.preventDefault();
+        stopRecordingAndSend();
+      };
+      voiceBtn.addEventListener("mousedown", begin);
+      voiceBtn.addEventListener("mouseup", end);
+      voiceBtn.addEventListener("mouseleave", () => {
+        if (recording) stopRecordingAndSend();
+      });
+      voiceBtn.addEventListener("touchstart", begin, { passive: false });
+      voiceBtn.addEventListener("touchend", end, { passive: false });
+      voiceBtn.addEventListener("touchcancel", () => {
+        if (recording) stopRecordingAndSend();
+      });
+    }
 
     clearBtn.addEventListener("click", () => {
       if (!confirm("Clear this chat from your device?")) return;

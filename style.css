@@ -3472,69 +3472,38 @@ body.nav-menu-open {
 .ai-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-bottom: 14px;
   gap: 12px;
 }
 
-.ai-status-wrap {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
 .ai-toolbar-actions {
   display: inline-flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-}
-
-.ai-status {
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.ai-status--dot {
-  position: relative;
-  padding-left: 16px;
-}
-
-.ai-status--dot::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #94f0b1;
-  transform: translateY(-50%);
-  box-shadow: 0 0 12px rgba(148, 240, 177, 0.6);
 }
 
 .ai-clear {
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f6f2eb;
+  padding: 8px 12px;
+  border-radius: 10px;
   font-size: 11px;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
 }
 
 .ai-close {
   display: none;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #f6f2eb;
+  padding: 8px 12px;
+  border-radius: 10px;
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
 }
@@ -3657,8 +3626,26 @@ body.nav-menu-open {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
-  align-items: center;
+  align-items: stretch;
   text-align: left;
+}
+
+.ai-input-actions {
+  display: grid;
+  gap: 8px;
+  align-content: center;
+}
+
+.ai-voice-btn {
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f3efe8;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 10px;
+  cursor: pointer;
 }
 
 .ai-input-row textarea {
