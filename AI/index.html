@@ -257,24 +257,37 @@
       return data.reply || "Sorry, I couldn't generate a response.";
     }
 
-    async function transcribeAudio(blob) {
-      const response = await fetch("/api/stt", {
+    async function sendVoiceTurn(blob) {
+      const formData = new FormData();
+      const mimeType = blob.type || "audio/webm";
+      const fileName = mimeType.includes("mp4") ? "speech.m4a" : mimeType.includes("ogg") ? "speech.ogg" : "speech.webm";
+      formData.append("audio", blob, fileName);
+      formData.append("mimeType", mimeType);
+      formData.append(
+        "messages",
+        JSON.stringify(
+          messages.map((msg) => ({
+            role: msg.role,
+            content: msg.text,
+          }))
+        )
+      );
+
+      const response = await fetch("/api/voice", {
         method: "POST",
-        headers: {
-          "Content-Type": blob.type || "audio/webm",
-          "X-Audio-Mime": blob.type || "audio/webm",
-          "X-STT-Language": "en",
-        },
-        body: blob,
+        body: formData,
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || "Transcription request failed");
+        throw new Error(errorText || "Voice request failed");
       }
 
       const data = await response.json();
-      return String(data?.text || "").trim();
+      return {
+        text: String(data?.text || "").trim(),
+        reply: String(data?.reply || "").trim(),
+      };
     }
 
     async function submitUserMessage(text) {
@@ -648,7 +661,7 @@
       mediaRecorder.stop();
       mediaRecorder = null;
       releaseRecordingStream();
-      setAudioStatus("Transcribing...");
+      setAudioStatus("Thinking...");
 
       try {
         const blob = await done;
@@ -656,17 +669,18 @@
           setAudioStatus("No audio captured");
           return;
         }
-        const text = await transcribeAudio(blob);
+        const { text, reply } = await sendVoiceTurn(blob);
         if (!text) {
           setAudioStatus("No speech detected");
           return;
         }
-        input.value = text;
-        setAudioStatus("Sending...");
-        await submitUserMessage(text);
+        messages.push({ role: "user", text });
+        messages.push({ role: "assistant", text: reply || "Sorry, something went wrong. Please try again." });
+        render(messages);
+        saveMessages(messages);
         setAudioStatus("Idle");
       } catch (err) {
-        setAudioStatus(`Voice error: ${err?.message || "transcription failed"}`);
+        setAudioStatus(`Voice error: ${err?.message || "request failed"}`);
         releaseRecordingStream();
       }
     }

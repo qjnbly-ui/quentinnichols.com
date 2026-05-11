@@ -69,7 +69,7 @@ module.exports = async (req, res) => {
     const fileExt = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
     const fileName = `speech.${fileExt}`;
     formData.append("file", new Blob([audioBuffer], { type: mimeType }), fileName);
-    formData.append("model", process.env.STT_MODEL || "whisper-large-v3");
+    formData.append("model", process.env.STT_MODEL || "whisper-large-v3-turbo");
     formData.append("temperature", "0");
     formData.append("response_format", "json");
     formData.append("language", language || "en");
