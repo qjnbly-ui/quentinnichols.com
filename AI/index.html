@@ -68,6 +68,8 @@
               <textarea id="chat-message" rows="2" placeholder="What themes keep showing up in my writing?" required></textarea>
               <div class="ai-input-actions">
                 <button type="button" id="voice-button" class="ai-voice-btn" aria-label="Start voice input">Start Voice</button>
+                <button type="button" id="voice-send-button" class="ai-voice-send-btn" hidden>Send Voice</button>
+                <button type="button" id="voice-cancel-button" class="ai-voice-cancel-btn" hidden>Cancel</button>
                 <button type="submit">Send</button>
               </div>
             </div>
@@ -86,6 +88,8 @@
     const clearBtn = document.getElementById("clear-chat");
     const audioStatus = document.getElementById("audio-status");
     const voiceBtn = document.getElementById("voice-button");
+    const voiceSendBtn = document.getElementById("voice-send-button");
+    const voiceCancelBtn = document.getElementById("voice-cancel-button");
     let audioUnlocked = false;
     let unlockAttempted = false;
     let mediaRecorder = null;
@@ -93,24 +97,35 @@
     let recordingChunks = [];
     let recordingStream = null;
     let recordMimeType = "";
+    let unlockedAudio = null;
 
     function setAudioStatus(text) {
       if (!audioStatus) return;
       audioStatus.textContent = String(text || "");
     }
 
+    function setVoiceRecordingUi(isRecording) {
+      if (!voiceBtn || !voiceSendBtn || !voiceCancelBtn) return;
+      voiceBtn.hidden = isRecording;
+      voiceSendBtn.hidden = !isRecording;
+      voiceCancelBtn.hidden = !isRecording;
+    }
+
     async function unlockAudioPlayback() {
-      if (audioUnlocked || unlockAttempted) return;
+      if (audioUnlocked) return;
       unlockAttempted = true;
       try {
-        const unlockAudio = new Audio(
-          "data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
-        );
-        unlockAudio.muted = true;
-        unlockAudio.playsInline = true;
-        await unlockAudio.play();
-        unlockAudio.pause();
-        unlockAudio.currentTime = 0;
+        if (!unlockedAudio) {
+          unlockedAudio = new Audio(
+            "data:audio/wav;base64,UklGRlQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA="
+          );
+          unlockedAudio.playsInline = true;
+        }
+        unlockedAudio.muted = true;
+        await unlockedAudio.play();
+        unlockedAudio.pause();
+        unlockedAudio.currentTime = 0;
+        unlockedAudio.muted = false;
         audioUnlocked = true;
       } catch (_err) {
         // Keep graceful fallback behavior if unlock is blocked.
@@ -522,7 +537,10 @@
 
           currentUrl = audioUrl;
           await new Promise((resolve, reject) => {
-            const audio = new Audio(audioUrl);
+            const audio = unlockedAudio || new Audio();
+            audio.src = audioUrl;
+            audio.playsInline = true;
+            audio.muted = false;
             currentAudio = audio;
             const onTimeUpdate = () => {
               if (Number.isFinite(audio.duration) && audio.duration > 0) {
@@ -533,7 +551,7 @@
               audio.removeEventListener("timeupdate", onTimeUpdate);
               URL.revokeObjectURL(audioUrl);
               controls.progress.value = 0;
-              currentAudio = null;
+              if (currentAudio === audio) currentAudio = null;
               currentUrl = null;
             };
             audio.addEventListener("timeupdate", onTimeUpdate);
@@ -667,18 +685,18 @@
         });
         mediaRecorder.start(250);
         recording = true;
-        voiceBtn.textContent = "Stop Voice";
+        setVoiceRecordingUi(true);
         setAudioStatus("Listening...");
       } catch (err) {
-        voiceBtn.textContent = "Start Voice";
+        setVoiceRecordingUi(false);
         setAudioStatus(`Mic error: ${err?.message || "permission denied or unavailable"}`);
       }
     }
 
-    async function stopRecordingAndSend() {
+    function stopRecorderCapture() {
       if (!recording || !mediaRecorder) return;
       recording = false;
-      voiceBtn.textContent = "Start Voice";
+      setVoiceRecordingUi(false);
 
       const stoppedRecorder = mediaRecorder;
       const stoppedMimeType = stoppedRecorder.mimeType || recordMimeType || "audio/webm";
@@ -699,6 +717,12 @@
       stoppedRecorder.stop();
       mediaRecorder = null;
       releaseRecordingStream();
+      return done;
+    }
+
+    async function stopRecordingAndSend() {
+      const done = stopRecorderCapture();
+      if (!done) return;
       setAudioStatus("Thinking...");
 
       try {
@@ -723,14 +747,38 @@
       }
     }
 
+    async function cancelRecording() {
+      const done = stopRecorderCapture();
+      if (!done) return;
+      setAudioStatus("Canceled");
+      try {
+        await done;
+      } catch (_err) {}
+      recordingChunks = [];
+      setTimeout(() => {
+        if (!recording) setAudioStatus("");
+      }, 1200);
+    }
+
     if (voiceBtn) {
       voiceBtn.addEventListener("click", async (event) => {
         event.preventDefault();
-        if (!recording) {
-          await startRecording();
-        } else {
-          await stopRecordingAndSend();
-        }
+        await startRecording();
+      });
+    }
+
+    if (voiceSendBtn) {
+      voiceSendBtn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        await unlockAudioPlayback();
+        await stopRecordingAndSend();
+      });
+    }
+
+    if (voiceCancelBtn) {
+      voiceCancelBtn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        await cancelRecording();
       });
     }
 
@@ -742,7 +790,7 @@
           } catch (_err) {}
           mediaRecorder = null;
           recording = false;
-          voiceBtn.textContent = "Start Voice";
+          setVoiceRecordingUi(false);
         }
         releaseRecordingStream();
       }

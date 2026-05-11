@@ -2199,25 +2199,13 @@ body.nav-menu-open {
 }
 
 .home-map-card--projects {
-  grid-column: span 5;
+  grid-column: span 12;
   --home-map-card-image: url("/projects/images/blyoregon.org.png");
   --home-map-accent: rgba(88, 170, 255, 0.24);
 }
 
 .home-map-card--projects {
   animation-delay: 0.12s;
-}
-
-.home-map-card--ai {
-  grid-column: span 7;
-  --home-map-card-image: url("/assets/AI.logo.png");
-  --home-map-card-size: contain;
-  --home-map-card-position: center 24%;
-  --home-map-accent: rgba(78, 210, 192, 0.24);
-}
-
-.home-map-card--ai {
-  animation-delay: 0.18s;
 }
 
 .home-map-card:hover {
@@ -2402,8 +2390,7 @@ body.nav-menu-open {
 
   .home-map-card--photo,
   .home-map-card--blog,
-  .home-map-card--projects,
-  .home-map-card--ai {
+  .home-map-card--projects {
     grid-column: span 1;
   }
 }
@@ -3634,9 +3621,12 @@ body.nav-menu-open {
   display: grid;
   gap: 8px;
   align-content: center;
+  grid-template-columns: 1fr;
 }
 
-.ai-voice-btn {
+.ai-voice-btn,
+.ai-voice-send-btn,
+.ai-voice-cancel-btn {
   padding: 10px 14px;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.25);
@@ -3646,6 +3636,16 @@ body.nav-menu-open {
   letter-spacing: 0.12em;
   font-size: 10px;
   cursor: pointer;
+}
+
+.ai-voice-send-btn {
+  background: linear-gradient(135deg, #f5f2ea, #f0d6b4);
+  color: #1a130a;
+}
+
+.ai-voice-cancel-btn {
+  background: transparent;
+  color: #f3efe8;
 }
 
 .ai-input-row textarea {

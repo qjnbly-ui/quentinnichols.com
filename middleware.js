@@ -1,4 +1,4 @@
-const PROTECTED_PATHS = ["/portal"];
+const PROTECTED_PATHS = ["/portal", "/ai", "/api/ask", "/api/tts", "/api/stt", "/api/voice"];
 
 function getAllowedEmails() {
   const raw = process.env.ALLOWED_PORTAL_EMAILS || "quentin@quentinnichols.com";
@@ -53,7 +53,10 @@ function clearCookie(name) {
 }
 
 function isProtected(pathname) {
-  return PROTECTED_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  const normalizedPathname = String(pathname || "").toLowerCase();
+  return PROTECTED_PATHS.some(
+    (prefix) => normalizedPathname === prefix || normalizedPathname.startsWith(`${prefix}/`)
+  );
 }
 
 function loginRedirect(requestUrl) {
