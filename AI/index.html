@@ -680,17 +680,23 @@
       recording = false;
       voiceBtn.textContent = "Start Voice";
 
+      const stoppedRecorder = mediaRecorder;
+      const stoppedMimeType = stoppedRecorder.mimeType || recordMimeType || "audio/webm";
       const done = new Promise((resolve) => {
-        mediaRecorder.addEventListener(
+        const timeout = setTimeout(() => {
+          resolve(null);
+        }, 5000);
+        stoppedRecorder.addEventListener(
           "stop",
           () => {
-            const blob = new Blob(recordingChunks, { type: mediaRecorder.mimeType || recordMimeType || "audio/webm" });
+            clearTimeout(timeout);
+            const blob = new Blob(recordingChunks, { type: stoppedMimeType });
             resolve(blob);
           },
           { once: true }
         );
       });
-      mediaRecorder.stop();
+      stoppedRecorder.stop();
       mediaRecorder = null;
       releaseRecordingStream();
       setAudioStatus("Thinking...");
