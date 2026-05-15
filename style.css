@@ -2771,6 +2771,19 @@ body.nav-menu-open {
   color: inherit;
 }
 
+.reads-quote-trigger {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: inherit;
+}
+
 .reads-shelf-card img {
   width: 100%;
   aspect-ratio: 2 / 3;
@@ -2864,6 +2877,75 @@ body.nav-menu-open {
   border-color: #ffffff;
 }
 
+.reads-quote-open {
+  overflow: hidden;
+}
+
+.reads-quote-modal[hidden] {
+  display: none;
+}
+
+.reads-quote-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.reads-quote-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.72);
+  cursor: pointer;
+}
+
+.reads-quote-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(640px, 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #121212;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  padding: 28px 24px 24px;
+}
+
+.reads-quote-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  border: 0;
+  background: transparent;
+  color: #f5f5f5;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.reads-quote-title {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.reads-quote-text {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  font-size: clamp(19px, 2.9vw, 28px);
+  line-height: 1.4;
+  color: #f4f2ec;
+}
+
+.reads-quote-attribution {
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 @media (max-width: 720px) {
   .reads-shelf-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2874,6 +2956,9 @@ body.nav-menu-open {
   .reads-field-full,
   .reads-submit {
     grid-column: span 1;
+  }
+  .reads-quote-dialog {
+    padding: 24px 18px 18px;
   }
 }
 

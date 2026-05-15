@@ -162,7 +162,15 @@
             <img src="/assets/Books%20I%20Have%20Read/28.webp" alt="Book cover 28" loading="lazy">
           </div>
           <div class="reads-shelf-card">
-            <img src="/blog/images/theWarofArt.jpg" alt="The War of Art book cover" loading="lazy">
+            <button
+              class="reads-quote-trigger"
+              type="button"
+              data-quote-trigger
+              aria-label="Open quote from The War of Art"
+            >
+              <img src="/blog/images/theWarofArt.jpg" alt="The War of Art book cover" loading="lazy">
+              <span class="reads-shelf-badge">Quote</span>
+            </button>
           </div>
         </div>
       </div>
@@ -192,6 +200,47 @@
       </div>
     </section>
   </main>
+  <div class="reads-quote-modal" data-quote-modal hidden>
+    <button class="reads-quote-backdrop" type="button" data-quote-close aria-label="Close quote popup"></button>
+    <div class="reads-quote-dialog" role="dialog" aria-modal="true" aria-labelledby="reads-quote-title">
+      <button class="reads-quote-close" type="button" data-quote-close aria-label="Close quote popup">&times;</button>
+      <p id="reads-quote-title" class="reads-quote-title">From <em>The War of Art</em></p>
+      <blockquote class="reads-quote-text">
+        “It was easier for Hitler to start World War II than it was for him to face a blank square of canvas.”
+      </blockquote>
+      <p class="reads-quote-attribution">— Steven Pressfield, <em>The War of Art</em> (2002)</p>
+    </div>
+  </div>
+  <script>
+    (() => {
+      const trigger = document.querySelector("[data-quote-trigger]");
+      const modal = document.querySelector("[data-quote-modal]");
+      if (!trigger || !modal) return;
+
+      const closeControls = modal.querySelectorAll("[data-quote-close]");
+
+      const closeModal = () => {
+        modal.hidden = true;
+        document.body.classList.remove("reads-quote-open");
+      };
+
+      const openModal = () => {
+        modal.hidden = false;
+        document.body.classList.add("reads-quote-open");
+      };
+
+      trigger.addEventListener("click", openModal);
+      closeControls.forEach((control) => {
+        control.addEventListener("click", closeModal);
+      });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !modal.hidden) {
+          closeModal();
+        }
+      });
+    })();
+  </script>
   <script src="/assets/nav.js"></script>
 </body>
 </html>
