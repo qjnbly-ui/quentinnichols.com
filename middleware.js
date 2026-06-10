@@ -8,6 +8,7 @@ const PROTECTED_PATHS = [
   "/api/voice",
   "/api/people",
   "/api/person-interactions",
+  "/api/relationship-note-draft",
   "/api/relationship-notebook",
 ];
 

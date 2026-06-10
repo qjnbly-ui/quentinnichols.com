@@ -4950,6 +4950,81 @@ body.nav-menu-open {
   grid-template-columns: minmax(160px, 0.7fr) minmax(0, 1.3fr);
 }
 
+.qapp-optional-details {
+  border-top: 1px solid var(--qapp-border);
+  padding-top: 4px;
+}
+
+.qapp-optional-details summary {
+  color: var(--qapp-muted);
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.qapp-review-panel {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--qapp-border);
+  border-radius: 10px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.qapp-review-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.qapp-review-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.qapp-review-card h4 {
+  margin: 0;
+}
+
+.qapp-review-card p,
+.qapp-review-note p {
+  margin: 0;
+}
+
+.qapp-review-note {
+  background: rgba(200, 173, 106, 0.1);
+  border: 1px solid rgba(200, 173, 106, 0.2);
+  border-radius: 8px;
+  color: var(--qapp-text);
+  padding: 12px;
+}
+
+.qapp-check-row {
+  align-items: flex-start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto 1fr;
+}
+
+.qapp-check-row input {
+  margin-top: 3px;
+  min-height: auto;
+  width: auto;
+}
+
+.qapp-check-row span {
+  display: grid;
+  gap: 3px;
+}
+
+.qapp-check-row small {
+  color: var(--qapp-muted);
+  line-height: 1.35;
+}
+
 .qapp-capture-form label span {
   color: var(--qapp-text);
   font-weight: 800;
@@ -4970,6 +5045,13 @@ body.nav-menu-open {
   min-height: 112px;
   padding: 14px;
   resize: vertical;
+}
+
+.qapp-capture-form .qapp-check-row input {
+  margin-top: 3px;
+  min-height: auto;
+  padding: 0;
+  width: auto;
 }
 
 .qapp-capture-form input:focus,
@@ -5215,6 +5297,7 @@ body.qapp-drawer-open {
   .qapp-memory-input-grid,
   .qapp-profile-meta,
   .qapp-people-toolbar,
+  .qapp-review-grid,
   .qapp-memory-list {
     grid-template-columns: 1fr;
   }

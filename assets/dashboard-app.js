@@ -28,6 +28,10 @@
   let peopleSearch = "";
   let selectedPersonId = "";
   let peopleMode = "list";
+  let relationshipCaptureNote = "";
+  let relationshipDraft = null;
+  let relationshipDraftStatus = "idle";
+  let relationshipDraftError = "";
 
   function escapeHtml(value) {
     return String(value || "")
@@ -59,6 +63,10 @@
     if (currentRoute !== "people") {
       peopleMode = "list";
       selectedPersonId = "";
+      relationshipCaptureNote = "";
+      relationshipDraft = null;
+      relationshipDraftStatus = "idle";
+      relationshipDraftError = "";
     }
     screenTitle.textContent = routeTitles[currentRoute];
     routeButtons.forEach((button) => {
@@ -332,56 +340,181 @@
     `;
   }
 
+  function confidencePercent(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return "";
+    return `${Math.round(number * 100)}%`;
+  }
+
+  function renderRelationshipDraft() {
+    if (relationshipDraftStatus === "loading") {
+      return `
+        <section class="qapp-review-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Reviewing note</h3>
+            ${statusPill("Working")}
+          </div>
+          <p>Checking names, topics, memory cards, and follow-ups before anything is saved.</p>
+        </section>
+      `;
+    }
+
+    if (relationshipDraftStatus === "error") {
+      return `
+        <section class="qapp-review-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Review failed</h3>
+            ${statusPill("Error")}
+          </div>
+          <p>${escapeHtml(relationshipDraftError)}</p>
+        </section>
+      `;
+    }
+
+    if (!relationshipDraft) return "";
+
+    const existingPeople = Array.isArray(relationshipDraft.people) ? relationshipDraft.people : [];
+    const possiblePeople = Array.isArray(relationshipDraft.possiblePeople) ? relationshipDraft.possiblePeople : [];
+    const interaction = relationshipDraft.interaction || {};
+    const memoryCards = Array.isArray(relationshipDraft.memoryCards) ? relationshipDraft.memoryCards : [];
+    const reminders = Array.isArray(relationshipDraft.reminders) ? relationshipDraft.reminders : [];
+    const questions = Array.isArray(relationshipDraft.questions) ? relationshipDraft.questions : [];
+
+    return `
+      <section class="qapp-review-panel">
+        <div class="qapp-panel-title-row">
+          <div>
+            <p class="qapp-kicker">Review Before Saving</p>
+            <h3>${escapeHtml(relationshipDraft.summary || "Suggested structure")}</h3>
+          </div>
+          ${statusPill(relationshipDraft.source === "ai" ? "AI Reviewed" : "Script Reviewed")}
+        </div>
+        ${questions.length ? `<div class="qapp-review-note">${questions.map((question) => `<p>${escapeHtml(question)}</p>`).join("")}</div>` : ""}
+        <div class="qapp-review-grid">
+          <div class="qapp-review-card">
+            <h4>Apply to existing profiles</h4>
+            ${existingPeople.length ? existingPeople.map((person) => `
+              <label class="qapp-check-row">
+                <input name="draftPersonIds" type="checkbox" value="${escapeHtml(person.id)}" ${person.selected === false ? "" : "checked"}>
+                <span>
+                  <strong>${escapeHtml(person.name)}</strong>
+                  <small>${escapeHtml(person.matchedAlias ? `Matched "${person.matchedAlias}"` : confidencePercent(person.confidence))}</small>
+                </span>
+              </label>
+            `).join("") : `<p>No existing profiles were confidently matched.</p>`}
+          </div>
+          <div class="qapp-review-card">
+            <h4>Create possible new profiles</h4>
+            ${possiblePeople.length ? possiblePeople.map((person) => `
+              <label class="qapp-check-row">
+                <input name="draftNewPeople" type="checkbox" value="${escapeHtml(person.name)}">
+                <span>
+                  <strong>${escapeHtml(person.name)}</strong>
+                  <small>${escapeHtml(confidencePercent(person.confidence) || "Possible new person")}</small>
+                </span>
+              </label>
+            `).join("") : `<p>No new people detected.</p>`}
+          </div>
+          <div class="qapp-review-card">
+            <h4>Conversation</h4>
+            <p>${escapeHtml(interaction.topics?.length ? `Topics: ${interaction.topics.join(", ")}` : "No topics detected yet.")}</p>
+            ${interaction.dateHint ? `<p>${escapeHtml(`Timing mentioned: ${interaction.dateHint}`)}</p>` : ""}
+          </div>
+          <div class="qapp-review-card">
+            <h4>Memory Cards</h4>
+            ${memoryCards.length ? memoryCards.map((card, index) => `
+              <label class="qapp-check-row">
+                <input name="draftMemoryIndexes" type="checkbox" value="${index}" checked>
+                <span>
+                  <strong>${escapeHtml(card.label)}</strong>
+                  <small>${escapeHtml(card.value)}</small>
+                </span>
+              </label>
+            `).join("") : `<p>No memory cards suggested.</p>`}
+          </div>
+          <div class="qapp-review-card">
+            <h4>Follow-Ups</h4>
+            ${reminders.length ? reminders.map((reminder, index) => `
+              <label class="qapp-check-row">
+                <input name="draftReminderIndexes" type="checkbox" value="${index}" checked>
+                <span>
+                  <strong>${escapeHtml(reminder.title)}</strong>
+                  <small>${escapeHtml(reminder.details || "Reminder candidate")}</small>
+                </span>
+              </label>
+            `).join("") : `<p>No follow-ups suggested.</p>`}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
   function renderPeopleCapture() {
     const selectedPerson = selectedPersonId ? notebook.people.find((person) => person.id === selectedPersonId) : null;
     return `
-      ${sectionHeader("Relationship Memory", "Add Conversation", "Create a person or attach this conversation to someone already in your notebook.")}
+      ${sectionHeader("Relationship Memory", "Add Conversation", "Write it naturally first. The app will suggest who it belongs to, what to remember, and what to follow up on.")}
       <section class="qapp-panel">
         <button class="qapp-text-button" data-action="back-to-people" type="button">Back to people</button>
         <form id="qappQuickCapture" class="qapp-capture-form">
           <div class="qapp-form-section">
             <div class="qapp-form-section-title">
-              <p class="qapp-kicker">Contact Profile</p>
-              <h3>Name, contact details, tags, and first-met context</h3>
-            </div>
-          <div class="qapp-capture-grid">
-            <label class="qapp-person-picker">
-              <span>Name</span>
-              <input name="personId" type="hidden" value="${escapeHtml(selectedPerson?.id || "")}">
-              <input name="name" type="text" value="${escapeHtml(selectedPerson?.name || "")}" placeholder="John">
-              <div id="qappPersonSuggestions" class="qapp-suggestions" hidden></div>
-            </label>
-              <label>
-                <span>Tags</span>
-                <input name="tags" type="text" value="${escapeHtml((selectedPerson?.tags || []).join(", "))}" placeholder="Friend, Fire Department, Customer">
-              </label>
-              <label>
-                <span>Email</span>
-                <input name="email" type="email" value="${escapeHtml(selectedPerson?.email || "")}" placeholder="john@example.com">
-              </label>
-              <label>
-                <span>Phone</span>
-                <input name="phone" type="tel" value="${escapeHtml(selectedPerson?.phone || "")}" placeholder="(541) 555-0123">
-              </label>
-            <label>
-                <span>Where you met</span>
-                <input name="firstMetLocation" type="text" value="${escapeHtml(selectedPerson?.first_met_location || selectedPerson?.firstMetLocation || "")}" placeholder="Fire hall">
-            </label>
-              <label>
-                <span>Photo URL</span>
-                <input name="photoUrl" type="url" value="${escapeHtml(selectedPerson?.photo_url || selectedPerson?.photoUrl || "")}" placeholder="Optional">
-              </label>
+              <p class="qapp-kicker">Smart Capture</p>
+              <h3>Type or dictate the whole interaction</h3>
             </div>
             <label>
-              <span>Overview</span>
-              <textarea name="overview" rows="3" placeholder="A few words about who they are and what stands out.">${escapeHtml(selectedPerson?.overview || "")}</textarea>
+              <span>Conversation note</span>
+              <textarea name="note" rows="6" placeholder="Visited with Marla and Bruce. Marla said Wyatt's graduation dinner is Friday. Bruce mentioned the roof project is still delayed.">${escapeHtml(relationshipCaptureNote)}</textarea>
             </label>
+            <button class="qapp-inline-button" data-action="review-relationship-note" type="button">Review Note</button>
           </div>
+
+          ${renderRelationshipDraft()}
+
+          <details class="qapp-optional-details">
+            <summary>Optional manual details</summary>
+            <div class="qapp-form-section">
+              <div class="qapp-form-section-title">
+                <p class="qapp-kicker">Contact Profile</p>
+                <h3>Only fill this if the note needs help</h3>
+              </div>
+              <div class="qapp-capture-grid">
+                <label class="qapp-person-picker">
+                  <span>Name</span>
+                  <input name="personId" type="hidden" value="${escapeHtml(selectedPerson?.id || "")}">
+                  <input name="name" type="text" value="${escapeHtml(selectedPerson?.name || "")}" placeholder="John">
+                  <div id="qappPersonSuggestions" class="qapp-suggestions" hidden></div>
+                </label>
+                <label>
+                  <span>Tags</span>
+                  <input name="tags" type="text" value="${escapeHtml((selectedPerson?.tags || []).join(", "))}" placeholder="Friend, Fire Department, Customer">
+                </label>
+                <label>
+                  <span>Email</span>
+                  <input name="email" type="email" value="${escapeHtml(selectedPerson?.email || "")}" placeholder="john@example.com">
+                </label>
+                <label>
+                  <span>Phone</span>
+                  <input name="phone" type="tel" value="${escapeHtml(selectedPerson?.phone || "")}" placeholder="(541) 555-0123">
+                </label>
+                <label>
+                  <span>Where you met</span>
+                  <input name="firstMetLocation" type="text" value="${escapeHtml(selectedPerson?.first_met_location || selectedPerson?.firstMetLocation || "")}" placeholder="Fire hall">
+                </label>
+                <label>
+                  <span>Photo URL</span>
+                  <input name="photoUrl" type="url" value="${escapeHtml(selectedPerson?.photo_url || selectedPerson?.photoUrl || "")}" placeholder="Optional">
+                </label>
+              </div>
+              <label>
+                <span>Overview</span>
+                <textarea name="overview" rows="3" placeholder="A few words about who they are and what stands out.">${escapeHtml(selectedPerson?.overview || "")}</textarea>
+              </label>
+            </div>
 
           <div class="qapp-form-section">
             <div class="qapp-form-section-title">
               <p class="qapp-kicker">Conversation Log</p>
-              <h3>Date, location, mood, topics, and notes</h3>
+              <h3>Optional overrides</h3>
             </div>
             <div class="qapp-capture-grid">
               <label>
@@ -401,10 +534,6 @@
                 <input name="aiSummary" type="text" placeholder="Optional short summary">
               </label>
           </div>
-          <label>
-            <span>Dictated conversation note</span>
-            <textarea name="note" rows="4" placeholder="Met John at the fire hall. His daughter Emily is graduating. He is worried about replacing the roof before winter."></textarea>
-          </label>
           </div>
 
           <div class="qapp-form-section">
@@ -448,6 +577,7 @@
               </label>
             </div>
           </div>
+          </details>
           <button type="submit">Save Conversation</button>
         </form>
       </section>
@@ -552,6 +682,7 @@
     const backButtons = [...document.querySelectorAll('[data-action="back-to-people"]')];
     const newConversationButton = document.querySelector('[data-action="new-person-note"]');
     const addForPersonButton = document.querySelector('[data-action="add-note-for-person"]');
+    const reviewButton = document.querySelector('[data-action="review-relationship-note"]');
     const personRows = [...document.querySelectorAll('[data-action="open-person"]')];
 
     if (reloadButton) {
@@ -575,6 +706,10 @@
       button.addEventListener("click", () => {
         peopleMode = "list";
         selectedPersonId = "";
+        relationshipCaptureNote = "";
+        relationshipDraft = null;
+        relationshipDraftStatus = "idle";
+        relationshipDraftError = "";
         render();
       });
     });
@@ -591,6 +726,10 @@
       newConversationButton.addEventListener("click", () => {
         selectedPersonId = "";
         peopleMode = "capture";
+        relationshipCaptureNote = "";
+        relationshipDraft = null;
+        relationshipDraftStatus = "idle";
+        relationshipDraftError = "";
         render();
       });
     }
@@ -599,13 +738,43 @@
       addForPersonButton.addEventListener("click", () => {
         selectedPersonId = addForPersonButton.dataset.personId || selectedPersonId;
         peopleMode = "capture";
+        relationshipCaptureNote = "";
+        relationshipDraft = null;
+        relationshipDraftStatus = "idle";
+        relationshipDraftError = "";
         render();
       });
     }
 
     if (!form) return;
 
+    if (reviewButton) {
+      reviewButton.addEventListener("click", async () => {
+        const note = String(new FormData(form).get("note") || "").trim();
+        if (!note) return;
+        relationshipCaptureNote = note;
+        relationshipDraftStatus = "loading";
+        relationshipDraftError = "";
+        relationshipDraft = null;
+        render();
+        try {
+          const payload = await apiJson("/api/relationship-note-draft", {
+            method: "POST",
+            body: { note },
+          });
+          relationshipDraft = payload.draft || null;
+          relationshipDraftStatus = "ready";
+          render();
+        } catch (error) {
+          relationshipDraftStatus = "error";
+          relationshipDraftError = error?.message || "Unable to review note.";
+          render();
+        }
+      });
+    }
+
     const nameInput = form.elements.name;
+    const noteInput = form.elements.note;
     const personIdInput = form.elements.personId;
     const suggestions = document.getElementById("qappPersonSuggestions");
 
@@ -643,6 +812,12 @@
     }
 
     nameInput?.addEventListener("input", renderSuggestions);
+    noteInput?.addEventListener("input", () => {
+      relationshipCaptureNote = noteInput.value;
+      relationshipDraft = null;
+      relationshipDraftStatus = "idle";
+      relationshipDraftError = "";
+    });
     suggestions?.addEventListener("click", (event) => {
       const button = event.target.closest(".qapp-suggestion");
       if (!button) return;
@@ -688,19 +863,40 @@
       }
       const reminderTitle = String(formData.get("reminderTitle") || "").trim();
       const remindAt = String(formData.get("remindAt") || "").trim();
+      const draftPersonIds = formData.getAll("draftPersonIds").map((value) => String(value || "").trim()).filter(Boolean);
+      const draftNewPeople = formData.getAll("draftNewPeople").map((value) => String(value || "").trim()).filter(Boolean);
+      const draftMemoryIndexes = new Set(formData.getAll("draftMemoryIndexes").map((value) => Number(value)));
+      const draftReminderIndexes = new Set(formData.getAll("draftReminderIndexes").map((value) => Number(value)));
+      const draftInteraction = relationshipDraft?.interaction || {};
+      const draftMemoryCards = Array.isArray(relationshipDraft?.memoryCards)
+        ? relationshipDraft.memoryCards
+            .filter((_, index) => draftMemoryIndexes.has(index))
+            .map((card) => ({
+              label: String(card.label || "").trim(),
+              value: String(card.value || "").trim(),
+              confidence: Number.isFinite(Number(card.confidence)) ? Number(card.confidence) : 0.7,
+            }))
+            .filter((card) => card.label && card.value)
+        : [];
+      const draftReminders = Array.isArray(relationshipDraft?.reminders)
+        ? relationshipDraft.reminders
+            .filter((_, index) => draftReminderIndexes.has(index))
+            .map((reminder) => ({
+              title: String(reminder.title || "").trim(),
+              details: String(reminder.details || "").trim(),
+              priority: "normal",
+            }))
+            .filter((reminder) => reminder.title)
+        : [];
 
       submitButton.disabled = true;
       submitButton.textContent = "Saving...";
       try {
-        let person = chosenPersonId
-          ? notebook.people.find((item) => item.id === chosenPersonId)
-          : notebook.people.find((item) => item.name.toLowerCase() === name.toLowerCase());
-
-        if (!person) {
+        const createPerson = async (personName) => {
           const created = await apiJson("/api/people", {
             method: "POST",
             body: {
-              name,
+              name: personName,
               tags: tags.length ? tags : ["Captured"],
               email: String(formData.get("email") || "").trim(),
               phone: String(formData.get("phone") || "").trim(),
@@ -709,26 +905,56 @@
               firstMetLocation,
             },
           });
-          person = normalizePerson({ ...created.person, interactions: [], memoryCards: [], reminders: [] });
+          return normalizePerson({ ...created.person, interactions: [], memoryCards: [], reminders: [] });
+        };
+
+        const peopleToSave = draftPersonIds
+          .map((id) => notebook.people.find((item) => item.id === id))
+          .filter(Boolean);
+
+        if (!peopleToSave.length && chosenPersonId) {
+          const chosenPerson = notebook.people.find((item) => item.id === chosenPersonId);
+          if (chosenPerson) peopleToSave.push(chosenPerson);
         }
 
-        await apiJson("/api/person-interactions", {
+        if (!peopleToSave.length && !draftNewPeople.length) {
+          const existingPerson = notebook.people.find((item) => item.name.toLowerCase() === name.toLowerCase());
+          peopleToSave.push(existingPerson || await createPerson(name));
+        }
+
+        for (const newPersonName of draftNewPeople) {
+          peopleToSave.push(await createPerson(newPersonName));
+        }
+
+        const selectedMemoryCards = draftMemoryCards.length ? draftMemoryCards : memoryCards;
+        const selectedReminders = draftReminders.length
+          ? draftReminders
+          : reminderTitle ? [{ title: reminderTitle, remindAt, priority: "normal" }] : [];
+        const selectedTopics = topics.length
+          ? topics
+          : Array.isArray(draftInteraction.topics) && draftInteraction.topics.length ? draftInteraction.topics : ["captured"];
+
+        await Promise.all(peopleToSave.map((person) => apiJson("/api/person-interactions", {
           method: "POST",
           body: {
             personId: person.id,
             location,
             notes: note,
-            mood: String(formData.get("mood") || "").trim(),
-            topics: topics.length ? topics : ["captured"],
-            aiSummary: String(formData.get("aiSummary") || "").trim(),
-            memoryCards,
-            reminders: reminderTitle ? [{ title: reminderTitle, remindAt, priority: "normal" }] : [],
+            mood: String(formData.get("mood") || "").trim() || draftInteraction.mood || "",
+            topics: selectedTopics,
+            aiSummary: String(formData.get("aiSummary") || "").trim() || relationshipDraft?.summary || "",
+            memoryCards: selectedMemoryCards,
+            reminders: selectedReminders,
           },
-        });
+        })));
 
         form.reset();
+        relationshipCaptureNote = "";
+        relationshipDraft = null;
+        relationshipDraftStatus = "idle";
+        relationshipDraftError = "";
         await loadNotebookData();
-        selectedPersonId = person.id;
+        selectedPersonId = peopleToSave[0]?.id || "";
         peopleMode = "profile";
         render();
       } catch (error) {
