@@ -4770,28 +4770,42 @@ body.nav-menu-open {
   gap: 8px;
 }
 
+.qapp-capture-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .qapp-capture-form label span {
   color: var(--qapp-text);
   font-weight: 800;
 }
 
+.qapp-capture-form input,
 .qapp-capture-form textarea {
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid var(--qapp-border);
   border-radius: 8px;
   color: var(--qapp-text);
-  min-height: 112px;
-  padding: 14px;
-  resize: vertical;
+  min-height: 48px;
+  padding: 0 14px;
   width: 100%;
 }
 
+.qapp-capture-form textarea {
+  min-height: 112px;
+  padding: 14px;
+  resize: vertical;
+}
+
+.qapp-capture-form input:focus,
 .qapp-capture-form textarea:focus {
   border-color: var(--qapp-gold);
   outline: 2px solid rgba(200, 173, 106, 0.18);
 }
 
 .qapp-capture-form button,
+.qapp-inline-button,
 .qapp-drawer-footer button {
   background: var(--qapp-text);
   border: 0;
@@ -4801,6 +4815,10 @@ body.nav-menu-open {
   font-weight: 900;
   min-height: 44px;
   padding: 0 18px;
+}
+
+.qapp-inline-button {
+  margin-top: 14px;
 }
 
 .qapp-drawer-overlay {
@@ -4960,6 +4978,7 @@ body.qapp-drawer-open {
 
 @media (max-width: 760px) {
   .qapp-grid,
+  .qapp-capture-grid,
   .qapp-memory-list {
     grid-template-columns: 1fr;
   }

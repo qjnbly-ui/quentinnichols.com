@@ -11,7 +11,6 @@
   const logoutButton = document.getElementById("qappLogoutButton");
   const routeButtons = [...document.querySelectorAll("[data-route]")];
 
-  const storageKey = "qapp_relationship_notebook_v1";
   const routeTitles = {
     today: "Today",
     people: "People Notebook",
@@ -22,49 +21,10 @@
     inquiries: "Inquiries",
   };
 
-  const defaultNotebook = {
-    people: [
-      {
-        id: "sample-john",
-        name: "John",
-        tags: ["Fire Department"],
-        summary: "Met at the fire hall. Daughter Emily is graduating soon.",
-        memoryCards: [
-          { label: "Daughter", value: "Emily" },
-          { label: "Current Concern", value: "Roof replacement before winter" },
-        ],
-        reminders: [
-          { title: "Ask how Emily's graduation went", due: "This month" },
-        ],
-        interactions: [
-          {
-            date: "Recent",
-            location: "Fire hall",
-            mood: "Concerned but proud",
-            notes: "Talked about Emily graduating and the roof project.",
-            topics: ["family", "home", "graduation"],
-          },
-        ],
-      },
-    ],
-  };
-
   let currentRoute = "today";
-  let notebook = loadNotebook();
-
-  function loadNotebook() {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
-      if (saved && Array.isArray(saved.people)) return saved;
-    } catch (_error) {}
-    return defaultNotebook;
-  }
-
-  function saveNotebook() {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(notebook));
-    } catch (_error) {}
-  }
+  let notebook = { people: [] };
+  let notebookStatus = "loading";
+  let notebookError = "";
 
   function escapeHtml(value) {
     return String(value || "")
@@ -115,6 +75,74 @@
     return `<span class="qapp-pill">${escapeHtml(label)}</span>`;
   }
 
+  function formatDate(value, fallback = "Recent") {
+    if (!value) return fallback;
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return fallback;
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  async function apiJson(url, options = {}) {
+    const response = await fetch(url, {
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...options.headers,
+      },
+      ...options,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload?.error || "Request failed.");
+    }
+    return payload;
+  }
+
+  function normalizePerson(person) {
+    const memoryCards = Array.isArray(person.memoryCards) ? person.memoryCards : [];
+    const reminders = Array.isArray(person.reminders) ? person.reminders : [];
+    const interactions = Array.isArray(person.interactions) ? person.interactions : [];
+    return {
+      ...person,
+      summary: person.overview || person.summary || "No overview yet.",
+      tags: Array.isArray(person.tags) ? person.tags : [],
+      memoryCards: memoryCards.map((card) => ({
+        label: card.label || card.category || "Memory",
+        value: card.value || "",
+      })),
+      reminders: reminders.map((reminder) => ({
+        title: reminder.title || "Follow up",
+        due: reminder.remind_at ? formatDate(reminder.remind_at, "Scheduled") : "Soon",
+      })),
+      interactions: interactions.map((interaction) => ({
+        date: formatDate(interaction.occurred_at),
+        location: interaction.location || "Not specified",
+        mood: interaction.mood || "",
+        notes: interaction.notes || interaction.ai_summary || "",
+        topics: Array.isArray(interaction.topics) ? interaction.topics : [],
+      })),
+    };
+  }
+
+  async function loadNotebookData() {
+    notebookStatus = "loading";
+    notebookError = "";
+    render();
+    try {
+      const payload = await apiJson("/api/relationship-notebook");
+      notebook = {
+        people: Array.isArray(payload.people) ? payload.people.map(normalizePerson) : [],
+      };
+      notebookStatus = "ready";
+    } catch (error) {
+      notebookStatus = "error";
+      notebookError = error?.message || "Unable to load notebook.";
+    }
+    render();
+  }
+
   function renderToday() {
     const peopleCount = notebook.people.length;
     const reminderCount = notebook.people.reduce((count, person) => count + person.reminders.length, 0);
@@ -143,14 +171,35 @@
             <p class="qapp-kicker">Next Build</p>
             <h3>Relationship Notebook</h3>
           </div>
-          ${statusPill("Local preview")}
+          ${statusPill(notebookStatus === "ready" ? "Supabase" : "Loading")}
         </div>
-        <p>Start with people and conversations. Supabase tables are already shaped for profiles, interactions, memory cards, and follow-up reminders.</p>
+        <p>Start with people and conversations. Profiles, interactions, memory cards, and follow-up reminders now save to Supabase.</p>
       </section>
     `;
   }
 
   function renderPeople() {
+    if (notebookStatus === "loading") {
+      return `
+        ${sectionHeader("Relationship Memory", "People Notebook", "Loading your private notebook from Supabase.")}
+        <section class="qapp-panel"><p>Loading people, conversations, memory cards, and reminders...</p></section>
+      `;
+    }
+
+    if (notebookStatus === "error") {
+      return `
+        ${sectionHeader("Relationship Memory", "People Notebook", "The notebook API could not load.")}
+        <section class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Load failed</h3>
+            ${statusPill("Error")}
+          </div>
+          <p>${escapeHtml(notebookError)}</p>
+          <button class="qapp-inline-button" data-action="reload-notebook" type="button">Try Again</button>
+        </section>
+      `;
+    }
+
     const peopleMarkup = notebook.people.map((person) => `
       <article class="qapp-person-card" data-person-id="${escapeHtml(person.id)}">
         <div class="qapp-person-avatar">${escapeHtml(person.name.charAt(0) || "?")}</div>
@@ -163,29 +212,29 @@
             <div class="qapp-tag-row">${person.tags.map(statusPill).join("")}</div>
           </div>
           <div class="qapp-memory-list">
-            ${person.memoryCards.map((card) => `
+            ${person.memoryCards.length ? person.memoryCards.map((card) => `
               <div class="qapp-memory-card">
                 <span>${escapeHtml(card.label)}</span>
                 <strong>${escapeHtml(card.value)}</strong>
               </div>
-            `).join("")}
+            `).join("") : `<div class="qapp-memory-card"><span>Memory Cards</span><strong>No facts saved yet.</strong></div>`}
           </div>
           <div class="qapp-interaction-log">
-            ${person.interactions.map((interaction) => `
+            ${person.interactions.length ? person.interactions.map((interaction) => `
               <div class="qapp-log-entry">
                 <span>${escapeHtml(interaction.date)} - ${escapeHtml(interaction.location)}</span>
                 <p>${escapeHtml(interaction.notes)}</p>
                 <div class="qapp-tag-row">${interaction.topics.map(statusPill).join("")}</div>
               </div>
-            `).join("")}
+            `).join("") : `<div class="qapp-log-entry"><span>Conversation Log</span><p>No conversations saved yet.</p></div>`}
           </div>
           <div class="qapp-reminder-list">
-            ${person.reminders.map((reminder) => `
+            ${person.reminders.length ? person.reminders.map((reminder) => `
               <div class="qapp-reminder">
                 <strong>${escapeHtml(reminder.title)}</strong>
                 <span>${escapeHtml(reminder.due)}</span>
               </div>
-            `).join("")}
+            `).join("") : `<div class="qapp-reminder"><strong>No follow-ups yet</strong><span>Add one from a conversation note.</span></div>`}
           </div>
         </div>
       </article>
@@ -195,14 +244,24 @@
       ${sectionHeader("Relationship Memory", "People Notebook", "A private Oz Pearlman-style notebook for names, conversations, memory cards, and follow-ups.")}
       <section class="qapp-panel">
         <form id="qappQuickCapture" class="qapp-capture-form">
+          <div class="qapp-capture-grid">
+            <label>
+              <span>Name</span>
+              <input name="name" type="text" placeholder="John">
+            </label>
+            <label>
+              <span>Location</span>
+              <input name="location" type="text" placeholder="Fire hall">
+            </label>
+          </div>
           <label>
             <span>Dictated conversation note</span>
             <textarea name="note" rows="4" placeholder="Met John at the fire hall. His daughter Emily is graduating. He is worried about replacing the roof before winter."></textarea>
           </label>
-          <button type="submit">Capture Preview</button>
+          <button type="submit">Save Conversation</button>
         </form>
       </section>
-      <section class="qapp-list">${peopleMarkup}</section>
+      <section class="qapp-list">${peopleMarkup || `<article class="qapp-panel"><h3>No people yet</h3><p>Save a conversation note to create the first relationship profile.</p></article>`}</section>
     `;
   }
 
@@ -264,38 +323,69 @@
 
   function bindPeopleForms() {
     const form = document.getElementById("qappQuickCapture");
+    const reloadButton = document.querySelector('[data-action="reload-notebook"]');
+    if (reloadButton) {
+      reloadButton.addEventListener("click", loadNotebookData);
+    }
     if (!form) return;
 
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const note = String(new FormData(form).get("note") || "").trim();
+      const submitButton = form.querySelector('button[type="submit"]');
+      const formData = new FormData(form);
+      const note = String(formData.get("note") || "").trim();
       if (!note) return;
-      const firstNameMatch = note.match(/\b(?:met|talked to|saw)\s+([A-Z][a-z]+)/i);
-      const name = firstNameMatch?.[1] || "New Person";
-      const id = `person-${Date.now()}`;
-      notebook.people.unshift({
-        id,
-        name,
-        tags: ["Captured"],
-        summary: note,
-        memoryCards: [
-          { label: "Raw Note", value: note.length > 90 ? `${note.slice(0, 90)}...` : note },
-        ],
-        reminders: [
-          { title: "Review and extract follow-ups", due: "Soon" },
-        ],
-        interactions: [
-          {
-            date: "Today",
-            location: "Not specified",
-            mood: "Unsorted",
+      const typedName = String(formData.get("name") || "").trim();
+      const firstNameMatch = note.match(/\b(?:met|talked to|saw)\s+([A-Z][a-z]+)/);
+      const name = typedName || firstNameMatch?.[1] || "New Person";
+      const location = String(formData.get("location") || "").trim() || "Not specified";
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Saving...";
+      try {
+        let person = notebook.people.find((item) => item.name.toLowerCase() === name.toLowerCase());
+        if (!person) {
+          const created = await apiJson("/api/people", {
+            method: "POST",
+            body: {
+              name,
+              tags: ["Captured"],
+              overview: note,
+              firstMetLocation: location,
+            },
+          });
+          person = normalizePerson({ ...created.person, interactions: [], memoryCards: [], reminders: [] });
+        }
+
+        await apiJson("/api/person-interactions", {
+          method: "POST",
+          body: {
+            personId: person.id,
+            location,
             notes: note,
             topics: ["captured"],
+            memoryCards: [
+              {
+                label: "Raw Note",
+                value: note.length > 180 ? `${note.slice(0, 180)}...` : note,
+              },
+            ],
+            reminders: [
+              {
+                title: "Review and extract follow-ups",
+                priority: "normal",
+              },
+            ],
           },
-        ],
-      });
-      saveNotebook();
-      render();
+        });
+
+        form.reset();
+        await loadNotebookData();
+      } catch (error) {
+        notebookStatus = "error";
+        notebookError = error?.message || "Unable to save conversation.";
+        render();
+      }
     });
   }
 
@@ -309,7 +399,7 @@
       drawerEmail.textContent = session.user?.email || "Signed in";
       authGate.hidden = true;
       shell.hidden = false;
-      render();
+      await loadNotebookData();
     } catch (error) {
       authMessage.textContent = error?.message || "Unable to check session.";
       authMessage.classList.add("is-error");

@@ -157,7 +157,7 @@ create table if not exists public.ai_messages (
 create table if not exists public.ai_context_items (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references auth.users(id) on delete cascade,
-  source_type text not null check (source_type in ('calendar_event', 'task', 'note', 'conversation', 'document', 'website', 'manual')),
+  source_type text not null check (source_type in ('calendar_event', 'task', 'note', 'conversation', 'person', 'person_interaction', 'document', 'website', 'manual')),
   source_id uuid,
   title text,
   content text not null,
