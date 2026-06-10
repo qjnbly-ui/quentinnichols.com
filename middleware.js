@@ -1,4 +1,4 @@
-const PROTECTED_PATHS = ["/portal", "/ai", "/api/ask", "/api/tts", "/api/stt", "/api/voice"];
+const PROTECTED_PATHS = ["/portal", "/app", "/ai", "/api/ask", "/api/tts", "/api/stt", "/api/voice"];
 
 function getAllowedEmails() {
   const raw = process.env.ALLOWED_PORTAL_EMAILS || "quentin@quentinnichols.com";

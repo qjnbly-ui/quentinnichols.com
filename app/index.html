@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Quentin Dashboard App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#08090b">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/Favicon32.png">
+  <link rel="stylesheet" href="/style.css">
+</head>
+
+<body class="qapp-page">
+  <section id="qappAuthGate" class="qapp-auth-gate" aria-live="polite">
+    <div class="qapp-auth-card">
+      <img class="qapp-auth-logo" src="/assets/NEWLOGO.png" alt="Quentin Nichols">
+      <p class="qapp-kicker">Private Dashboard</p>
+      <h1>Loading</h1>
+      <p id="qappAuthMessage">Checking your session...</p>
+      <a href="/portal/">Back to portal</a>
+    </div>
+  </section>
+
+  <div id="qappDrawerOverlay" class="qapp-drawer-overlay" hidden></div>
+
+  <aside id="qappDrawer" class="qapp-drawer" aria-hidden="true" aria-label="Dashboard menu">
+    <div class="qapp-drawer-header">
+      <img src="/assets/NEWLOGO.png" alt="Quentin Nichols">
+      <div>
+        <strong>Quentin App</strong>
+        <span id="qappDrawerEmail">Private dashboard</span>
+      </div>
+    </div>
+
+    <nav class="qapp-drawer-nav" aria-label="Dashboard sections">
+      <button class="qapp-drawer-item is-active" data-route="today" type="button">
+        <span class="qapp-icon" aria-hidden="true">H</span>
+        <span>Today</span>
+      </button>
+      <button class="qapp-drawer-item" data-route="people" type="button">
+        <span class="qapp-icon" aria-hidden="true">P</span>
+        <span>People Notebook</span>
+      </button>
+      <button class="qapp-drawer-item" data-route="calendar" type="button">
+        <span class="qapp-icon" aria-hidden="true">C</span>
+        <span>Calendar</span>
+      </button>
+      <button class="qapp-drawer-item" data-route="tasks" type="button">
+        <span class="qapp-icon" aria-hidden="true">T</span>
+        <span>Tasks</span>
+      </button>
+      <button class="qapp-drawer-item" data-route="notes" type="button">
+        <span class="qapp-icon" aria-hidden="true">N</span>
+        <span>Notes</span>
+      </button>
+      <button class="qapp-drawer-item" data-route="ai" type="button">
+        <span class="qapp-icon" aria-hidden="true">AI</span>
+        <span>AI Context</span>
+      </button>
+      <button class="qapp-drawer-item" data-route="inquiries" type="button">
+        <span class="qapp-icon" aria-hidden="true">I</span>
+        <span>Inquiries</span>
+      </button>
+    </nav>
+
+    <div class="qapp-drawer-footer">
+      <a href="/portal/">Portal</a>
+      <button id="qappLogoutButton" type="button">Sign Out</button>
+    </div>
+  </aside>
+
+  <div id="qappShell" class="qapp-shell" hidden>
+    <header class="qapp-bar">
+      <button id="qappMenuButton" class="qapp-menu-button" type="button" aria-label="Open menu" aria-controls="qappDrawer" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="qapp-title-group">
+        <p class="qapp-kicker">Private Dashboard</p>
+        <h1 id="qappScreenTitle">Today</h1>
+      </div>
+      <a class="qapp-ai-link" href="/AI/">AI</a>
+    </header>
+
+    <main id="qappView" class="qapp-view" aria-live="polite"></main>
+
+    <nav class="qapp-bottom-nav" aria-label="Primary dashboard sections">
+      <button class="qapp-nav-item is-active" data-route="today" type="button">
+        <span class="qapp-icon" aria-hidden="true">H</span>
+        <span>Today</span>
+      </button>
+      <button class="qapp-nav-item" data-route="people" type="button">
+        <span class="qapp-icon" aria-hidden="true">P</span>
+        <span>People</span>
+      </button>
+      <button class="qapp-nav-item" data-route="calendar" type="button">
+        <span class="qapp-icon" aria-hidden="true">C</span>
+        <span>Calendar</span>
+      </button>
+      <button class="qapp-nav-item" data-route="tasks" type="button">
+        <span class="qapp-icon" aria-hidden="true">T</span>
+        <span>Tasks</span>
+      </button>
+      <button class="qapp-nav-item" data-route="ai" type="button">
+        <span class="qapp-icon" aria-hidden="true">AI</span>
+        <span>AI</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="/assets/auth.js"></script>
+  <script src="/assets/dashboard-app.js"></script>
+</body>
+</html>

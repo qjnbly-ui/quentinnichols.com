@@ -4452,3 +4452,534 @@ body.nav-menu-open {
   text-align: center;
   color: rgba(245, 242, 234, 0.56);
 }
+
+.qapp-page {
+  --qapp-bg: #060709;
+  --qapp-panel: rgba(15, 18, 23, 0.94);
+  --qapp-panel-soft: rgba(255, 255, 255, 0.045);
+  --qapp-border: rgba(245, 242, 234, 0.13);
+  --qapp-border-strong: rgba(245, 242, 234, 0.24);
+  --qapp-text: #f5f2ea;
+  --qapp-muted: rgba(245, 242, 234, 0.68);
+  --qapp-gold: #c8ad6a;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(200, 173, 106, 0.15), transparent 34rem),
+    linear-gradient(180deg, #0b0d11 0%, var(--qapp-bg) 54%, #030405 100%);
+  color: var(--qapp-text);
+  min-height: 100dvh;
+}
+
+.qapp-page [hidden] {
+  display: none !important;
+}
+
+.qapp-page button,
+.qapp-page input,
+.qapp-page textarea {
+  font: inherit;
+}
+
+.qapp-auth-gate {
+  align-items: center;
+  display: flex;
+  min-height: 100dvh;
+  padding: 24px;
+}
+
+.qapp-auth-card {
+  background: var(--qapp-panel);
+  border: 1px solid var(--qapp-border);
+  border-radius: 24px;
+  box-shadow: 0 26px 80px rgba(0, 0, 0, 0.48);
+  display: grid;
+  gap: 14px;
+  margin: 0 auto;
+  max-width: 460px;
+  padding: 32px;
+  text-align: center;
+  width: 100%;
+}
+
+.qapp-auth-logo {
+  height: 58px;
+  justify-self: center;
+  object-fit: contain;
+  width: 136px;
+}
+
+.qapp-auth-card h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.3rem, 12vw, 4.6rem);
+  line-height: 0.96;
+  margin: 0;
+}
+
+.qapp-auth-card p,
+.qapp-auth-card a {
+  color: var(--qapp-muted);
+}
+
+.qapp-auth-card a {
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.qapp-auth-card .is-error {
+  color: #ffb6a8;
+}
+
+.qapp-shell {
+  min-height: 100dvh;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+}
+
+.qapp-bar {
+  align-items: center;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: rgba(6, 7, 9, 0.82);
+  border-bottom: 1px solid var(--qapp-border);
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 48px 1fr auto;
+  left: 0;
+  min-height: calc(74px + env(safe-area-inset-top, 0px));
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 18px 12px;
+  position: sticky;
+  right: 0;
+  top: 0;
+  z-index: 30;
+}
+
+.qapp-menu-button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--qapp-border);
+  border-radius: 12px;
+  cursor: pointer;
+  display: grid;
+  height: 48px;
+  justify-items: center;
+  padding: 12px;
+  width: 48px;
+}
+
+.qapp-menu-button span {
+  background: var(--qapp-text);
+  border-radius: 999px;
+  display: block;
+  height: 2px;
+  width: 20px;
+}
+
+.qapp-title-group {
+  min-width: 0;
+}
+
+.qapp-kicker {
+  color: var(--qapp-gold);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+.qapp-title-group h1 {
+  font-size: clamp(1.25rem, 5vw, 2rem);
+  letter-spacing: 0;
+  line-height: 1;
+  margin: 0;
+}
+
+.qapp-ai-link {
+  align-items: center;
+  background: var(--qapp-text);
+  border-radius: 999px;
+  color: #090909;
+  display: inline-flex;
+  font-size: 0.8rem;
+  font-weight: 900;
+  min-height: 40px;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+.qapp-view {
+  display: grid;
+  gap: 18px;
+  margin: 0 auto;
+  max-width: 1120px;
+  padding: 22px 16px 28px;
+}
+
+.qapp-section-head {
+  display: grid;
+  gap: 10px;
+  padding: 10px 2px 4px;
+}
+
+.qapp-section-head h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.1rem, 11vw, 5rem);
+  line-height: 0.94;
+  margin: 0;
+  max-width: 760px;
+}
+
+.qapp-section-head p:last-child {
+  color: var(--qapp-muted);
+  line-height: 1.55;
+  margin: 0;
+  max-width: 680px;
+}
+
+.qapp-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.qapp-panel,
+.qapp-person-card {
+  background: var(--qapp-panel);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  box-shadow: 0 20px 52px rgba(0, 0, 0, 0.3);
+  padding: 18px;
+}
+
+.qapp-wide-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.qapp-panel h3,
+.qapp-person-card h3 {
+  font-size: 1rem;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.qapp-panel p,
+.qapp-person-card p {
+  color: var(--qapp-muted);
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+
+.qapp-stat {
+  color: var(--qapp-gold);
+  display: block;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 3rem;
+  line-height: 0.9;
+  margin-bottom: 14px;
+}
+
+.qapp-panel-title-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.qapp-pill {
+  align-items: center;
+  background: rgba(200, 173, 106, 0.13);
+  border: 1px solid rgba(200, 173, 106, 0.24);
+  border-radius: 999px;
+  color: #ead7a1;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  min-height: 26px;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.qapp-list,
+.qapp-person-main,
+.qapp-memory-list,
+.qapp-interaction-log,
+.qapp-reminder-list,
+.qapp-capture-form {
+  display: grid;
+  gap: 14px;
+}
+
+.qapp-person-card {
+  grid-template-columns: 54px 1fr;
+}
+
+.qapp-person-avatar {
+  align-items: center;
+  background: linear-gradient(145deg, rgba(200, 173, 106, 0.28), rgba(142, 191, 159, 0.16));
+  border: 1px solid var(--qapp-border-strong);
+  border-radius: 50%;
+  color: var(--qapp-text);
+  display: flex;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.7rem;
+  height: 54px;
+  justify-content: center;
+  width: 54px;
+}
+
+.qapp-person-main {
+  min-width: 0;
+}
+
+.qapp-tag-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qapp-memory-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.qapp-memory-card,
+.qapp-log-entry,
+.qapp-reminder {
+  background: var(--qapp-panel-soft);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.qapp-memory-card span,
+.qapp-log-entry span,
+.qapp-reminder span {
+  color: var(--qapp-muted);
+  display: block;
+  font-size: 0.78rem;
+}
+
+.qapp-memory-card strong,
+.qapp-reminder strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+.qapp-capture-form label {
+  display: grid;
+  gap: 8px;
+}
+
+.qapp-capture-form label span {
+  color: var(--qapp-text);
+  font-weight: 800;
+}
+
+.qapp-capture-form textarea {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  color: var(--qapp-text);
+  min-height: 112px;
+  padding: 14px;
+  resize: vertical;
+  width: 100%;
+}
+
+.qapp-capture-form textarea:focus {
+  border-color: var(--qapp-gold);
+  outline: 2px solid rgba(200, 173, 106, 0.18);
+}
+
+.qapp-capture-form button,
+.qapp-drawer-footer button {
+  background: var(--qapp-text);
+  border: 0;
+  border-radius: 999px;
+  color: #090909;
+  cursor: pointer;
+  font-weight: 900;
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+.qapp-drawer-overlay {
+  background: rgba(0, 0, 0, 0.58);
+  inset: 0;
+  position: fixed;
+  z-index: 60;
+}
+
+.qapp-drawer {
+  background: rgba(10, 12, 15, 0.98);
+  border-right: 1px solid var(--qapp-border);
+  bottom: 0;
+  box-shadow: 20px 0 70px rgba(0, 0, 0, 0.48);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  left: 0;
+  max-width: 360px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  top: 0;
+  transform: translateX(-105%);
+  transition: transform 180ms ease;
+  width: min(88vw, 360px);
+  z-index: 70;
+}
+
+.qapp-drawer.is-open {
+  transform: translateX(0);
+}
+
+.qapp-drawer-header {
+  align-items: center;
+  border-bottom: 1px solid var(--qapp-border);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 52px 1fr;
+  padding-bottom: 16px;
+}
+
+.qapp-drawer-header img {
+  height: 48px;
+  object-fit: contain;
+  width: 52px;
+}
+
+.qapp-drawer-header strong,
+.qapp-drawer-header span {
+  display: block;
+}
+
+.qapp-drawer-header span {
+  color: var(--qapp-muted);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qapp-drawer-nav {
+  display: grid;
+  gap: 6px;
+  overflow-y: auto;
+  padding: 16px 0;
+}
+
+.qapp-drawer-item,
+.qapp-nav-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--qapp-muted);
+  cursor: pointer;
+  display: grid;
+  font-weight: 800;
+  gap: 10px;
+  grid-template-columns: 32px 1fr;
+  min-height: 46px;
+  text-align: left;
+}
+
+.qapp-drawer-item {
+  border-radius: 8px;
+  padding: 0 10px;
+}
+
+.qapp-drawer-item.is-active,
+.qapp-nav-item.is-active {
+  color: var(--qapp-text);
+}
+
+.qapp-drawer-item.is-active {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.qapp-icon {
+  align-items: center;
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  display: inline-flex;
+  font-size: 0.78rem;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+.qapp-drawer-footer {
+  align-items: center;
+  border-top: 1px solid var(--qapp-border);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding-top: 16px;
+}
+
+.qapp-drawer-footer a {
+  color: var(--qapp-muted);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.qapp-bottom-nav {
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: rgba(6, 7, 9, 0.9);
+  border-top: 1px solid var(--qapp-border);
+  bottom: 0;
+  display: grid;
+  gap: 2px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  left: 0;
+  min-height: calc(78px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  position: fixed;
+  right: 0;
+  z-index: 40;
+}
+
+.qapp-nav-item {
+  border-radius: 8px;
+  font-size: 0.72rem;
+  gap: 4px;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  min-width: 0;
+  padding: 4px 2px;
+  text-align: center;
+}
+
+.qapp-nav-item .qapp-icon {
+  height: 28px;
+  width: 28px;
+}
+
+body.qapp-drawer-open {
+  overflow: hidden;
+}
+
+@media (max-width: 760px) {
+  .qapp-grid,
+  .qapp-memory-list {
+    grid-template-columns: 1fr;
+  }
+
+  .qapp-panel-title-row {
+    display: grid;
+  }
+
+  .qapp-person-card {
+    grid-template-columns: 44px 1fr;
+    padding: 14px;
+  }
+
+  .qapp-person-avatar {
+    font-size: 1.4rem;
+    height: 44px;
+    width: 44px;
+  }
+
+  .qapp-view {
+    padding: 18px 12px 24px;
+  }
+}
