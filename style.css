@@ -4730,6 +4730,10 @@ body.nav-menu-open {
   grid-template-columns: 54px 1fr;
 }
 
+.qapp-person-card--profile {
+  width: 100%;
+}
+
 .qapp-person-avatar {
   align-items: center;
   background: linear-gradient(145deg, rgba(200, 173, 106, 0.28), rgba(142, 191, 159, 0.16));
@@ -4744,6 +4748,85 @@ body.nav-menu-open {
   width: 54px;
 }
 
+.qapp-people-toolbar {
+  align-items: end;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr auto;
+}
+
+.qapp-people-toolbar label {
+  display: grid;
+  gap: 8px;
+}
+
+.qapp-people-toolbar label span {
+  color: var(--qapp-text);
+  font-weight: 800;
+}
+
+.qapp-people-toolbar input {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  color: var(--qapp-text);
+  min-height: 48px;
+  padding: 0 14px;
+  width: 100%;
+}
+
+.qapp-person-row {
+  align-items: center;
+  background: var(--qapp-panel);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  color: var(--qapp-text);
+  cursor: pointer;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 54px 1fr minmax(180px, auto);
+  padding: 14px;
+  text-align: left;
+  width: 100%;
+}
+
+.qapp-person-row:hover,
+.qapp-person-row:focus-visible {
+  border-color: var(--qapp-border-strong);
+  outline: none;
+}
+
+.qapp-person-row-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.qapp-person-row-main strong {
+  font-size: 1rem;
+}
+
+.qapp-person-row-main span,
+.qapp-person-row-side small {
+  color: var(--qapp-muted);
+}
+
+.qapp-person-row-meta {
+  font-size: 0.82rem;
+}
+
+.qapp-person-row-side {
+  align-items: end;
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.qapp-profile-head {
+  display: grid;
+  gap: 14px;
+}
+
 .qapp-person-main {
   min-width: 0;
 }
@@ -4753,6 +4836,50 @@ body.nav-menu-open {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.qapp-profile-meta {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.qapp-profile-meta span {
+  background: var(--qapp-panel-soft);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  color: var(--qapp-muted);
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.qapp-profile-meta strong {
+  color: var(--qapp-text);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.qapp-subsection-title {
+  align-items: center;
+  border-top: 1px solid var(--qapp-border);
+  display: flex;
+  justify-content: space-between;
+  padding-top: 10px;
+}
+
+.qapp-subsection-title h4 {
+  font-size: 0.84rem;
+  letter-spacing: 0.16em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.qapp-subsection-title span {
+  color: var(--qapp-gold);
+  font-weight: 900;
 }
 
 .qapp-memory-list {
@@ -4788,6 +4915,25 @@ body.nav-menu-open {
   gap: 8px;
 }
 
+.qapp-form-section {
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.qapp-form-section-title {
+  display: grid;
+  gap: 4px;
+}
+
+.qapp-form-section-title h3 {
+  font-size: 1rem;
+  letter-spacing: 0;
+  margin: 0;
+}
+
 .qapp-person-picker {
   position: relative;
 }
@@ -4796,6 +4942,12 @@ body.nav-menu-open {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.qapp-memory-input-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(160px, 0.7fr) minmax(0, 1.3fr);
 }
 
 .qapp-capture-form label span {
@@ -4841,6 +4993,22 @@ body.nav-menu-open {
 
 .qapp-inline-button {
   margin-top: 14px;
+}
+
+.qapp-text-button {
+  background: transparent;
+  border: 0;
+  color: var(--qapp-muted);
+  cursor: pointer;
+  font-weight: 900;
+  justify-self: start;
+  padding: 0;
+}
+
+.qapp-text-button:hover,
+.qapp-text-button:focus-visible {
+  color: var(--qapp-text);
+  outline: none;
 }
 
 .qapp-suggestions {
@@ -5044,8 +5212,20 @@ body.qapp-drawer-open {
 @media (max-width: 760px) {
   .qapp-grid,
   .qapp-capture-grid,
+  .qapp-memory-input-grid,
+  .qapp-profile-meta,
+  .qapp-people-toolbar,
   .qapp-memory-list {
     grid-template-columns: 1fr;
+  }
+
+  .qapp-person-row {
+    grid-template-columns: 44px 1fr;
+  }
+
+  .qapp-person-row-side {
+    grid-column: 2;
+    justify-items: start;
   }
 
   .qapp-panel-title-row {

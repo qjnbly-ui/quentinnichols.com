@@ -25,6 +25,9 @@
   let notebook = { people: [] };
   let notebookStatus = "loading";
   let notebookError = "";
+  let peopleSearch = "";
+  let selectedPersonId = "";
+  let peopleMode = "list";
 
   function escapeHtml(value) {
     return String(value || "")
@@ -53,6 +56,10 @@
 
   function setRoute(route) {
     currentRoute = routeTitles[route] ? route : "today";
+    if (currentRoute !== "people") {
+      peopleMode = "list";
+      selectedPersonId = "";
+    }
     screenTitle.textContent = routeTitles[currentRoute];
     routeButtons.forEach((button) => {
       button.classList.toggle("is-active", button.dataset.route === currentRoute);
@@ -200,8 +207,73 @@
       `;
     }
 
-    const peopleMarkup = notebook.people.map((person) => `
-      <article class="qapp-person-card" data-person-id="${escapeHtml(person.id)}">
+    const selectedPerson = selectedPersonId ? notebook.people.find((person) => person.id === selectedPersonId) : null;
+    if (peopleMode === "profile" && selectedPerson) {
+      return renderPersonProfile(selectedPerson);
+    }
+
+    if (peopleMode === "capture") {
+      return renderPeopleCapture();
+    }
+
+    const query = peopleSearch.trim().toLowerCase();
+    const filteredPeople = notebook.people.filter((person) => {
+      if (!query) return true;
+      const values = [
+        person.name,
+        person.summary,
+        person.email,
+        person.phone,
+        person.first_met_location,
+        ...(person.tags || []),
+        ...(person.memoryCards || []).flatMap((card) => [card.label, card.value]),
+      ];
+      return values.some((value) => String(value || "").toLowerCase().includes(query));
+    });
+
+    const peopleMarkup = filteredPeople.map((person) => {
+      const latestInteraction = person.interactions[0];
+      const nextReminder = person.reminders[0];
+      const topMemory = person.memoryCards[0];
+      return `
+        <button class="qapp-person-row" data-action="open-person" data-person-id="${escapeHtml(person.id)}" type="button">
+          <span class="qapp-person-avatar">${escapeHtml(person.name.charAt(0) || "?")}</span>
+          <span class="qapp-person-row-main">
+            <strong>${escapeHtml(person.name)}</strong>
+            <span>${escapeHtml(person.summary)}</span>
+            <span class="qapp-person-row-meta">
+              ${escapeHtml(latestInteraction ? `Last: ${latestInteraction.date}` : "No conversations yet")}
+              ${topMemory ? ` | ${escapeHtml(topMemory.label)}: ${escapeHtml(topMemory.value)}` : ""}
+            </span>
+          </span>
+          <span class="qapp-person-row-side">
+            ${(person.tags || []).slice(0, 2).map(statusPill).join("")}
+            ${nextReminder ? `<small>Next: ${escapeHtml(nextReminder.title)}</small>` : ""}
+          </span>
+        </button>
+      `;
+    }).join("");
+
+    return `
+      ${sectionHeader("Relationship Memory", "People Notebook", "Search your private relationship notebook, then open a person for the full profile.")}
+      <section class="qapp-panel qapp-people-toolbar">
+        <label>
+          <span>Search people</span>
+          <input id="qappPeopleSearch" type="search" value="${escapeHtml(peopleSearch)}" placeholder="Search name, tag, memory, email, phone">
+        </label>
+        <button class="qapp-inline-button" data-action="new-person-note" type="button">Add Conversation</button>
+      </section>
+      <section class="qapp-list qapp-people-list">
+        ${peopleMarkup || `<article class="qapp-panel"><h3>No people found</h3><p>${query ? "Try a different search." : "Add a conversation to create the first relationship profile."}</p></article>`}
+      </section>
+    `;
+  }
+
+  function renderPersonProfile(person) {
+    return `
+      <section class="qapp-profile-head">
+        <button class="qapp-text-button" data-action="back-to-people" type="button">Back to people</button>
+        <div class="qapp-person-card qapp-person-card--profile">
         <div class="qapp-person-avatar">${escapeHtml(person.name.charAt(0) || "?")}</div>
         <div class="qapp-person-main">
           <div class="qapp-panel-title-row">
@@ -211,6 +283,16 @@
             </div>
             <div class="qapp-tag-row">${person.tags.map(statusPill).join("")}</div>
           </div>
+          <div class="qapp-profile-meta">
+            <span><strong>Email</strong>${escapeHtml(person.email || "Not saved")}</span>
+            <span><strong>Phone</strong>${escapeHtml(person.phone || "Not saved")}</span>
+            <span><strong>First Met</strong>${escapeHtml(person.first_met_location || person.firstMetLocation || "Not saved")}</span>
+          </div>
+          <button class="qapp-inline-button" data-action="add-note-for-person" data-person-id="${escapeHtml(person.id)}" type="button">Add Conversation</button>
+          <div class="qapp-subsection-title">
+            <h4>Memory Cards</h4>
+            <span>${person.memoryCards.length}</span>
+          </div>
           <div class="qapp-memory-list">
             ${person.memoryCards.length ? person.memoryCards.map((card) => `
               <div class="qapp-memory-card">
@@ -218,6 +300,10 @@
                 <strong>${escapeHtml(card.value)}</strong>
               </div>
             `).join("") : `<div class="qapp-memory-card"><span>Memory Cards</span><strong>No facts saved yet.</strong></div>`}
+          </div>
+          <div class="qapp-subsection-title">
+            <h4>Conversation Log</h4>
+            <span>${person.interactions.length}</span>
           </div>
           <div class="qapp-interaction-log">
             ${person.interactions.length ? person.interactions.map((interaction) => `
@@ -228,6 +314,10 @@
               </div>
             `).join("") : `<div class="qapp-log-entry"><span>Conversation Log</span><p>No conversations saved yet.</p></div>`}
           </div>
+          <div class="qapp-subsection-title">
+            <h4>Follow-Up Reminders</h4>
+            <span>${person.reminders.length}</span>
+          </div>
           <div class="qapp-reminder-list">
             ${person.reminders.length ? person.reminders.map((reminder) => `
               <div class="qapp-reminder">
@@ -237,33 +327,130 @@
             `).join("") : `<div class="qapp-reminder"><strong>No follow-ups yet</strong><span>Add one from a conversation note.</span></div>`}
           </div>
         </div>
-      </article>
-    `).join("");
+        </div>
+      </section>
+    `;
+  }
 
+  function renderPeopleCapture() {
+    const selectedPerson = selectedPersonId ? notebook.people.find((person) => person.id === selectedPersonId) : null;
     return `
-      ${sectionHeader("Relationship Memory", "People Notebook", "A private Oz Pearlman-style notebook for names, conversations, memory cards, and follow-ups.")}
+      ${sectionHeader("Relationship Memory", "Add Conversation", "Create a person or attach this conversation to someone already in your notebook.")}
       <section class="qapp-panel">
+        <button class="qapp-text-button" data-action="back-to-people" type="button">Back to people</button>
         <form id="qappQuickCapture" class="qapp-capture-form">
+          <div class="qapp-form-section">
+            <div class="qapp-form-section-title">
+              <p class="qapp-kicker">Contact Profile</p>
+              <h3>Name, contact details, tags, and first-met context</h3>
+            </div>
           <div class="qapp-capture-grid">
             <label class="qapp-person-picker">
               <span>Name</span>
-              <input name="personId" type="hidden">
-              <input name="name" type="text" placeholder="John">
+              <input name="personId" type="hidden" value="${escapeHtml(selectedPerson?.id || "")}">
+              <input name="name" type="text" value="${escapeHtml(selectedPerson?.name || "")}" placeholder="John">
               <div id="qappPersonSuggestions" class="qapp-suggestions" hidden></div>
             </label>
+              <label>
+                <span>Tags</span>
+                <input name="tags" type="text" value="${escapeHtml((selectedPerson?.tags || []).join(", "))}" placeholder="Friend, Fire Department, Customer">
+              </label>
+              <label>
+                <span>Email</span>
+                <input name="email" type="email" value="${escapeHtml(selectedPerson?.email || "")}" placeholder="john@example.com">
+              </label>
+              <label>
+                <span>Phone</span>
+                <input name="phone" type="tel" value="${escapeHtml(selectedPerson?.phone || "")}" placeholder="(541) 555-0123">
+              </label>
             <label>
-              <span>Location</span>
-              <input name="location" type="text" placeholder="Fire hall">
+                <span>Where you met</span>
+                <input name="firstMetLocation" type="text" value="${escapeHtml(selectedPerson?.first_met_location || selectedPerson?.firstMetLocation || "")}" placeholder="Fire hall">
             </label>
+              <label>
+                <span>Photo URL</span>
+                <input name="photoUrl" type="url" value="${escapeHtml(selectedPerson?.photo_url || selectedPerson?.photoUrl || "")}" placeholder="Optional">
+              </label>
+            </div>
+            <label>
+              <span>Overview</span>
+              <textarea name="overview" rows="3" placeholder="A few words about who they are and what stands out.">${escapeHtml(selectedPerson?.overview || "")}</textarea>
+            </label>
+          </div>
+
+          <div class="qapp-form-section">
+            <div class="qapp-form-section-title">
+              <p class="qapp-kicker">Conversation Log</p>
+              <h3>Date, location, mood, topics, and notes</h3>
+            </div>
+            <div class="qapp-capture-grid">
+              <label>
+                <span>Conversation location</span>
+                <input name="location" type="text" placeholder="Fire hall">
+              </label>
+              <label>
+                <span>Mood</span>
+                <input name="mood" type="text" placeholder="Excited, tired, worried">
+              </label>
+              <label>
+                <span>Topics</span>
+                <input name="topics" type="text" placeholder="family, work, graduation">
+              </label>
+              <label>
+                <span>AI summary</span>
+                <input name="aiSummary" type="text" placeholder="Optional short summary">
+              </label>
           </div>
           <label>
             <span>Dictated conversation note</span>
             <textarea name="note" rows="4" placeholder="Met John at the fire hall. His daughter Emily is graduating. He is worried about replacing the roof before winter."></textarea>
           </label>
+          </div>
+
+          <div class="qapp-form-section">
+            <div class="qapp-form-section-title">
+              <p class="qapp-kicker">Memory Cards</p>
+              <h3>Quick facts to remember next time</h3>
+            </div>
+            <div class="qapp-memory-input-grid">
+              <label>
+                <span>Fact 1 label</span>
+                <input name="memoryLabel1" type="text" placeholder="Daughter">
+              </label>
+              <label>
+                <span>Fact 1 value</span>
+                <input name="memoryValue1" type="text" placeholder="Emily">
+              </label>
+              <label>
+                <span>Fact 2 label</span>
+                <input name="memoryLabel2" type="text" placeholder="Goal">
+              </label>
+              <label>
+                <span>Fact 2 value</span>
+                <input name="memoryValue2" type="text" placeholder="Becoming a paramedic">
+              </label>
+            </div>
+          </div>
+
+          <div class="qapp-form-section">
+            <div class="qapp-form-section-title">
+              <p class="qapp-kicker">Follow-Up Reminder</p>
+              <h3>One thing worth asking about later</h3>
+            </div>
+            <div class="qapp-capture-grid">
+              <label>
+                <span>Reminder</span>
+                <input name="reminderTitle" type="text" placeholder="Ask about EMT exam">
+              </label>
+              <label>
+                <span>Remind date</span>
+                <input name="remindAt" type="date">
+              </label>
+            </div>
+          </div>
           <button type="submit">Save Conversation</button>
         </form>
       </section>
-      <section class="qapp-list">${peopleMarkup || `<article class="qapp-panel"><h3>No people yet</h3><p>Save a conversation note to create the first relationship profile.</p></article>`}</section>
     `;
   }
 
@@ -361,9 +548,61 @@
   function bindPeopleForms() {
     const form = document.getElementById("qappQuickCapture");
     const reloadButton = document.querySelector('[data-action="reload-notebook"]');
+    const searchInput = document.getElementById("qappPeopleSearch");
+    const backButtons = [...document.querySelectorAll('[data-action="back-to-people"]')];
+    const newConversationButton = document.querySelector('[data-action="new-person-note"]');
+    const addForPersonButton = document.querySelector('[data-action="add-note-for-person"]');
+    const personRows = [...document.querySelectorAll('[data-action="open-person"]')];
+
     if (reloadButton) {
       reloadButton.addEventListener("click", loadNotebookData);
     }
+
+    if (searchInput) {
+      searchInput.addEventListener("input", () => {
+        const cursorPosition = searchInput.selectionStart || searchInput.value.length;
+        peopleSearch = searchInput.value;
+        render();
+        const nextSearchInput = document.getElementById("qappPeopleSearch");
+        if (nextSearchInput) {
+          nextSearchInput.focus();
+          nextSearchInput.setSelectionRange(cursorPosition, cursorPosition);
+        }
+      });
+    }
+
+    backButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        peopleMode = "list";
+        selectedPersonId = "";
+        render();
+      });
+    });
+
+    personRows.forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedPersonId = button.dataset.personId || "";
+        peopleMode = "profile";
+        render();
+      });
+    });
+
+    if (newConversationButton) {
+      newConversationButton.addEventListener("click", () => {
+        selectedPersonId = "";
+        peopleMode = "capture";
+        render();
+      });
+    }
+
+    if (addForPersonButton) {
+      addForPersonButton.addEventListener("click", () => {
+        selectedPersonId = addForPersonButton.dataset.personId || selectedPersonId;
+        peopleMode = "capture";
+        render();
+      });
+    }
+
     if (!form) return;
 
     const nameInput = form.elements.name;
@@ -419,17 +658,42 @@
       const formData = new FormData(form);
       const note = String(formData.get("note") || "").trim();
       if (!note) return;
-      const selectedPersonId = String(formData.get("personId") || "").trim();
+      const chosenPersonId = String(formData.get("personId") || "").trim();
       const typedName = String(formData.get("name") || "").trim();
       const firstNameMatch = note.match(/\b(?:met|talked to|saw)\s+([A-Z][a-z]+)/);
       const name = typedName || firstNameMatch?.[1] || "New Person";
       const location = String(formData.get("location") || "").trim() || "Not specified";
+      const firstMetLocation = String(formData.get("firstMetLocation") || "").trim() || location;
+      const tags = String(formData.get("tags") || "")
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .slice(0, 12);
+      const topics = String(formData.get("topics") || "")
+        .split(",")
+        .map((topic) => topic.trim())
+        .filter(Boolean)
+        .slice(0, 12);
+      const memoryCards = [1, 2]
+        .map((index) => ({
+          label: String(formData.get(`memoryLabel${index}`) || "").trim(),
+          value: String(formData.get(`memoryValue${index}`) || "").trim(),
+        }))
+        .filter((card) => card.label && card.value);
+      if (!memoryCards.length) {
+        memoryCards.push({
+          label: "Raw Note",
+          value: note.length > 180 ? `${note.slice(0, 180)}...` : note,
+        });
+      }
+      const reminderTitle = String(formData.get("reminderTitle") || "").trim();
+      const remindAt = String(formData.get("remindAt") || "").trim();
 
       submitButton.disabled = true;
       submitButton.textContent = "Saving...";
       try {
-        let person = selectedPersonId
-          ? notebook.people.find((item) => item.id === selectedPersonId)
+        let person = chosenPersonId
+          ? notebook.people.find((item) => item.id === chosenPersonId)
           : notebook.people.find((item) => item.name.toLowerCase() === name.toLowerCase());
 
         if (!person) {
@@ -437,9 +701,12 @@
             method: "POST",
             body: {
               name,
-              tags: ["Captured"],
-              overview: note,
-              firstMetLocation: location,
+              tags: tags.length ? tags : ["Captured"],
+              email: String(formData.get("email") || "").trim(),
+              phone: String(formData.get("phone") || "").trim(),
+              photoUrl: String(formData.get("photoUrl") || "").trim(),
+              overview: String(formData.get("overview") || "").trim() || note,
+              firstMetLocation,
             },
           });
           person = normalizePerson({ ...created.person, interactions: [], memoryCards: [], reminders: [] });
@@ -451,24 +718,19 @@
             personId: person.id,
             location,
             notes: note,
-            topics: ["captured"],
-            memoryCards: [
-              {
-                label: "Raw Note",
-                value: note.length > 180 ? `${note.slice(0, 180)}...` : note,
-              },
-            ],
-            reminders: [
-              {
-                title: "Review and extract follow-ups",
-                priority: "normal",
-              },
-            ],
+            mood: String(formData.get("mood") || "").trim(),
+            topics: topics.length ? topics : ["captured"],
+            aiSummary: String(formData.get("aiSummary") || "").trim(),
+            memoryCards,
+            reminders: reminderTitle ? [{ title: reminderTitle, remindAt, priority: "normal" }] : [],
           },
         });
 
         form.reset();
         await loadNotebookData();
+        selectedPersonId = person.id;
+        peopleMode = "profile";
+        render();
       } catch (error) {
         notebookStatus = "error";
         notebookError = error?.message || "Unable to save conversation.";

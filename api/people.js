@@ -49,6 +49,7 @@ module.exports = async function handler(req, res) {
       phone: cleanText(body.phone, 80) || null,
       email: cleanText(body.email, 160) || null,
       tags: cleanTags(body.tags),
+      first_met_at: cleanText(body.firstMetAt || body.first_met_at, 80) || null,
       first_met_location: cleanText(body.firstMetLocation || body.first_met_location, 240) || null,
       overview: cleanText(body.overview, 2000) || null,
       metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {},
