@@ -50,6 +50,103 @@ function cleanCache(maxEntries, ttlMs) {
   }
 }
 
+function splitTextForTts(text, maxChunkLength = 190) {
+  const cleaned = String(text || "").replace(/\s+/g, " ").trim();
+  if (!cleaned) return [];
+
+  const sentences = cleaned.match(/[^.!?]+[.!?]*/g) || [cleaned];
+  const chunks = [];
+  let buffer = "";
+
+  function pushBuffer() {
+    const value = buffer.trim();
+    if (value) chunks.push(value);
+    buffer = "";
+  }
+
+  function pushPiece(piece) {
+    const value = String(piece || "").trim();
+    if (!value) return;
+
+    if (value.length > maxChunkLength) {
+      const words = value.split(/\s+/);
+      for (const word of words) {
+        const next = buffer ? `${buffer} ${word}` : word;
+        if (next.length > maxChunkLength) {
+          pushBuffer();
+          if (word.length > maxChunkLength) {
+            for (let i = 0; i < word.length; i += maxChunkLength) {
+              chunks.push(word.slice(i, i + maxChunkLength));
+            }
+          } else {
+            buffer = word;
+          }
+        } else {
+          buffer = next;
+        }
+      }
+      return;
+    }
+
+    const next = buffer ? `${buffer} ${value}` : value;
+    if (next.length > maxChunkLength) {
+      pushBuffer();
+      buffer = value;
+    } else {
+      buffer = next;
+    }
+  }
+
+  for (const sentence of sentences) {
+    pushPiece(sentence);
+  }
+  pushBuffer();
+  return chunks;
+}
+
+function getWavDataChunk(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 44) return null;
+  if (buffer.subarray(0, 4).toString("ascii") !== "RIFF" || buffer.subarray(8, 12).toString("ascii") !== "WAVE") {
+    return null;
+  }
+
+  let offset = 12;
+  while (offset + 8 <= buffer.length) {
+    const chunkId = buffer.subarray(offset, offset + 4).toString("ascii");
+    const chunkSize = buffer.readUInt32LE(offset + 4);
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + chunkSize;
+    if (chunkId === "data" && dataEnd <= buffer.length) {
+      return { start: dataStart, end: dataEnd, size: chunkSize };
+    }
+    offset = dataEnd + (chunkSize % 2);
+  }
+
+  return null;
+}
+
+function combineWavBuffers(buffers) {
+  const validBuffers = buffers.filter((buffer) => Buffer.isBuffer(buffer) && buffer.length > 0);
+  if (validBuffers.length <= 1) return validBuffers[0] || Buffer.alloc(0);
+
+  const first = validBuffers[0];
+  const firstData = getWavDataChunk(first);
+  if (!firstData) return first;
+
+  const dataParts = [];
+  for (const buffer of validBuffers) {
+    const data = getWavDataChunk(buffer);
+    if (!data) return first;
+    dataParts.push(buffer.subarray(data.start, data.end));
+  }
+
+  const combinedData = Buffer.concat(dataParts);
+  const header = Buffer.from(first.subarray(0, firstData.start));
+  header.writeUInt32LE(header.length - 8 + combinedData.length, 4);
+  header.writeUInt32LE(combinedData.length, firstData.start - 4);
+  return Buffer.concat([header, combinedData]);
+}
+
 async function callTts({ apiKey, model, text, voice, speed, responseFormat }) {
   const response = await fetch("https://api.groq.com/openai/v1/audio/speech", {
     method: "POST",
@@ -70,6 +167,42 @@ async function callTts({ apiKey, model, text, voice, speed, responseFormat }) {
   const buffer = Buffer.from(await response.arrayBuffer());
   const details = !response.ok || !looksLikeAudio(buffer, contentType) ? buffer.toString("utf8").slice(0, 500) : "";
   return { ok: response.ok && looksLikeAudio(buffer, contentType), status: response.status, contentType, buffer, details };
+}
+
+async function callChunkedTts({ apiKey, model, text, voice, speed, responseFormat, maxChunkLength }) {
+  const chunks = splitTextForTts(text, maxChunkLength);
+  const buffers = [];
+  const attempts = [];
+  let contentType = "audio/wav";
+
+  for (const chunk of chunks) {
+    const result = await callTts({ apiKey, model, text: chunk, voice, speed, responseFormat });
+    attempts.push({
+      model,
+      voice,
+      status: result.status,
+      contentType: result.contentType || null,
+      bytes: result.buffer.length,
+      chunkLength: chunk.length,
+      details: result.details || null,
+    });
+
+    if (!result.ok) {
+      return { ok: false, status: result.status, contentType: result.contentType, buffer: result.buffer, details: result.details, attempts };
+    }
+
+    contentType = result.contentType || contentType;
+    buffers.push(result.buffer);
+  }
+
+  return {
+    ok: buffers.length > 0,
+    status: buffers.length > 0 ? 200 : 400,
+    contentType,
+    buffer: combineWavBuffers(buffers),
+    details: "",
+    attempts,
+  };
 }
 
 module.exports = async (req, res) => {
@@ -97,8 +230,9 @@ module.exports = async (req, res) => {
     const text = String(body.text || "").trim().slice(0, getInt(process.env.TTS_MAX_CHARS, 1200, 120, 4000));
     const speed = getFloat(body.speed ?? process.env.TTS_SPEED ?? 1.15, 1.15, 0.5, 5);
     const responseFormat = String(process.env.TTS_RESPONSE_FORMAT || "wav").trim() || "wav";
-    const defaultVoice = String(process.env.TTS_VOICE || "tara").trim() || "tara";
-    const fallbackVoice = String(process.env.TTS_FALLBACK_VOICE || "troy").trim() || "troy";
+    const maxChunkLength = getInt(process.env.TTS_CHUNK_MAX_CHARS, 190, 50, 200);
+    const defaultVoice = String(process.env.TTS_VOICE || "troy").trim() || "troy";
+    const fallbackVoice = String(process.env.TTS_FALLBACK_VOICE || "hannah").trim() || "hannah";
     const voice = String(body.voice || defaultVoice).trim() || defaultVoice;
     const primaryModel = String(process.env.TTS_MODEL || "canopylabs/orpheus-v1-english").trim();
     const fallbackModels = getEnvList(process.env.TTS_FALLBACK_MODELS);
@@ -124,7 +258,7 @@ module.exports = async (req, res) => {
     const cacheMaxEntries = getInt(process.env.TTS_CACHE_MAX_ENTRIES, 200, 10, 5_000);
     const hash = crypto
       .createHash("sha256")
-      .update(`${primaryModel}|${voice}|${speed}|${responseFormat}|${text}`)
+      .update(`${primaryModel}|${voice}|${speed}|${responseFormat}|${maxChunkLength}|${text}`)
       .digest("hex");
 
     if (cacheEnabled) {
@@ -143,28 +277,29 @@ module.exports = async (req, res) => {
     }
 
     const attempts = [];
-    const voices = [voice, fallbackVoice];
+    const voices = [...new Set([voice, fallbackVoice].filter(Boolean))];
     let winning = null;
 
     for (const model of modelPlan) {
       for (const candidateVoice of voices) {
-        const result = await callTts({
+        const result = await callChunkedTts({
           apiKey,
           model,
           text,
           voice: candidateVoice,
           speed,
           responseFormat,
+          maxChunkLength,
         });
 
-        attempts.push({
+        attempts.push(...(result.attempts || [{
           model,
           voice: candidateVoice,
           status: result.status,
           contentType: result.contentType || null,
           bytes: result.buffer.length,
           details: result.details || null,
-        });
+        }]));
 
         if (result.ok) {
           winning = { ...result, model, voice: candidateVoice };
