@@ -288,6 +288,21 @@ alter table public.ai_messages enable row level security;
 alter table public.ai_context_items enable row level security;
 alter table public.contact_inquiries enable row level security;
 
+grant usage on schema public to authenticated;
+
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.calendar_events to authenticated;
+grant select, insert, update, delete on public.tasks to authenticated;
+grant select, insert, update, delete on public.notes to authenticated;
+grant select, insert, update, delete on public.people to authenticated;
+grant select, insert, update, delete on public.person_interactions to authenticated;
+grant select, insert, update, delete on public.person_memory_cards to authenticated;
+grant select, insert, update, delete on public.person_follow_up_reminders to authenticated;
+grant select, insert, update, delete on public.ai_conversations to authenticated;
+grant select, insert, update, delete on public.ai_messages to authenticated;
+grant select, insert, update, delete on public.ai_context_items to authenticated;
+grant select, insert, update, delete on public.contact_inquiries to authenticated;
+
 drop policy if exists "Profiles are owner readable" on public.profiles;
 create policy "Profiles are owner readable"
 on public.profiles for select

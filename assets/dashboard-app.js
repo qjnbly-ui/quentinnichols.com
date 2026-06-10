@@ -17,7 +17,7 @@
     calendar: "Calendar",
     tasks: "Tasks",
     notes: "Notes",
-    ai: "AI Context",
+    ai: "AI Assistant",
     inquiries: "Inquiries",
   };
 
@@ -245,9 +245,11 @@
       <section class="qapp-panel">
         <form id="qappQuickCapture" class="qapp-capture-form">
           <div class="qapp-capture-grid">
-            <label>
+            <label class="qapp-person-picker">
               <span>Name</span>
+              <input name="personId" type="hidden">
               <input name="name" type="text" placeholder="John">
+              <div id="qappPersonSuggestions" class="qapp-suggestions" hidden></div>
             </label>
             <label>
               <span>Location</span>
@@ -282,6 +284,45 @@
     `;
   }
 
+  function renderAiAssistant() {
+    return `
+      ${sectionHeader("Assistant", "AI inside the app", "Use the site-grounded assistant without leaving the private application.")}
+      <section class="qapp-panel qapp-ai-frame-panel">
+        <div class="qapp-panel-title-row">
+          <div>
+            <p class="qapp-kicker">Private Tool</p>
+            <h3>Quentin Nichols AI</h3>
+          </div>
+          ${statusPill("Protected")}
+        </div>
+        <iframe class="qapp-ai-frame" src="/AI/" title="Quentin Nichols AI"></iframe>
+      </section>
+      <section class="qapp-grid">
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Context Items</h3>
+            ${statusPill("Schema Ready")}
+          </div>
+          <p>Store facts the AI should remember across calendar, tasks, notes, and people.</p>
+        </article>
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Conversations</h3>
+            ${statusPill("Schema Ready")}
+          </div>
+          <p>Persist important AI chats without mixing them into random browser storage.</p>
+        </article>
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Decision Log</h3>
+            ${statusPill("Planned")}
+          </div>
+          <p>Track why the AI suggested or arranged something.</p>
+        </article>
+      </section>
+    `;
+  }
+
   function render() {
     if (currentRoute === "today") {
       view.innerHTML = renderToday();
@@ -307,11 +348,7 @@
         { title: "Archive", status: "Planned", copy: "Search old entries and promote important details into AI context." },
       ]);
     } else if (currentRoute === "ai") {
-      view.innerHTML = renderPlaceholder("ai", "Memory Layer", "AI Context", "AI context items are the bridge between raw app data and useful assistant reasoning.", [
-        { title: "Context Items", status: "Schema Ready", copy: "Store facts the AI should remember across calendar, tasks, notes, and people." },
-        { title: "Conversations", status: "Schema Ready", copy: "Persist important AI chats without mixing them into random browser storage." },
-        { title: "Decision Log", status: "Planned", copy: "Track why the AI suggested or arranged something." },
-      ]);
+      view.innerHTML = renderAiAssistant();
     } else {
       view.innerHTML = renderPlaceholder("inquiries", "Website", "Inquiries", "Project and photography inquiries currently send email; Supabase storage is ready for later.", [
         { title: "Contact Inbox", status: "Future", copy: "Store incoming inquiries in Supabase after the email flow." },
@@ -329,12 +366,60 @@
     }
     if (!form) return;
 
+    const nameInput = form.elements.name;
+    const personIdInput = form.elements.personId;
+    const suggestions = document.getElementById("qappPersonSuggestions");
+
+    function renderSuggestions() {
+      if (!nameInput || !personIdInput || !suggestions) return;
+      const query = String(nameInput.value || "").trim().toLowerCase();
+      personIdInput.value = "";
+      if (!query) {
+        suggestions.hidden = true;
+        suggestions.innerHTML = "";
+        return;
+      }
+
+      const matches = notebook.people
+        .filter((person) => {
+          const name = String(person.name || "").toLowerCase();
+          const preferredName = String(person.preferred_name || person.preferredName || "").toLowerCase();
+          return name.includes(query) || preferredName.includes(query);
+        })
+        .slice(0, 6);
+
+      if (!matches.length) {
+        suggestions.hidden = true;
+        suggestions.innerHTML = "";
+        return;
+      }
+
+      suggestions.innerHTML = matches.map((person) => `
+        <button class="qapp-suggestion" data-person-id="${escapeHtml(person.id)}" data-person-name="${escapeHtml(person.name)}" type="button">
+          <strong>${escapeHtml(person.name)}</strong>
+          <span>${escapeHtml(person.tags?.[0] || "Notebook profile")}</span>
+        </button>
+      `).join("");
+      suggestions.hidden = false;
+    }
+
+    nameInput?.addEventListener("input", renderSuggestions);
+    suggestions?.addEventListener("click", (event) => {
+      const button = event.target.closest(".qapp-suggestion");
+      if (!button) return;
+      personIdInput.value = button.dataset.personId || "";
+      nameInput.value = button.dataset.personName || "";
+      suggestions.hidden = true;
+      suggestions.innerHTML = "";
+    });
+
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const submitButton = form.querySelector('button[type="submit"]');
       const formData = new FormData(form);
       const note = String(formData.get("note") || "").trim();
       if (!note) return;
+      const selectedPersonId = String(formData.get("personId") || "").trim();
       const typedName = String(formData.get("name") || "").trim();
       const firstNameMatch = note.match(/\b(?:met|talked to|saw)\s+([A-Z][a-z]+)/);
       const name = typedName || firstNameMatch?.[1] || "New Person";
@@ -343,7 +428,10 @@
       submitButton.disabled = true;
       submitButton.textContent = "Saving...";
       try {
-        let person = notebook.people.find((item) => item.name.toLowerCase() === name.toLowerCase());
+        let person = selectedPersonId
+          ? notebook.people.find((item) => item.id === selectedPersonId)
+          : notebook.people.find((item) => item.name.toLowerCase() === name.toLowerCase());
+
         if (!person) {
           const created = await apiJson("/api/people", {
             method: "POST",

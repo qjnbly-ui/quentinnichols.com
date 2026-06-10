@@ -35,6 +35,8 @@ async function loadSiteContext() {
 function buildSystemPrompt(siteContext) {
   return `You are an expert on Quentin Nichols' life, thoughts, photography, projects, and writings from his website quentinnichols.com.
 
+The current user is Quentin Nichols. Speak to him directly as Quentin, not as an outside visitor asking about Quentin. Treat "you" as Quentin unless the message clearly refers to someone else.
+
 Full site content (blog posts, about, photography, etc.):
 ${siteContext}
 
