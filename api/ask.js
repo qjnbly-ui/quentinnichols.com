@@ -52,6 +52,31 @@ function formatBullets(items, formatter) {
   return lines.length ? lines.join("\n") : "- None loaded";
 }
 
+function compactText(value, maxLength = 320) {
+  return String(value || "").trim().replace(/\s+/g, " ").slice(0, maxLength);
+}
+
+function privateSearchText(person, interactions, memoryCards, reminders) {
+  const personInteractions = interactions.filter((interaction) => interaction.person_id === person.id);
+  const personMemoryCards = memoryCards.filter((card) => card.person_id === person.id);
+  const personReminders = reminders.filter((reminder) => reminder.person_id === person.id);
+  return [
+    person.name,
+    person.preferred_name,
+    person.overview,
+    person.first_met_location,
+    ...(Array.isArray(person.tags) ? person.tags : []),
+    ...personInteractions.flatMap((interaction) => [
+      interaction.location,
+      interaction.notes,
+      interaction.ai_summary,
+      ...(Array.isArray(interaction.topics) ? interaction.topics : []),
+    ]),
+    ...personMemoryCards.flatMap((card) => [card.category, card.label, card.value]),
+    ...personReminders.flatMap((reminder) => [reminder.title, reminder.details]),
+  ].filter(Boolean).join(" ");
+}
+
 async function loadPrivateAppContext(req) {
   try {
     const { supabaseRest } = await getAuthedSupabase(req);
@@ -100,9 +125,37 @@ async function loadPrivateAppContext(req) {
     ]);
 
     const peopleById = new Map(people.map((person) => [person.id, person]));
+    const workSignals = people
+      .map((person) => {
+        const text = privateSearchText(person, interactions, memoryCards, reminders);
+        if (!/\b(coworker|co-worker|foreman|boss|manager|work|worked|job|crew|fire hall|station|customer|client)\b/i.test(text)) {
+          return "";
+        }
+        return `- ${person.name}: ${compactText(text)}`;
+      })
+      .filter(Boolean)
+      .slice(0, 24);
+
+    const relationshipSignals = people
+      .map((person) => {
+        const text = privateSearchText(person, interactions, memoryCards, reminders);
+        if (!/\b(mom|mother|dad|father|sister|brother|daughter|son|wife|husband|family|friend|cousin|pet|dog|cat)\b/i.test(text)) {
+          return "";
+        }
+        return `- ${person.name}: ${compactText(text)}`;
+      })
+      .filter(Boolean)
+      .slice(0, 24);
 
     const context = `
 Private app context from Supabase. This is current runtime data for Quentin's private dashboard. Treat it as private, user-owned data. Use it when relevant, but do not expose unrelated private details unless Quentin asks.
+
+Notebook search signals:
+Work, coworker, and role-related matches:
+${workSignals.length ? workSignals.join("\n") : "- None loaded"}
+
+Family, friend, and pet-related matches:
+${relationshipSignals.length ? relationshipSignals.join("\n") : "- None loaded"}
 
 People:
 ${formatBullets(people, (person) => {
@@ -155,11 +208,11 @@ function buildSystemPrompt(siteContext, privateAppContext) {
 
 The current user is Quentin Nichols. Speak to him directly as Quentin, not as an outside visitor asking about Quentin. Treat "you" as Quentin unless the message clearly refers to someone else.
 
-Full site content (blog posts, about, photography, etc.):
-${siteContext}
-
 Current private dashboard context:
 ${privateAppContext}
+
+Full site content (blog posts, about, photography, etc.):
+${siteContext}
 
 Your role: Think deeply, connect ideas across posts, recall details accurately, and provide insightful, personal-feeling responses as if you know Quentin better than he remembers himself sometimes. Be reflective, honest, and encouraging. Use first-person insights only when quoting or paraphrasing his writing.
 
@@ -170,6 +223,8 @@ Scripting rules: Ground responses in the provided text and avoid inventing facts
 When the user asks to "tell a story" about a topic or person, assume they want existing information or anecdotes from the provided context, not a new narrative. If you're unsure or don't have enough context, ask for clarification instead of making assumptions.
 
 Avoid repeating the same points across consecutive responses unless the user asks for a recap or comparison.
+
+Private dashboard context is the best source for Quentin's current personal app data, including people, coworkers, family, conversations, memory cards, follow-ups, calendar events, tasks, and notes. For broad questions like "who is my coworker", "what do you know about my foreman", "who did I talk to", or "what should I follow up on", search the private dashboard context first before using website writing context. Do not say "your life, not Quentin's" because the user is Quentin.
 
 Answer questions based ONLY on the website content and private dashboard context unless asked otherwise. If something isn't covered, say so clearly.
 When sharing site links, use Markdown with human-readable titles (e.g., [Photography](/photography/)) and avoid raw URLs.`;
