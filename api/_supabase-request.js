@@ -32,7 +32,10 @@ function json(res, statusCode, payload) {
 async function getAuthedSupabase(req) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    || process.env.SUPABASE_SERVICE_KEY
+    || process.env.SUPABASE_SERVICE_ROLE
+    || process.env.SUPABASE_SECRET_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
     const error = new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY.");
     error.statusCode = 500;
@@ -109,7 +112,7 @@ async function getAuthedSupabase(req) {
     });
   }
 
-  return { user, supabaseRest, supabaseAdminRest };
+  return { user, supabaseRest, supabaseAdminRest, hasSupabaseServiceRoleKey: Boolean(supabaseServiceRoleKey) };
 }
 
 async function handleApiError(res, error) {
