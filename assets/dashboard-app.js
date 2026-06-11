@@ -76,16 +76,6 @@
     render();
   }
 
-  function sectionHeader(kicker, title, copy) {
-    return `
-      <section class="qapp-section-head">
-        <p class="qapp-kicker">${escapeHtml(kicker)}</p>
-        <h2>${escapeHtml(title)}</h2>
-        <p>${escapeHtml(copy)}</p>
-      </section>
-    `;
-  }
-
   function statusPill(label) {
     return `<span class="qapp-pill">${escapeHtml(label)}</span>`;
   }
@@ -198,7 +188,6 @@
     const peopleCount = notebook.people.length;
     const reminderCount = notebook.people.reduce((count, person) => count + person.reminders.length, 0);
     return `
-      ${sectionHeader("Command Center", "Plan the day before it runs you", "Calendar, tasks, relationship memory, and AI context will live here together.")}
       <section class="qapp-grid qapp-grid--stats">
         <article class="qapp-panel">
           <span class="qapp-stat">${peopleCount}</span>
@@ -219,7 +208,6 @@
       <section class="qapp-panel qapp-wide-panel">
         <div class="qapp-panel-title-row">
           <div>
-            <p class="qapp-kicker">Next Build</p>
             <h3>Relationship Notebook</h3>
           </div>
           ${statusPill(notebookStatus === "ready" ? "Supabase" : "Loading")}
@@ -232,14 +220,12 @@
   function renderPeople() {
     if (notebookStatus === "loading") {
       return `
-        ${sectionHeader("Relationship Memory", "People Notebook", "Loading your private notebook from Supabase.")}
         <section class="qapp-panel"><p>Loading people, conversations, memory cards, and reminders...</p></section>
       `;
     }
 
     if (notebookStatus === "error") {
       return `
-        ${sectionHeader("Relationship Memory", "People Notebook", "The notebook API could not load.")}
         <section class="qapp-panel">
           <div class="qapp-panel-title-row">
             <h3>Load failed</h3>
@@ -299,7 +285,6 @@
     }).join("");
 
     return `
-      ${sectionHeader("Relationship Memory", "People Notebook", "Search your private relationship notebook, then open a person for the full profile.")}
       <section class="qapp-panel qapp-people-toolbar">
         <label>
           <span>Search people</span>
@@ -459,7 +444,7 @@
             <h4>Create possible new profiles</h4>
             ${possiblePeople.length ? possiblePeople.map((person) => `
               <label class="qapp-check-row">
-                <input name="draftNewPeople" type="checkbox" value="${escapeHtml(person.name)}">
+                <input name="draftNewPeople" type="checkbox" value="${escapeHtml(person.name)}" ${Number(person.confidence) >= 0.75 ? "checked" : ""}>
                 <span>
                   <strong>${escapeHtml(person.name)}</strong>
                   <small>${escapeHtml(confidencePercent(person.confidence) || "Possible new person")}</small>
@@ -504,7 +489,6 @@
   function renderPeopleCapture() {
     const selectedPerson = selectedPersonId ? notebook.people.find((person) => person.id === selectedPersonId) : null;
     return `
-      ${sectionHeader("Relationship Memory", "Add Conversation", "Capture the interaction in plain language. The app will identify related people, key details, and possible follow-ups before saving.")}
       <section class="qapp-panel">
         <button class="qapp-text-button" data-action="back-to-people" type="button">Back to people</button>
         <form id="qappQuickCapture" class="qapp-capture-form">
@@ -638,7 +622,6 @@
 
   function renderPlaceholder(route, kicker, title, copy, items) {
     return `
-      ${sectionHeader(kicker, title, copy)}
       <section class="qapp-grid">
         ${items.map((item) => `
           <article class="qapp-panel">

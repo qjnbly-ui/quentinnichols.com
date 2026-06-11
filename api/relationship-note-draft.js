@@ -30,6 +30,9 @@ const STOPWORDS = new Set([
   "he",
   "she",
   "it",
+  "her",
+  "him",
+  "his",
 ]);
 
 function cleanText(value, maxLength = 5000) {
@@ -138,6 +141,7 @@ function extractDateHint(note) {
 function extractPetNames(note) {
   const names = [];
   const patterns = [
+    /\b(?:his|her|their|my)\s+(?:dog|cat|pet|border collie|horse)\s+([A-Z][a-z]+)\b/gi,
     /\b(?:dog|cat|pet|border collie|horse)\s+(?:named|called)\s+([A-Z][a-z]+)\b/gi,
     /\b([A-Z][a-z]+)\s+(?:the\s+)?(?:dog|cat|border collie|horse)\b/gi,
   ];
@@ -171,9 +175,20 @@ function extractMemoryCards(note) {
   }
   const petNames = extractPetNames(note);
   petNames.forEach((name) => {
-    const petType = note.match(new RegExp(`\\b(border collie|dog|cat|pet|horse)\\s+(?:named\\s+)?${name}\\b`, "i"))?.[1] || "Pet";
+    const petType = note.match(new RegExp(`\\b(?:his|her|their|my)\\s+(dog|cat|pet|border collie|horse)\\s+${name}\\b`, "i"))?.[1]
+      || note.match(new RegExp(`\\b(border collie|dog|cat|pet|horse)\\s+(?:named\\s+)?${name}\\b`, "i"))?.[1]
+      || "Pet";
     cards.push({ label: titleCase(petType), value: name, confidence: 0.88 });
   });
+  const work = note.match(/\b(?:runs|owns|operates|manages|works at|works for)\s+([^.!?]+)/i);
+  if (work) {
+    const workValue = work[1].split(/\s+and\s+(?:is|was|has|will|asked|mentioned|said)\b/i)[0];
+    cards.push({ label: "Work", value: cleanText(workValue, 180), confidence: 0.76 });
+  }
+  const event = note.match(/\b(?:preparing for|going to|attending|hosting)\s+(?:an?\s+)?([^.!?]+?\b(?:market|show|event|conference|wedding|graduation|dinner)\b[^.!?]*)/i);
+  if (event) {
+    cards.push({ label: "Upcoming Event", value: cleanText(event[1], 180), confidence: 0.78 });
+  }
   const hobby = note.match(/\b((?:repairs|collects|builds|restores|photographs|makes)\s+[^.!?]+?)\s+as a hobby\b/i)
     || note.match(/\bhobby\s+(?:is|:)\s*([^.!?]+)/i);
   if (hobby) {
@@ -201,10 +216,16 @@ function normalizeCard(card) {
   const label = cleanText(card.label, 120);
   let value = cleanText(card.value, 1000);
   if (!label || !value) return null;
+  const lowerLabel = label.toLowerCase();
+  const lowerValue = value.toLowerCase();
+  if (lowerLabel === "place") return null;
+  if (["pet", "dog", "cat", "horse", "border collie"].includes(lowerLabel) && ["her", "his", "their", "my"].includes(lowerValue)) {
+    return null;
+  }
 
   let normalizedLabel = label;
   const petValue = value.match(/^([A-Z][a-z]+)\s*,\s*(.+)$/);
-  if (label.toLowerCase() === "pet" && petValue) {
+  if (lowerLabel === "pet" && petValue) {
     value = petValue[1];
     normalizedLabel = titleCase(petValue[2]);
   }
@@ -235,6 +256,12 @@ function normalizedCardKey(card) {
   if (label.includes("hobby")) {
     return `hobby:${compactValue}`;
   }
+  if (label.includes("work")) {
+    return `work:${compactValue}`;
+  }
+  if (label.includes("event") || value.includes("art market")) {
+    return `event:${compactValue}`;
+  }
   return `${label}:${compactValue}`;
 }
 
@@ -244,7 +271,9 @@ function cardScore(card) {
   let score = Number(card.confidence) || 0;
   if (label !== "pet") score += 0.2;
   if (/\b(next|this|last)\s+(month|week|year)\b/.test(value)) score += 0.2;
+  if (label.includes("event") || label.includes("work")) score += 0.2;
   if (label === "border collie") score += 0.2;
+  if (label === "cat") score += 0.2;
   return score;
 }
 
@@ -276,7 +305,7 @@ function sanitizeDraft(draft, scriptDraft, note) {
     ...draft,
     people: Array.isArray(draft.people) ? draft.people : scriptDraft.people,
     possiblePeople: cleanPossiblePeople,
-    memoryCards: mergeCards(Array.isArray(draft.memoryCards) ? draft.memoryCards : [], scriptDraft.memoryCards),
+    memoryCards: mergeCards(scriptDraft.memoryCards, Array.isArray(draft.memoryCards) ? draft.memoryCards : []),
     reminders: Array.isArray(draft.reminders) && draft.reminders.length ? draft.reminders : scriptDraft.reminders,
     questions: questions.filter((question) => ![...petNames].some((name) => question.toLowerCase().includes(name))),
     interaction: {
