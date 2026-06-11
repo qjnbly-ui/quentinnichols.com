@@ -122,6 +122,19 @@
     return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   }
 
+  function formatDateTime(value, fallback = "Recent") {
+    if (!value) return fallback;
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return fallback;
+    return date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }
+
   function toDateKey(value) {
     const date = value instanceof Date ? value : new Date(value);
     if (!Number.isFinite(date.getTime())) return "";
@@ -191,6 +204,93 @@
     return payload;
   }
 
+  function qappModal({ title = "Confirm", message = "", fields = [], confirmLabel = "OK", cancelLabel = "Cancel", danger = false, showCancel = true } = {}) {
+    return new Promise((resolve) => {
+      const overlay = document.createElement("div");
+      overlay.className = "qapp-modal-overlay";
+      overlay.innerHTML = `
+        <section class="qapp-modal" role="dialog" aria-modal="true" aria-labelledby="qappModalTitle">
+          <div class="qapp-modal-header">
+            <h2 id="qappModalTitle">${escapeHtml(title)}</h2>
+            ${message ? `<p>${escapeHtml(message)}</p>` : ""}
+          </div>
+          ${fields.length ? `
+            <div class="qapp-modal-fields">
+              ${fields.map((field, index) => `
+                <label>
+                  <span>${escapeHtml(field.label || "Value")}</span>
+                  ${field.type === "textarea"
+                    ? `<textarea data-modal-field="${index}" rows="${field.rows || 4}">${escapeHtml(field.value || "")}</textarea>`
+                    : `<input data-modal-field="${index}" type="${escapeHtml(field.type || "text")}" value="${escapeHtml(field.value || "")}">`}
+                </label>
+              `).join("")}
+            </div>
+          ` : ""}
+          <div class="qapp-modal-actions">
+            ${showCancel ? `<button class="qapp-modal-cancel" type="button">${escapeHtml(cancelLabel)}</button>` : ""}
+            <button class="qapp-modal-confirm ${danger ? "is-danger" : ""}" type="button">${escapeHtml(confirmLabel)}</button>
+          </div>
+        </section>
+      `;
+
+      function close(result) {
+        document.removeEventListener("keydown", onKeydown);
+        overlay.remove();
+        resolve(result);
+      }
+
+      function readValues() {
+        return fields.map((field, index) => {
+          const input = overlay.querySelector(`[data-modal-field="${index}"]`);
+          return field.trim === false ? input?.value || "" : String(input?.value || "").trim();
+        });
+      }
+
+      function onKeydown(event) {
+        if (event.key === "Escape") close(null);
+        if (event.key === "Enter" && !event.shiftKey && fields.length <= 1) {
+          event.preventDefault();
+          close(fields.length ? readValues()[0] : true);
+        }
+      }
+
+      overlay.querySelector(".qapp-modal-cancel")?.addEventListener("click", () => close(null));
+      overlay.querySelector(".qapp-modal-confirm").addEventListener("click", () => close(fields.length ? readValues() : true));
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) close(null);
+      });
+      document.addEventListener("keydown", onKeydown);
+      document.body.appendChild(overlay);
+      const firstField = overlay.querySelector("[data-modal-field]");
+      const confirmButton = overlay.querySelector(".qapp-modal-confirm");
+      setTimeout(() => (firstField || confirmButton)?.focus(), 0);
+    });
+  }
+
+  function qappAlert(message, title = "Notice") {
+    return qappModal({ title, message, confirmLabel: "OK", showCancel: false });
+  }
+
+  function qappConfirm(message, title = "Confirm", options = {}) {
+    return qappModal({
+      title,
+      message,
+      confirmLabel: options.confirmLabel || "Confirm",
+      cancelLabel: options.cancelLabel || "Cancel",
+      danger: Boolean(options.danger),
+    });
+  }
+
+  async function qappPrompt(label, value = "", options = {}) {
+    const result = await qappModal({
+      title: options.title || label,
+      fields: [{ label, value, type: options.type || "text", rows: options.rows, trim: options.trim }],
+      confirmLabel: options.confirmLabel || "Save",
+      cancelLabel: options.cancelLabel || "Cancel",
+    });
+    return Array.isArray(result) ? result[0] : result;
+  }
+
   function normalizePerson(person) {
     const memoryCards = Array.isArray(person.memoryCards) ? person.memoryCards : [];
     const reminders = Array.isArray(person.reminders) ? person.reminders : [];
@@ -219,7 +319,7 @@
       interactions: interactions.map((interaction) => ({
         id: interaction.id || "",
         occurred_at: interaction.occurred_at || "",
-        date: formatDate(interaction.occurred_at),
+        date: formatDateTime(interaction.occurred_at),
         location: interaction.location || "Not specified",
         mood: interaction.mood || "",
         notes: interaction.notes || interaction.ai_summary || "",
@@ -989,14 +1089,14 @@
         }
         if (action === "delete-event") {
           if (!eventId) return;
-          if (!window.confirm("Delete this calendar event?")) return;
+          if (!await qappConfirm("Delete this calendar event?", "Delete event", { confirmLabel: "Delete", danger: true })) return;
           try {
             await apiJson("/api/calendar-events", { method: "DELETE", body: { id: eventId } });
             editingCalendarEventId = "";
             calendarMode = "month";
             await loadCalendarData();
           } catch (error) {
-            window.alert(error?.message || "Unable to delete event.");
+            await qappAlert(error?.message || "Unable to delete event.", "Calendar error");
           }
         }
       });
@@ -1012,7 +1112,7 @@
       const startsAt = fromDateTimeLocal(formData.get("startsAt"));
       const endsAt = fromDateTimeLocal(formData.get("endsAt"));
       if (!startsAt) {
-        window.alert("A valid start date is required.");
+        await qappAlert("A valid start date is required.", "Calendar event");
         return;
       }
       submitButton.disabled = true;
@@ -1040,7 +1140,7 @@
         calendarMode = "month";
         await loadCalendarData();
       } catch (error) {
-        window.alert(error?.message || "Unable to save event.");
+        await qappAlert(error?.message || "Unable to save event.", "Calendar error");
         submitButton.disabled = false;
         submitButton.textContent = id ? "Save Event" : "Create Event";
       }
@@ -1124,16 +1224,25 @@
 
     if (editPersonButton && activePerson) {
       editPersonButton.addEventListener("click", async () => {
-        const name = window.prompt("Name", activePerson.name || "");
+        const values = await qappModal({
+          title: "Edit profile",
+          fields: [
+            { label: "Name", value: activePerson.name || "" },
+            { label: "Email", value: activePerson.email || "" },
+            { label: "Phone", value: activePerson.phone || "" },
+            { label: "Where you met", value: activePerson.first_met_location || "" },
+            { label: "Tags, comma separated", value: (activePerson.tags || []).join(", ") },
+            { label: "Overview", value: activePerson.overview || activePerson.summary || "", type: "textarea", rows: 4 },
+          ],
+          confirmLabel: "Save Profile",
+        });
+        if (!values) return;
+        const [name, email, phone, firstMetLocation, tagText, overview] = values;
         if (!name) return;
-        const email = (window.prompt("Email", activePerson.email || "") ?? activePerson.email) || "";
-        const phone = (window.prompt("Phone", activePerson.phone || "") ?? activePerson.phone) || "";
-        const firstMetLocation = (window.prompt("Where you met", activePerson.first_met_location || "") ?? activePerson.first_met_location) || "";
-        const tags = (window.prompt("Tags, comma separated", (activePerson.tags || []).join(", ")) || "")
+        const tags = String(tagText || "")
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean);
-        const overview = (window.prompt("Overview", activePerson.overview || activePerson.summary || "") ?? activePerson.overview) || "";
         try {
           await apiJson("/api/people", {
             method: "PATCH",
@@ -1153,14 +1262,14 @@
           peopleMode = "profile";
           render();
         } catch (error) {
-          window.alert(error?.message || "Unable to update profile.");
+          await qappAlert(error?.message || "Unable to update profile.", "Profile error");
         }
       });
     }
 
     if (deletePersonButton && activePerson) {
       deletePersonButton.addEventListener("click", async () => {
-        if (!window.confirm(`Delete ${activePerson.name} and all notebook data attached to this profile?`)) return;
+        if (!await qappConfirm(`Delete ${activePerson.name} and all notebook data attached to this profile?`, "Delete profile", { confirmLabel: "Delete Profile", danger: true })) return;
         try {
           await apiJson("/api/people", {
             method: "POST",
@@ -1171,7 +1280,7 @@
           await loadNotebookData();
           render();
         } catch (error) {
-          window.alert(error?.message || "Unable to delete profile.");
+          await qappAlert(error?.message || "Unable to delete profile.", "Profile error");
         }
       });
     }
@@ -1190,13 +1299,22 @@
         try {
           if (type === "interaction") {
             if (isDelete) {
-              if (!window.confirm("Delete this conversation entry?")) return;
+              if (!await qappConfirm("Delete this conversation entry?", "Delete conversation", { confirmLabel: "Delete", danger: true })) return;
               await apiJson("/api/person-interactions", { method: "DELETE", body: { id: itemId } });
             } else if (interaction) {
-              const notes = window.prompt("Conversation notes", interaction.notes || "");
+              const values = await qappModal({
+                title: "Edit conversation",
+                fields: [
+                  { label: "Conversation notes", value: interaction.notes || "", type: "textarea", rows: 5 },
+                  { label: "Location", value: interaction.location || "" },
+                  { label: "Topics, comma separated", value: (interaction.topics || []).join(", ") },
+                ],
+                confirmLabel: "Save Conversation",
+              });
+              if (!values) return;
+              const [notes, location, topicText] = values;
               if (!notes) return;
-              const location = (window.prompt("Location", interaction.location || "") ?? interaction.location) || "";
-              const topics = (window.prompt("Topics, comma separated", (interaction.topics || []).join(", ")) || "")
+              const topics = String(topicText || "")
                 .split(",")
                 .map((topic) => topic.trim())
                 .filter(Boolean);
@@ -1207,13 +1325,20 @@
             }
           } else if (type === "memory") {
             if (isDelete) {
-              if (!window.confirm("Delete this memory card?")) return;
+              if (!await qappConfirm("Delete this memory card?", "Delete memory", { confirmLabel: "Delete", danger: true })) return;
               await apiJson("/api/relationship-items", { method: "DELETE", body: { type: "memory", id: itemId } });
             } else if (memory) {
-              const label = window.prompt("Memory label", memory.label || "");
-              if (!label) return;
-              const value = window.prompt("Memory value", memory.value || "");
-              if (!value) return;
+              const values = await qappModal({
+                title: "Edit memory",
+                fields: [
+                  { label: "Memory label", value: memory.label || "" },
+                  { label: "Memory value", value: memory.value || "", type: "textarea", rows: 3 },
+                ],
+                confirmLabel: "Save Memory",
+              });
+              if (!values) return;
+              const [label, value] = values;
+              if (!label || !value) return;
               await apiJson("/api/relationship-items", {
                 method: "PATCH",
                 body: { type: "memory", id: itemId, label, value, category: memory.category || "general" },
@@ -1221,13 +1346,21 @@
             }
           } else if (type === "reminder") {
             if (isDelete) {
-              if (!window.confirm("Delete this follow-up reminder?")) return;
+              if (!await qappConfirm("Delete this follow-up reminder?", "Delete follow-up", { confirmLabel: "Delete", danger: true })) return;
               await apiJson("/api/relationship-items", { method: "DELETE", body: { type: "reminder", id: itemId } });
             } else if (reminder) {
-              const title = window.prompt("Reminder", reminder.title || "");
+              const values = await qappModal({
+                title: "Edit follow-up",
+                fields: [
+                  { label: "Reminder", value: reminder.title || "" },
+                  { label: "Details", value: reminder.details || "", type: "textarea", rows: 3 },
+                  { label: "Remind date/time", value: reminder.remind_at || "" },
+                ],
+                confirmLabel: "Save Follow-Up",
+              });
+              if (!values) return;
+              const [title, details, remindAt] = values;
               if (!title) return;
-              const details = (window.prompt("Details", reminder.details || "") ?? reminder.details) || "";
-              const remindAt = (window.prompt("Remind date/time", reminder.remind_at || "") ?? reminder.remind_at) || "";
               await apiJson("/api/relationship-items", {
                 method: "PATCH",
                 body: { type: "reminder", id: itemId, title, details, remindAt, status: reminder.status || "open", priority: reminder.priority || "normal" },
@@ -1240,7 +1373,7 @@
           peopleMode = "profile";
           render();
         } catch (error) {
-          window.alert(error?.message || "Unable to update item.");
+          await qappAlert(error?.message || "Unable to update item.", "Notebook error");
         }
       });
     });
@@ -1519,6 +1652,24 @@
   });
 
   drawerOverlay.addEventListener("click", closeDrawer);
+
+  window.addEventListener("message", async (event) => {
+    if (event.origin !== window.location.origin) return;
+    const data = event.data || {};
+    if (data.type !== "qapp:view-calendar-event") return;
+    const dateKey = toDateKey(data.startsAt) || selectedCalendarDate || toDateKey(new Date());
+    selectedCalendarDate = dateKey;
+    const selectedDate = dateFromKey(dateKey);
+    if (selectedDate) {
+      calendarCursor = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    }
+    calendarMode = "month";
+    editingCalendarEventId = "";
+    setRoute("calendar");
+    if (calendarStatus !== "loading") {
+      await loadCalendarData();
+    }
+  });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeDrawer();

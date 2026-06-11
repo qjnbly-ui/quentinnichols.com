@@ -231,6 +231,14 @@
         done.className = "ai-action-status";
         done.textContent = "Added";
         card.appendChild(done);
+        const controls = document.createElement("div");
+        controls.className = "ai-action-controls";
+        const view = document.createElement("button");
+        view.type = "button";
+        view.dataset.actionView = String(index);
+        view.textContent = "View in Calendar";
+        controls.appendChild(view);
+        card.appendChild(controls);
       } else if (action.status === "saving") {
         const saving = document.createElement("span");
         saving.className = "ai-action-status";
@@ -462,6 +470,21 @@
       message.action.status = "dismissed";
       render(messages);
       saveMessages(messages);
+    }
+
+    function viewAction(index) {
+      const action = messages[index]?.action;
+      if (!action || action.type !== "create_calendar_event") return;
+      const message = {
+        type: "qapp:view-calendar-event",
+        eventId: action.eventId || "",
+        startsAt: action.payload?.startsAt || "",
+      };
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(message, window.location.origin);
+      } else {
+        window.location.href = "/app/";
+      }
     }
 
     const openBtn = document.getElementById("open-chat");
@@ -778,6 +801,12 @@
       const dismissButton = event.target.closest("[data-action-dismiss]");
       if (dismissButton) {
         dismissAction(Number(dismissButton.dataset.actionDismiss));
+        return;
+      }
+
+      const viewButton = event.target.closest("[data-action-view]");
+      if (viewButton) {
+        viewAction(Number(viewButton.dataset.actionView));
       }
     });
 
