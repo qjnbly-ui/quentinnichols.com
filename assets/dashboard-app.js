@@ -67,6 +67,9 @@
 
   function setRoute(route) {
     currentRoute = routeTitles[route] ? route : "today";
+    if (window.location.hash !== `#${currentRoute}`) {
+      history.replaceState(null, "", `#${currentRoute}`);
+    }
     if (currentRoute !== "people") {
       peopleMode = "list";
       selectedPersonId = "";
@@ -1603,8 +1606,6 @@
           },
         })));
 
-        await Promise.all(peopleToSave.map(updatePersonOverview));
-
         form.reset();
         relationshipCaptureNote = "";
         relationshipDraft = null;
@@ -1633,6 +1634,7 @@
       authGate.hidden = true;
       shell.hidden = false;
       await loadNotebookData();
+      setRoute(window.location.hash.replace("#", "") || currentRoute);
     } catch (error) {
       authMessage.textContent = error?.message || "Unable to check session.";
       authMessage.classList.add("is-error");
@@ -1656,6 +1658,10 @@
   window.addEventListener("message", async (event) => {
     if (event.origin !== window.location.origin) return;
     const data = event.data || {};
+    if (data.type === "qapp:set-route") {
+      setRoute(data.route);
+      return;
+    }
     if (data.type !== "qapp:view-calendar-event") return;
     const dateKey = toDateKey(data.startsAt) || selectedCalendarDate || toDateKey(new Date());
     selectedCalendarDate = dateKey;

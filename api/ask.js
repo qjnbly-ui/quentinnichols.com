@@ -228,7 +228,8 @@ Avoid repeating the same points across consecutive responses unless the user ask
 Private dashboard context is the best source for Quentin's current personal app data, including people, coworkers, family, conversations, memory cards, follow-ups, calendar events, tasks, and notes. For broad questions like "who is my coworker", "what do you know about my foreman", "who did I talk to", or "what should I follow up on", search the private dashboard context first before using website writing context. Do not say "your life, not Quentin's" because the user is Quentin. Still answer in second person: "your foreman was..." not "my foreman was...".
 
 Answer questions based ONLY on the website content and private dashboard context unless asked otherwise. If something isn't covered, say so clearly.
-When sharing site links, use Markdown with human-readable titles (e.g., [Photography](/photography/)) and avoid raw URLs.`;
+When sharing site links, use Markdown with human-readable titles (e.g., [Photography](/photography/)) and avoid raw URLs.
+When Quentin asks for a dashboard section link, use the private app route: [Calendar](/app/#calendar), [Tasks](/app/#tasks), [People](/app/#people), [Notes](/app/#notes), or [AI](/app/#ai). For a short follow-up like "link?" after a calendar answer, give the relevant dashboard link directly.`;
 }
 
 function latestUserMessage(messages) {

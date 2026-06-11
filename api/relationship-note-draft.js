@@ -346,6 +346,8 @@ function extractMemoryCards(note) {
     cards.push({ label: "Preferred Name", value: `${titleCase(knownAs[1])}: ${titleCase(knownAs[2])}`, confidence: 0.9 });
   }
   const familyContext = [];
+  const cousinContext = note.match(/\bmy\s+cousin\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+  if (cousinContext) familyContext.push(`${titleCase(cousinContext[1])} is my cousin`);
   const mom = note.match(/\bmy\s+(?:mom|mother)\s+is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
   if (mom) familyContext.push(`${titleCase(mom[1])} is my mom`);
   const sister = note.match(/\bmy\s+(?:younger\s+)?sister\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
@@ -358,6 +360,17 @@ function extractMemoryCards(note) {
   const daughter = note.match(/\b(?:daughter|kid|son|wife|husband|spouse|mom|dad|mother|father)\s+([A-Z][a-z]+)\b/);
   if (daughter) {
     cards.push({ label: titleCase(daughter[0].replace(daughter[1], "").trim()), value: daughter[1], confidence: 0.72 });
+  }
+  const graduation = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:just\s+)?graduated\s+([^.!?]+)/i)
+    || note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:just\s+)?graduated\b/i);
+  if (graduation) {
+    const detail = cleanText(graduation[2] || "graduated", 160);
+    cards.push({ label: "School Milestone", value: `${titleCase(graduation[1])} graduated ${detail}`.replace(/\s+/g, " "), confidence: 0.86 });
+  }
+  const dating = note.match(/\b(?:I\s+)?dated\s+(?:this\s+girl\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?:\s+when\s+I\s+was\s+in\s+([^.!?]+?))?(?:[,.]|$)/i);
+  if (dating) {
+    const timing = dating[2] ? ` when you were in ${cleanText(dating[2], 80)}` : "";
+    cards.push({ label: "Past Relationship", value: `You dated ${titleCase(dating[1])}${timing}`, confidence: 0.78 });
   }
   const petNames = extractPetNames(note);
   petNames.forEach((name) => {
