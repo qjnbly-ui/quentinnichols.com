@@ -303,6 +303,53 @@ grant select, insert, update, delete on public.ai_messages to authenticated;
 grant select, insert, update, delete on public.ai_context_items to authenticated;
 grant select, insert, update, delete on public.contact_inquiries to authenticated;
 
+create or replace function public.delete_person_profile(target_person_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_owner uuid := auth.uid();
+begin
+  if current_owner is null then
+    raise exception 'Authentication required.';
+  end if;
+
+  if not exists (
+    select 1
+    from public.people
+    where id = target_person_id
+      and owner_id = current_owner
+  ) then
+    raise exception 'Person not found.';
+  end if;
+
+  delete from public.person_follow_up_reminders
+  where person_id = target_person_id
+    and owner_id = current_owner;
+
+  delete from public.person_memory_cards
+  where person_id = target_person_id
+    and owner_id = current_owner;
+
+  delete from public.person_interactions
+  where person_id = target_person_id
+    and owner_id = current_owner;
+
+  delete from public.ai_context_items
+  where owner_id = current_owner
+    and source_type = 'person'
+    and source_id = target_person_id;
+
+  delete from public.people
+  where id = target_person_id
+    and owner_id = current_owner;
+end;
+$$;
+
+grant execute on function public.delete_person_profile(uuid) to authenticated;
+
 drop policy if exists "Profiles are owner readable" on public.profiles;
 create policy "Profiles are owner readable"
 on public.profiles for select

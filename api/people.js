@@ -66,6 +66,19 @@ async function loadOwnedPersonIds(supabaseRest, { id, name, ownerId }) {
     .filter(Boolean);
 }
 
+async function deletePersonViaRpc(supabaseRest, personId) {
+  const response = await supabaseRest("rpc/delete_person_profile", {
+    method: "POST",
+    body: { target_person_id: personId },
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const error = new Error(payload?.message || "Unable to delete person.");
+    error.statusCode = response.status;
+    throw error;
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (!["GET", "POST", "PATCH", "DELETE"].includes(req.method)) {
     json(res, 405, { error: "Method not allowed" });
@@ -111,7 +124,7 @@ module.exports = async function handler(req, res) {
       const profilePath = `people?id=eq.${encodeURIComponent(personId)}&${ownerFilter}`;
 
       if (!hasSupabaseServiceRoleKey) {
-        await deleteRows(supabaseRest, profilePath, "Unable to delete person.");
+        await deletePersonViaRpc(supabaseRest, personId);
         json(res, 200, { ok: true });
         return;
       }
