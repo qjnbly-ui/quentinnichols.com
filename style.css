@@ -3678,6 +3678,65 @@ body.nav-menu-open {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.ai-action-card {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(214, 185, 101, 0.35);
+  background: rgba(214, 185, 101, 0.08);
+  display: grid;
+  gap: 8px;
+}
+
+.ai-action-card strong {
+  font-size: 13px;
+}
+
+.ai-action-card p {
+  margin: 0;
+  color: rgba(245, 242, 234, 0.78);
+  font-size: 13px;
+}
+
+.ai-action-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ai-action-controls button {
+  border: 1px solid rgba(245, 242, 234, 0.2);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: #f5f2ea;
+  color: #090909;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.ai-action-controls button:last-child {
+  background: transparent;
+  color: rgba(245, 242, 234, 0.72);
+}
+
+.ai-action-status {
+  justify-self: start;
+  border: 1px solid rgba(214, 185, 101, 0.35);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: #d6b965;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.ai-action-status--error {
+  border-color: rgba(255, 130, 130, 0.45);
+  color: #ff9b9b;
+}
+
 .ai-input {
   margin-top: 16px;
   padding-top: 12px;

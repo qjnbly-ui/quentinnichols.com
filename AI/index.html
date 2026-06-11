@@ -200,6 +200,71 @@
       return softHyphens.replace(/\s+/g, " ").trim();
     }
 
+    function formatActionDate(value) {
+      if (!value) return "Time not set";
+      const date = new Date(value);
+      if (!Number.isFinite(date.getTime())) return "Time not set";
+      return date.toLocaleString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+
+    function renderActionCard(action, index) {
+      if (!action || action.type !== "create_calendar_event") return null;
+      const payload = action.payload || {};
+      const card = document.createElement("div");
+      card.className = `ai-action-card ai-action-card--${action.status || "draft"}`;
+
+      const title = document.createElement("strong");
+      title.textContent = action.label || "Suggested action";
+      const summary = document.createElement("p");
+      summary.textContent = `${payload.title || "Untitled event"} · ${formatActionDate(payload.startsAt)}`;
+      card.appendChild(title);
+      card.appendChild(summary);
+
+      if (action.status === "done") {
+        const done = document.createElement("span");
+        done.className = "ai-action-status";
+        done.textContent = "Added";
+        card.appendChild(done);
+      } else if (action.status === "saving") {
+        const saving = document.createElement("span");
+        saving.className = "ai-action-status";
+        saving.textContent = "Saving...";
+        card.appendChild(saving);
+      } else if (action.status === "dismissed") {
+        const dismissed = document.createElement("span");
+        dismissed.className = "ai-action-status";
+        dismissed.textContent = "Dismissed";
+        card.appendChild(dismissed);
+      } else if (action.status === "error") {
+        const error = document.createElement("span");
+        error.className = "ai-action-status ai-action-status--error";
+        error.textContent = action.error || "Could not apply";
+        card.appendChild(error);
+      } else {
+        const controls = document.createElement("div");
+        controls.className = "ai-action-controls";
+        const apply = document.createElement("button");
+        apply.type = "button";
+        apply.dataset.actionApply = String(index);
+        apply.textContent = "Add to Calendar";
+        const dismiss = document.createElement("button");
+        dismiss.type = "button";
+        dismiss.dataset.actionDismiss = String(index);
+        dismiss.textContent = "Dismiss";
+        controls.appendChild(apply);
+        controls.appendChild(dismiss);
+        card.appendChild(controls);
+      }
+
+      return card;
+    }
+
     function render(messages) {
       log.innerHTML = "";
       messages.forEach((msg, index) => {
@@ -213,6 +278,11 @@
           textEl.textContent = msg.text;
         }
         row.appendChild(textEl);
+
+        if (msg.role === "assistant" && msg.action) {
+          const actionCard = renderActionCard(msg.action, index);
+          if (actionCard) row.appendChild(actionCard);
+        }
 
         if (msg.role === "assistant" && msg.text && msg.text !== "Thinking...") {
           const controls = document.createElement("div");
@@ -274,7 +344,10 @@
       }
 
       const data = await response.json();
-      return data.reply || "Sorry, I couldn't generate a response.";
+      return {
+        reply: data.reply || "Sorry, I couldn't generate a response.",
+        action: Array.isArray(data.actions) ? data.actions[0] || null : null,
+      };
     }
 
     function blobToBase64(blob) {
@@ -340,12 +413,53 @@
       input.focus();
 
       try {
-        const reply = await sendMessage(payloadMessages);
-        messages[pendingIndex].text = reply;
+        const result = await sendMessage(payloadMessages);
+        messages[pendingIndex].text = result.reply;
+        if (result.action) messages[pendingIndex].action = result.action;
       } catch (err) {
         messages[pendingIndex].text = "Sorry, something went wrong. Please try again.";
       }
 
+      render(messages);
+      saveMessages(messages);
+    }
+
+    async function applyAction(index) {
+      const message = messages[index];
+      const action = message?.action;
+      if (!action || action.type !== "create_calendar_event") return;
+
+      action.status = "saving";
+      render(messages);
+      saveMessages(messages);
+
+      try {
+        const response = await fetch("/api/calendar-events", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(action.payload || {}),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error || "Calendar event could not be saved.");
+        }
+        action.status = "done";
+        action.eventId = payload?.event?.id || "";
+        message.text = `Added "${action.payload?.title || "the event"}" to your calendar.`;
+      } catch (err) {
+        action.status = "error";
+        action.error = err?.message || "Calendar event could not be saved.";
+      }
+
+      render(messages);
+      saveMessages(messages);
+    }
+
+    function dismissAction(index) {
+      const message = messages[index];
+      if (!message?.action) return;
+      message.action.status = "dismissed";
       render(messages);
       saveMessages(messages);
     }
@@ -650,6 +764,20 @@
       if (activePlayback) {
         activePlayback.stop();
         activePlayback = null;
+      }
+    });
+
+    log.addEventListener("click", async (event) => {
+      const applyButton = event.target.closest("[data-action-apply]");
+      if (applyButton) {
+        applyButton.disabled = true;
+        await applyAction(Number(applyButton.dataset.actionApply));
+        return;
+      }
+
+      const dismissButton = event.target.closest("[data-action-dismiss]");
+      if (dismissButton) {
+        dismissAction(Number(dismissButton.dataset.actionDismiss));
       }
     });
 

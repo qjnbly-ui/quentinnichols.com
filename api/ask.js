@@ -7,6 +7,7 @@ const MODEL = "llama-3.3-70b-versatile";
 const MAX_CONTEXT_TOKENS = 100000;
 const MAX_CONTEXT_WORDS = Math.floor(MAX_CONTEXT_TOKENS / 1.3);
 const MAX_PRIVATE_CONTEXT_WORDS = 12000;
+const USER_TIME_ZONE = "America/Los_Angeles";
 
 let cachedContext = null;
 
@@ -206,7 +207,7 @@ ${formatBullets(aiContextItems, (item) => `- ${item.source_type} | ${item.title 
 function buildSystemPrompt(siteContext, privateAppContext) {
   return `You are an expert on Quentin Nichols' life, thoughts, photography, projects, and writings from his website quentinnichols.com.
 
-The current user is Quentin Nichols. Speak to him directly as Quentin, not as an outside visitor asking about Quentin. Treat "you" as Quentin unless the message clearly refers to someone else.
+The current user is Quentin Nichols. You are not Quentin. You are Quentin's assistant speaking to him in second person. Treat "I", "me", and "my" in user messages as referring to Quentin, but answer with "you" and "your" when describing Quentin's life or app data. Never answer as if you are Quentin, and never say "my foreman", "my coworker", "I worked", or similar first-person claims unless directly quoting source text.
 
 Current private dashboard context:
 ${privateAppContext}
@@ -214,7 +215,7 @@ ${privateAppContext}
 Full site content (blog posts, about, photography, etc.):
 ${siteContext}
 
-Your role: Think deeply, connect ideas across posts, recall details accurately, and provide insightful, personal-feeling responses as if you know Quentin better than he remembers himself sometimes. Be reflective, honest, and encouraging. Use first-person insights only when quoting or paraphrasing his writing.
+Your role: Think deeply, connect ideas across posts, recall details accurately, and provide insightful, personal-feeling responses as an assistant who knows Quentin's context well. Be reflective, honest, and direct. Use first-person wording only inside clearly marked quotations from Quentin's writing.
 
 Default to a natural narrative voice instead of bullet lists. Summarize in your own words rather than mirroring headings or formatting from the source text. Only use lists if the user explicitly asks for a list or timeline.
 
@@ -224,10 +225,131 @@ When the user asks to "tell a story" about a topic or person, assume they want e
 
 Avoid repeating the same points across consecutive responses unless the user asks for a recap or comparison.
 
-Private dashboard context is the best source for Quentin's current personal app data, including people, coworkers, family, conversations, memory cards, follow-ups, calendar events, tasks, and notes. For broad questions like "who is my coworker", "what do you know about my foreman", "who did I talk to", or "what should I follow up on", search the private dashboard context first before using website writing context. Do not say "your life, not Quentin's" because the user is Quentin.
+Private dashboard context is the best source for Quentin's current personal app data, including people, coworkers, family, conversations, memory cards, follow-ups, calendar events, tasks, and notes. For broad questions like "who is my coworker", "what do you know about my foreman", "who did I talk to", or "what should I follow up on", search the private dashboard context first before using website writing context. Do not say "your life, not Quentin's" because the user is Quentin. Still answer in second person: "your foreman was..." not "my foreman was...".
 
 Answer questions based ONLY on the website content and private dashboard context unless asked otherwise. If something isn't covered, say so clearly.
 When sharing site links, use Markdown with human-readable titles (e.g., [Photography](/photography/)) and avoid raw URLs.`;
+}
+
+function latestUserMessage(messages) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role === "user" && typeof messages[index].content === "string") {
+      return messages[index].content;
+    }
+  }
+  return "";
+}
+
+function recentUserText(messages) {
+  return messages
+    .filter((msg) => msg?.role === "user" && typeof msg.content === "string")
+    .slice(-3)
+    .map((msg) => msg.content)
+    .join("\n");
+}
+
+function nextWeekdayDate(weekdayName, baseDate = new Date()) {
+  const weekdays = {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  };
+  const target = weekdays[String(weekdayName || "").toLowerCase()];
+  if (target === undefined) return null;
+  const date = new Date(baseDate);
+  date.setHours(0, 0, 0, 0);
+  let daysUntil = (target - date.getDay() + 7) % 7;
+  if (daysUntil === 0) daysUntil = 7;
+  date.setDate(date.getDate() + daysUntil);
+  return date;
+}
+
+function parseClockTime(text) {
+  const matches = String(text || "").matchAll(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi);
+  for (const match of matches) {
+    let hours = Number(match[1]);
+    const minutes = Number(match[2] || 0);
+    const meridiem = String(match[3] || "").toLowerCase();
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes) || hours > 23 || minutes > 59) continue;
+    if (meridiem === "pm" && hours < 12) hours += 12;
+    if (meridiem === "am" && hours === 12) hours = 0;
+    return { hours, minutes };
+  }
+  return null;
+}
+
+function titleCaseEvent(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function cleanCalendarTitle(text) {
+  return titleCaseEvent(
+    String(text || "")
+      .replace(/\b(add|create|put|schedule|calendar|event|appointment|reminder|to|my|on|at|this|next)\b/gi, " ")
+      .replace(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi, " ")
+      .replace(/\b\d{1,2}(?::\d{2})?\s*(am|pm)?\b/gi, " ")
+      .replace(/\s+/g, " ")
+  );
+}
+
+function buildCalendarAction(messages) {
+  const latest = latestUserMessage(messages);
+  const recent = recentUserText(messages);
+  const wantsCalendar =
+    /\b(add|create|put|schedule)\b/i.test(recent) && /\b(calendar|event|appointment|reminder)\b/i.test(recent);
+  const hasDateSignal = /\b(today|tomorrow|tonight|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i.test(latest);
+  const clock = parseClockTime(latest);
+  if (!wantsCalendar && !(hasDateSignal && clock)) return null;
+
+  const weekdayMatch = latest.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i);
+  let startsAt = null;
+  if (/\btomorrow\b/i.test(latest)) {
+    startsAt = new Date();
+    startsAt.setDate(startsAt.getDate() + 1);
+  } else if (/\btoday|tonight\b/i.test(latest)) {
+    startsAt = new Date();
+  } else if (weekdayMatch) {
+    startsAt = nextWeekdayDate(weekdayMatch[1]);
+  }
+
+  if (!startsAt || !clock) return null;
+  startsAt.setHours(clock.hours, clock.minutes, 0, 0);
+  const endsAt = new Date(startsAt);
+  endsAt.setHours(endsAt.getHours() + 1);
+
+  const title = cleanCalendarTitle(latest);
+  if (!title || title.length < 2) return null;
+
+  return {
+    type: "create_calendar_event",
+    status: "draft",
+    label: "Add calendar event",
+    payload: {
+      title,
+      startsAt: startsAt.toISOString(),
+      endsAt: endsAt.toISOString(),
+      allDay: false,
+      status: "confirmed",
+      source: "ai_assistant",
+      metadata: {
+        created_by: "ai_assistant",
+        original_text: latest,
+        user_timezone: USER_TIME_ZONE,
+      },
+    },
+  };
+}
+
+function extractActions(messages) {
+  const action = buildCalendarAction(messages);
+  return action ? [action] : [];
 }
 
 module.exports = async function handler(req, res) {
@@ -294,7 +416,11 @@ module.exports = async function handler(req, res) {
 
     const data = await response.json();
     const reply = data?.choices?.[0]?.message?.content?.trim() || "";
-    res.status(200).json({ reply });
+    const actions = extractActions(trimmedMessages);
+    const finalReply = actions.length
+      ? "I drafted this calendar event. Confirm it below to save it."
+      : reply;
+    res.status(200).json({ reply: finalReply, actions });
   } catch (err) {
     res.status(500).json({ error: "Server error" });
   }
