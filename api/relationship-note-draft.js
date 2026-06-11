@@ -6,6 +6,9 @@ const PET_TYPE_PATTERN = "border collie|golden retriever|dog|cat|pet|horse";
 const STOPWORDS = new Set([
   "and",
   "about",
+  "after",
+  "along",
+  "before",
   "with",
   "from",
   "that",
@@ -20,7 +23,10 @@ const STOPWORDS = new Set([
   "her",
   "their",
   "our",
+  "my",
   "you",
+  "known",
+  "thankfully",
   "visited",
   "talked",
   "discussed",
@@ -34,6 +40,19 @@ const STOPWORDS = new Set([
   "her",
   "him",
   "his",
+]);
+const RELATION_WORDS = new Set([
+  "dad",
+  "daughter",
+  "father",
+  "husband",
+  "kid",
+  "mom",
+  "mother",
+  "sister",
+  "son",
+  "spouse",
+  "wife",
 ]);
 
 function cleanText(value, maxLength = 5000) {
@@ -50,6 +69,28 @@ function titleCase(value) {
     .filter(Boolean)
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}`)
     .join(" ");
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function noteIncludesName(note, name) {
+  return new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(note);
+}
+
+function isValidPersonName(name, note = "") {
+  const cleanName = cleanText(name, 120);
+  if (!cleanName || cleanName.includes("'")) return false;
+  const parts = cleanName.split(/\s+/).filter(Boolean);
+  if (!parts.length || parts.length > 3) return false;
+  const lowerParts = parts.map((part) => part.toLowerCase());
+  if (lowerParts.some((part) => STOPWORDS.has(part))) return false;
+  if (lowerParts.every((part) => RELATION_WORDS.has(part))) return false;
+  if (/^(my|their|our|his|her)\b/i.test(cleanName)) return false;
+  if (/\b(?:dad|father|mom|mother|kid|child)\b/i.test(cleanName) && !noteIncludesName(note, cleanName)) return false;
+  if (cleanName.toLowerCase() === "quentin nichols") return false;
+  return true;
 }
 
 function normalizePeople(people) {
@@ -87,10 +128,13 @@ function findPossibleNames(note, knownPeople) {
   const knownNames = new Set(knownPeople.flatMap((person) => person.aliases.map((alias) => alias.toLowerCase())));
   const petNames = new Set(extractPetNames(note).map((name) => name.toLowerCase()));
   const placeNames = new Set(extractPlaceNames(note).map((name) => name.toLowerCase()));
+  const aliasNames = new Set(extractAliasNames(note).map((name) => name.toLowerCase()));
   const explicitMatches = [];
   const explicitPatterns = [
     /\b(?:met|saw|visited with|talked to|spoke with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:at|after|today|yesterday|and|about|because)\b|[.,!?]|$)/gi,
     /\bwith\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:at|after|today|yesterday|and|about|because)\b|[.,!?]|$)/gi,
+    /\b(?:mom|mother|dad|father|sister|brother|wife|husband|spouse|daughter|son)\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=[.,!?]|$|\s+(?:known|came|is|was|has|and)\b)/gi,
+    /\b(?:before|after)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:came|joined|entered)\b/gi,
   ];
   explicitPatterns.forEach((pattern) => {
     for (const match of note.matchAll(pattern)) {
@@ -103,7 +147,8 @@ function findPossibleNames(note, knownPeople) {
     .filter((name) => !knownNames.has(name.toLowerCase()))
     .filter((name) => !petNames.has(name.toLowerCase()))
     .filter((name) => !placeNames.has(name.toLowerCase()))
-    .filter((name) => !STOPWORDS.has(name.toLowerCase()))
+    .filter((name) => !aliasNames.has(name.toLowerCase()))
+    .filter((name) => isValidPersonName(name, note))
     .map((name) => ({ name: titleCase(name), confidence: explicitMatches.length ? 0.9 : 0.45 }));
 }
 
@@ -168,8 +213,37 @@ function extractPlaceNames(note) {
   return uniqueList(names, 6);
 }
 
+function extractAliasNames(note) {
+  const names = [];
+  const patterns = [
+    /\bKnown as\s+([A-Z][a-z]+)\b/gi,
+    /\bgoes by\s+([A-Z][a-z]+)\b/gi,
+  ];
+  patterns.forEach((pattern) => {
+    for (const match of note.matchAll(pattern)) {
+      names.push(match[1]);
+    }
+  });
+  return uniqueList(names, 6);
+}
+
 function extractMemoryCards(note) {
   const cards = [];
+  const knownAs = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\.\s+Known as\s+([A-Z][a-z]+)\b/i)
+    || note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:is\s+)?(?:known as|goes by)\s+([A-Z][a-z]+)\b/i);
+  if (knownAs) {
+    cards.push({ label: "Preferred Name", value: `${titleCase(knownAs[1])}: ${titleCase(knownAs[2])}`, confidence: 0.9 });
+  }
+  const familyContext = [];
+  const mom = note.match(/\bmy\s+(?:mom|mother)\s+is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+  if (mom) familyContext.push(`${titleCase(mom[1])} is my mom`);
+  const sister = note.match(/\bmy\s+(?:younger\s+)?sister\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+  if (sister) familyContext.push(`${titleCase(sister[1])} is my${/\byounger sister\b/i.test(note) ? " younger" : ""} sister`);
+  const cameIntoLives = note.match(/\bbefore\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+came into our lives\b/i);
+  if (cameIntoLives) familyContext.push(`${titleCase(cameIntoLives[1])} came into our lives`);
+  if (familyContext.length) {
+    cards.push({ label: "Family Context", value: familyContext.join("; "), confidence: 0.84 });
+  }
   const daughter = note.match(/\b(?:daughter|kid|son|wife|husband|spouse|mom|dad|mother|father)\s+([A-Z][a-z]+)\b/);
   if (daughter) {
     cards.push({ label: titleCase(daughter[0].replace(daughter[1], "").trim()), value: daughter[1], confidence: 0.72 });
@@ -303,22 +377,74 @@ function mergeCards(primaryCards, fallbackCards) {
   return [...cardsByKey.values()].slice(0, 8);
 }
 
-function sanitizeDraft(draft, scriptDraft, note) {
+function normalizeDraftPeople(draftPeople, scriptPeople, knownPeople, note) {
+  const knownById = new Map(knownPeople.map((person) => [person.id, person]));
+  const knownByName = new Map(knownPeople.map((person) => [person.name.toLowerCase(), person]));
+  const peopleById = new Map();
+
+  scriptPeople.forEach((person) => {
+    if (person.id) peopleById.set(person.id, person);
+  });
+
+  if (Array.isArray(draftPeople)) {
+    draftPeople.forEach((person) => {
+      const knownPerson = knownById.get(person?.id) || knownByName.get(String(person?.name || "").toLowerCase());
+      if (!knownPerson || !isValidPersonName(knownPerson.name, note)) return;
+      const aliases = Array.isArray(knownPerson.aliases) ? knownPerson.aliases : [knownPerson.name];
+      if (!aliases.some((alias) => noteIncludesName(note, alias))) return;
+      peopleById.set(knownPerson.id, {
+        id: knownPerson.id,
+        name: knownPerson.name,
+        matchedAlias: person.matchedAlias || knownPerson.name,
+        confidence: Math.max(Number.isFinite(Number(person.confidence)) ? Number(person.confidence) : 0.82, 0.82),
+        selected: person.selected !== false,
+      });
+    });
+  }
+
+  return [...peopleById.values()];
+}
+
+function normalizePossiblePeople(draftPossiblePeople, scriptPossiblePeople, knownPeople, note) {
+  const knownNames = new Set(knownPeople.flatMap((person) => [
+    person.name,
+    ...(Array.isArray(person.aliases) ? person.aliases : []),
+  ].map((name) => name.toLowerCase())));
+  const possibleByName = new Map();
+
+  [...scriptPossiblePeople, ...(Array.isArray(draftPossiblePeople) ? draftPossiblePeople : [])].forEach((person) => {
+    const name = titleCase(person?.name || "");
+    if (!isValidPersonName(name, note)) return;
+    if (knownNames.has(name.toLowerCase())) return;
+    const existing = possibleByName.get(name.toLowerCase());
+    const confidence = Number.isFinite(Number(person.confidence)) ? Number(person.confidence) : 0.45;
+    if (!existing || confidence > existing.confidence) {
+      possibleByName.set(name.toLowerCase(), { name, confidence });
+    }
+  });
+
+  return [...possibleByName.values()].slice(0, 8);
+}
+
+function sanitizeDraft(draft, scriptDraft, note, knownPeople = []) {
   const petNames = new Set(extractPetNames(note).map((name) => name.toLowerCase()));
-  const possiblePeople = Array.isArray(draft.possiblePeople) ? draft.possiblePeople : [];
+  const people = normalizeDraftPeople(draft.people, scriptDraft.people, knownPeople, note);
+  const possiblePeople = normalizePossiblePeople(draft.possiblePeople, scriptDraft.possiblePeople, knownPeople, note);
   const cleanPossiblePeople = possiblePeople.filter((person) => !petNames.has(String(person.name || "").toLowerCase()));
-  const hasExistingPeople = Array.isArray(draft.people) && draft.people.length;
+  const hasExistingPeople = people.length;
   const questions = hasExistingPeople
     ? Array.isArray(draft.questions) ? draft.questions : []
     : cleanPossiblePeople.length ? [`Create a new profile for ${cleanPossiblePeople.map((person) => person.name).join(", ")}?`] : [];
   return {
     ...scriptDraft,
     ...draft,
-    people: Array.isArray(draft.people) ? draft.people : scriptDraft.people,
+    people,
     possiblePeople: cleanPossiblePeople,
     memoryCards: mergeCards(scriptDraft.memoryCards, Array.isArray(draft.memoryCards) ? draft.memoryCards : []),
     reminders: Array.isArray(draft.reminders) && draft.reminders.length ? draft.reminders : scriptDraft.reminders,
-    questions: questions.filter((question) => ![...petNames].some((name) => question.toLowerCase().includes(name))),
+    questions: questions.filter((question) => ![...petNames].some((name) => question.toLowerCase().includes(name)))
+      .filter((question) => !/\b(their|my|our|his|her)\s+(kid|child|dad|father|mom|mother)\b/i.test(question))
+      .filter((question) => !/quentin nichols/i.test(question)),
     interaction: {
       ...scriptDraft.interaction,
       ...(draft.interaction && typeof draft.interaction === "object" ? draft.interaction : {}),
@@ -416,7 +542,7 @@ async function buildAiDraft(note, people, scriptDraft) {
         {
           role: "system",
           content:
-            "You organize Quentin Nichols' private relationship notes. Return only valid JSON. Do not invent facts. Prefer existing people when names clearly match. Pets, animals, projects, places, and organizations are memory cards or topics, not people profiles. If ambiguous, ask a question instead of assuming.",
+            "You organize Quentin Nichols' private relationship notes. Return only valid JSON. Do not invent facts. Prefer existing people when names clearly match. Pets, animals, projects, places, organizations, relationship phrases, and possessive phrases are memory cards or topics, not people profiles. Never create people named things like 'their kid', 'my dad', or 'Quentin Nichols dad'. For family notes, extract actual full names and relationship facts.",
         },
         {
           role: "user",
@@ -443,7 +569,7 @@ async function buildAiDraft(note, people, scriptDraft) {
   const payload = await response.json().catch(() => ({}));
   const parsed = safeJsonFromText(payload?.choices?.[0]?.message?.content);
   if (!parsed || typeof parsed !== "object") return scriptDraft;
-  return sanitizeDraft({ ...parsed, source: "ai" }, scriptDraft, note);
+  return sanitizeDraft({ ...parsed, source: "ai" }, scriptDraft, note, people);
 }
 
 module.exports = async function handler(req, res) {

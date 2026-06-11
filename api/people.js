@@ -28,6 +28,23 @@ async function deleteRows(supabaseRest, path, fallbackMessage, { optional = fals
   return true;
 }
 
+async function loadOwnedPersonIds(supabaseRest, { id, name, ownerId }) {
+  if (looksLikeUuid(id)) return [id];
+  const cleanName = cleanText(name, 160);
+  if (!cleanName) return [];
+
+  const response = await supabaseRest(
+    `people?select=id&owner_id=eq.${encodeURIComponent(ownerId)}&name=eq.${encodeURIComponent(cleanName)}`
+  );
+  const payload = await response.json().catch(() => []);
+  if (!response.ok) {
+    const error = new Error(payload?.message || "Unable to find person.");
+    error.statusCode = response.status;
+    throw error;
+  }
+  return payload.map((person) => person.id).filter(looksLikeUuid);
+}
+
 module.exports = async function handler(req, res) {
   if (!["GET", "POST", "PATCH", "DELETE"].includes(req.method)) {
     json(res, 405, { error: "Method not allowed" });
@@ -53,32 +70,38 @@ module.exports = async function handler(req, res) {
     const requestUrl = new URL(req.url, `https://${req.headers.host || "localhost"}`);
     const body = await readJsonBody(req);
     const id = cleanText(body.id || requestUrl.searchParams.get("id"), 80);
+    const name = cleanText(body.name || requestUrl.searchParams.get("name"), 160);
 
     if (req.method === "DELETE") {
-      if (!looksLikeUuid(id)) {
+      const personIds = await loadOwnedPersonIds(supabaseRest, { id, name, ownerId: user.id });
+      if (!personIds.length) {
         json(res, 400, { error: "A valid person is required." });
+        return;
+      }
+      if (personIds.length > 1) {
+        json(res, 409, { error: "More than one matching profile exists. Open the exact profile and try again." });
         return;
       }
 
       const deleteRest = supabaseAdminRest || supabaseRest;
+      const personId = personIds[0];
       const ownerFilter = `owner_id=eq.${encodeURIComponent(user.id)}`;
-      const personFilter = `person_id=eq.${encodeURIComponent(id)}&${ownerFilter}`;
+      const personFilter = `person_id=eq.${encodeURIComponent(personId)}&${ownerFilter}`;
       await deleteRows(deleteRest, `person_follow_up_reminders?${personFilter}`, "Unable to delete profile reminders.");
       await deleteRows(deleteRest, `person_memory_cards?${personFilter}`, "Unable to delete profile memory cards.");
       await deleteRows(deleteRest, `person_interactions?${personFilter}`, "Unable to delete profile interactions.");
       await deleteRows(
         deleteRest,
-        `ai_context_items?${ownerFilter}&source_type=eq.person&source_id=eq.${encodeURIComponent(id)}`,
+        `ai_context_items?${ownerFilter}&source_type=eq.person&source_id=eq.${encodeURIComponent(personId)}`,
         "Unable to delete profile AI context.",
         { optional: true }
       );
-      await deleteRows(deleteRest, `people?id=eq.${encodeURIComponent(id)}&${ownerFilter}`, "Unable to delete person.");
+      await deleteRows(deleteRest, `people?id=eq.${encodeURIComponent(personId)}&${ownerFilter}`, "Unable to delete person.");
 
       json(res, 200, { ok: true });
       return;
     }
 
-    const name = cleanText(body.name, 160);
     if (!name) {
       json(res, 400, { error: "Name is required." });
       return;
