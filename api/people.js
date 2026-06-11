@@ -55,7 +55,7 @@ async function loadOwnedPersonIds(supabaseRest, { id, name, ownerId }) {
 }
 
 async function deletePersonViaRpc(supabaseRest, personId) {
-  const response = await supabaseRest("rpc/delete_person_profile", {
+  const response = await supabaseRest("rpc/delete_person_profile_cascade", {
     method: "POST",
     body: { target_person_id: personId },
   });

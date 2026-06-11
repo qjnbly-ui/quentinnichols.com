@@ -353,6 +353,34 @@ alter function public.delete_person_profile(uuid) owner to postgres;
 revoke execute on function public.delete_person_profile(uuid) from public;
 grant execute on function public.delete_person_profile(uuid) to authenticated;
 
+create or replace function public.delete_person_profile_cascade(target_person_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  current_owner uuid := auth.uid();
+begin
+  if current_owner is null then
+    raise exception 'Authentication required.';
+  end if;
+
+  delete from public.people
+  where id = target_person_id
+    and owner_id = current_owner;
+
+  if not found then
+    raise exception 'Person not found.';
+  end if;
+end;
+$$;
+
+alter function public.delete_person_profile_cascade(uuid) owner to postgres;
+
+revoke execute on function public.delete_person_profile_cascade(uuid) from public;
+grant execute on function public.delete_person_profile_cascade(uuid) to authenticated;
+
 revoke execute on function public.handle_new_user() from public;
 
 drop policy if exists "Profiles are owner readable" on public.profiles;
