@@ -13,7 +13,13 @@ function cleanTags(value) {
 }
 
 function looksLikeUuid(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(String(value || ""));
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
+}
+
+function cleanRecordId(value) {
+  const id = cleanText(value, 80);
+  if (looksLikeUuid(id) || /^\d+$/.test(id)) return id;
+  return "";
 }
 
 async function deleteRows(supabaseRest, path, fallbackMessage, { optional = false } = {}) {
@@ -29,20 +35,35 @@ async function deleteRows(supabaseRest, path, fallbackMessage, { optional = fals
 }
 
 async function loadOwnedPersonIds(supabaseRest, { id, name, ownerId }) {
-  if (looksLikeUuid(id)) return [id];
+  const recordId = cleanRecordId(id);
+  if (recordId) return [recordId];
   const cleanName = cleanText(name, 160);
   if (!cleanName) return [];
 
   const response = await supabaseRest(
-    `people?select=id&owner_id=eq.${encodeURIComponent(ownerId)}&name=eq.${encodeURIComponent(cleanName)}`
+    `people?select=id,name&owner_id=eq.${encodeURIComponent(ownerId)}&name=eq.${encodeURIComponent(cleanName)}`
   );
-  const payload = await response.json().catch(() => []);
+  let payload = await response.json().catch(() => []);
   if (!response.ok) {
     const error = new Error(payload?.message || "Unable to find person.");
     error.statusCode = response.status;
     throw error;
   }
-  return payload.map((person) => person.id).filter(looksLikeUuid);
+  if (!payload.length) {
+    const fuzzyResponse = await supabaseRest(
+      `people?select=id,name&owner_id=eq.${encodeURIComponent(ownerId)}&name=ilike.${encodeURIComponent(`*${cleanName}*`)}`
+    );
+    payload = await fuzzyResponse.json().catch(() => []);
+    if (!fuzzyResponse.ok) {
+      const error = new Error(payload?.message || "Unable to find person.");
+      error.statusCode = fuzzyResponse.status;
+      throw error;
+    }
+  }
+  return payload
+    .filter((person) => cleanText(person.name, 160).toLowerCase() === cleanName.toLowerCase())
+    .map((person) => cleanRecordId(person.id))
+    .filter(Boolean);
 }
 
 module.exports = async function handler(req, res) {
@@ -122,7 +143,7 @@ module.exports = async function handler(req, res) {
     };
 
     if (req.method === "PATCH") {
-      if (!looksLikeUuid(id)) {
+      if (!cleanRecordId(id)) {
         json(res, 400, { error: "A valid person is required." });
         return;
       }
