@@ -1,6 +1,7 @@
 const { getAuthedSupabase, handleApiError, json, readJsonBody } = require("./_supabase-request");
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = process.env.RELATIONSHIP_NOTE_MODEL || "openai/gpt-oss-120b";
+const REASONING_EFFORT = process.env.RELATIONSHIP_REASONING_EFFORT || "medium";
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 const PET_TYPE_PATTERN = "border collie|golden retriever|dog|cat|pet|horse";
 const STOPWORDS = new Set([
@@ -54,6 +55,88 @@ const RELATION_WORDS = new Set([
   "spouse",
   "wife",
 ]);
+
+const DRAFT_RESPONSE_FORMAT = {
+  type: "json_schema",
+  json_schema: {
+    name: "relationship_note_draft",
+    strict: true,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["summary", "people", "possiblePeople", "interaction", "memoryCards", "reminders", "questions"],
+      properties: {
+        summary: { type: "string" },
+        people: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["id", "name", "matchedAlias", "confidence", "selected"],
+            properties: {
+              id: { type: "string" },
+              name: { type: "string" },
+              matchedAlias: { type: "string" },
+              confidence: { type: "number" },
+              selected: { type: "boolean" },
+            },
+          },
+        },
+        possiblePeople: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["name", "confidence"],
+            properties: {
+              name: { type: "string" },
+              confidence: { type: "number" },
+            },
+          },
+        },
+        interaction: {
+          type: "object",
+          additionalProperties: false,
+          required: ["location", "mood", "topics", "dateHint", "notes"],
+          properties: {
+            location: { type: "string" },
+            mood: { type: "string" },
+            topics: { type: "array", items: { type: "string" } },
+            dateHint: { type: "string" },
+            notes: { type: "string" },
+          },
+        },
+        memoryCards: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["label", "value", "confidence"],
+            properties: {
+              label: { type: "string" },
+              value: { type: "string" },
+              confidence: { type: "number" },
+            },
+          },
+        },
+        reminders: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["title", "details", "confidence"],
+            properties: {
+              title: { type: "string" },
+              details: { type: "string" },
+              confidence: { type: "number" },
+            },
+          },
+        },
+        questions: { type: "array", items: { type: "string" } },
+      },
+    },
+  },
+};
 
 function cleanText(value, maxLength = 5000) {
   return String(value || "").trim().slice(0, maxLength);
@@ -581,11 +664,14 @@ async function buildAiDraft(note, people, scriptDraft) {
       model: MODEL,
       temperature: 0.1,
       max_tokens: 1200,
+      reasoning_effort: REASONING_EFFORT,
+      reasoning_format: "hidden",
+      response_format: DRAFT_RESPONSE_FORMAT,
       messages: [
         {
           role: "system",
           content:
-            "You organize Quentin Nichols' private relationship notes. Return only valid JSON. Do not invent facts. Prefer existing people when names clearly match. Pets, animals, projects, places, organizations, relationship phrases, and possessive phrases are memory cards or topics, not people profiles. Never create people named things like 'their kid', 'my dad', or 'Quentin Nichols dad'. For family notes, extract actual full names and relationship facts.",
+            "You organize Quentin Nichols' private relationship notes. Follow the response schema exactly. Do not invent facts. Prefer existing people when names clearly match. Pets, animals, projects, places, organizations, relationship phrases, and possessive phrases are memory cards or topics, not people profiles. Never create people named things like 'their kid', 'my dad', or 'Quentin Nichols dad'. For family notes, extract actual full names and relationship facts.",
         },
         {
           role: "user",
