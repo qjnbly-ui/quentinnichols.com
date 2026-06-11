@@ -500,6 +500,7 @@
           </div>
           <div class="qapp-action-row">
             <button class="qapp-inline-button" data-action="add-note-for-person" data-person-id="${escapeHtml(person.id)}" type="button">Add Conversation</button>
+            <button class="qapp-soft-button" data-action="refresh-overview" data-person-id="${escapeHtml(person.id)}" type="button">Refresh Overview</button>
             <button class="qapp-soft-button" data-action="edit-person" data-person-id="${escapeHtml(person.id)}" type="button">Edit Profile</button>
             <button class="qapp-danger-button" data-action="delete-person" data-person-id="${escapeHtml(person.id)}" type="button">Delete Profile</button>
           </div>
@@ -1159,6 +1160,7 @@
     const addForPersonButton = document.querySelector('[data-action="add-note-for-person"]');
     const reviewButton = document.querySelector('[data-action="review-relationship-note"]');
     const personRows = [...document.querySelectorAll('[data-action="open-person"]')];
+    const refreshOverviewButton = document.querySelector('[data-action="refresh-overview"]');
     const editPersonButton = document.querySelector('[data-action="edit-person"]');
     const deletePersonButton = document.querySelector('[data-action="delete-person"]');
     const itemActionButtons = [...document.querySelectorAll("[data-item-id]")];
@@ -1222,6 +1224,28 @@
         relationshipDraftStatus = "idle";
         relationshipDraftError = "";
         render();
+      });
+    }
+
+    if (refreshOverviewButton && activePerson) {
+      refreshOverviewButton.addEventListener("click", async () => {
+        const originalText = refreshOverviewButton.textContent;
+        refreshOverviewButton.disabled = true;
+        refreshOverviewButton.textContent = "Refreshing...";
+        try {
+          await apiJson("/api/person-overview", {
+            method: "POST",
+            body: { personId: activePerson.id },
+          });
+          await loadNotebookData();
+          selectedPersonId = activePerson.id;
+          peopleMode = "profile";
+          render();
+        } catch (error) {
+          await qappAlert(error?.message || "Unable to refresh overview.", "Profile error");
+          refreshOverviewButton.disabled = false;
+          refreshOverviewButton.textContent = originalText || "Refresh Overview";
+        }
       });
     }
 
