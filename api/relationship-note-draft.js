@@ -2,6 +2,7 @@ const { getAuthedSupabase, handleApiError, json, readJsonBody } = require("./_su
 
 const MODEL = "llama-3.3-70b-versatile";
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+const PET_TYPE_PATTERN = "border collie|golden retriever|dog|cat|pet|horse";
 const STOPWORDS = new Set([
   "and",
   "about",
@@ -141,9 +142,9 @@ function extractDateHint(note) {
 function extractPetNames(note) {
   const names = [];
   const patterns = [
-    /\b(?:his|her|their|my)\s+(?:dog|cat|pet|border collie|horse)\s+([A-Z][a-z]+)\b/gi,
-    /\b(?:dog|cat|pet|border collie|horse)\s+(?:named|called)\s+([A-Z][a-z]+)\b/gi,
-    /\b([A-Z][a-z]+)\s+(?:the\s+)?(?:dog|cat|border collie|horse)\b/gi,
+    new RegExp(`\\b(?:his|her|their|my)\\s+(?:${PET_TYPE_PATTERN})\\s+([A-Z][a-z]+)\\b`, "gi"),
+    new RegExp(`\\b(?:${PET_TYPE_PATTERN})\\s+(?:named|called)\\s+([A-Z][a-z]+)\\b`, "gi"),
+    new RegExp(`\\b([A-Z][a-z]+)\\s+(?:the\\s+)?(?:${PET_TYPE_PATTERN})\\b`, "gi"),
   ];
   patterns.forEach((pattern) => {
     for (const match of note.matchAll(pattern)) {
@@ -175,8 +176,9 @@ function extractMemoryCards(note) {
   }
   const petNames = extractPetNames(note);
   petNames.forEach((name) => {
-    const petType = note.match(new RegExp(`\\b(?:his|her|their|my)\\s+(dog|cat|pet|border collie|horse)\\s+${name}\\b`, "i"))?.[1]
-      || note.match(new RegExp(`\\b(border collie|dog|cat|pet|horse)\\s+(?:named\\s+)?${name}\\b`, "i"))?.[1]
+    const petType = note.match(new RegExp(`\\b(?:his|her|their|my)\\s+(${PET_TYPE_PATTERN})\\s+${name}\\b`, "i"))?.[1]
+      || note.match(new RegExp(`\\b(${PET_TYPE_PATTERN})\\s+(?:named\\s+)?${name}\\b`, "i"))?.[1]
+      || note.match(new RegExp(`\\b${name}\\s+(?:the\\s+)?(${PET_TYPE_PATTERN})\\b`, "i"))?.[1]
       || "Pet";
     cards.push({ label: titleCase(petType), value: name, confidence: 0.88 });
   });
@@ -185,7 +187,7 @@ function extractMemoryCards(note) {
     const workValue = work[1].split(/\s+and\s+(?:is|was|has|will|asked|mentioned|said)\b/i)[0];
     cards.push({ label: "Work", value: cleanText(workValue, 180), confidence: 0.76 });
   }
-  const event = note.match(/\b(?:preparing for|going to|attending|hosting)\s+(?:an?\s+)?([^.!?]+?\b(?:market|show|event|conference|wedding|graduation|dinner)\b[^.!?]*)/i);
+  const event = note.match(/\b(?:preparing for|getting ready for|going to|attending|hosting)\s+(?:an?\s+)?([^.!?]+?\b(?:market|booth|show|event|conference|wedding|graduation|dinner)\b[^.!?]*)/i);
   if (event) {
     cards.push({ label: "Upcoming Event", value: cleanText(event[1], 180), confidence: 0.78 });
   }
@@ -219,15 +221,23 @@ function normalizeCard(card) {
   const lowerLabel = label.toLowerCase();
   const lowerValue = value.toLowerCase();
   if (lowerLabel === "place") return null;
-  if (["pet", "dog", "cat", "horse", "border collie"].includes(lowerLabel) && ["her", "his", "their", "my"].includes(lowerValue)) {
+  if (["pet", "pets", "dog", "cat", "horse", "border collie", "golden retriever"].includes(lowerLabel) && ["her", "his", "their", "my"].includes(lowerValue)) {
     return null;
   }
 
   let normalizedLabel = label;
   const petValue = value.match(/^([A-Z][a-z]+)\s*,\s*(.+)$/);
-  if (lowerLabel === "pet" && petValue) {
+  if (["pet", "pets"].includes(lowerLabel) && petValue) {
     value = petValue[1];
     normalizedLabel = titleCase(petValue[2]);
+  }
+  const petDescriptiveValue = value.match(new RegExp(`^([A-Z][a-z]+)\\s+(?:the\\s+)?(${PET_TYPE_PATTERN})\\b`, "i"));
+  if (["pet", "pets"].includes(lowerLabel) && petDescriptiveValue) {
+    value = titleCase(petDescriptiveValue[1]);
+    normalizedLabel = titleCase(petDescriptiveValue[2]);
+  }
+  if (["event", "events"].includes(lowerLabel)) {
+    normalizedLabel = "Upcoming Event";
   }
 
   return {
@@ -242,12 +252,12 @@ function normalizedCardKey(card) {
   const label = cleanText(card.label, 120).toLowerCase();
   const value = cleanText(card.value, 1000).toLowerCase();
   const compactValue = value
-    .replace(/\b(next|this|last)\s+(month|week|year)\b/g, "")
+    .replace(new RegExp(`\\b(next|this|last)\\s+(month|week|year|${WEEKDAYS.join("|")})\\b`, "gi"), "")
     .replace(/\b(before|after)\s+\w+\b/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 
-  if (["pet", "dog", "cat", "border collie", "horse"].includes(label)) {
+  if (["pet", "pets", "dog", "cat", "border collie", "golden retriever", "horse"].includes(label)) {
     return `pet:${compactValue.split(/\s+/)[0] || compactValue}`;
   }
   if (label.includes("trip") || label.includes("travel") || value.includes("glacier national park")) {
@@ -270,9 +280,10 @@ function cardScore(card) {
   const value = cleanText(card.value, 1000).toLowerCase();
   let score = Number(card.confidence) || 0;
   if (label !== "pet") score += 0.2;
-  if (/\b(next|this|last)\s+(month|week|year)\b/.test(value)) score += 0.2;
+  if (new RegExp(`\\b(next|this|last)\\s+(month|week|year|${WEEKDAYS.join("|")})\\b`, "i").test(value)) score += 0.2;
   if (label.includes("event") || label.includes("work")) score += 0.2;
   if (label === "border collie") score += 0.2;
+  if (label === "golden retriever") score += 0.2;
   if (label === "cat") score += 0.2;
   return score;
 }

@@ -16,6 +16,16 @@ function looksLikeUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(String(value || ""));
 }
 
+async function deleteRows(supabaseRest, path, fallbackMessage) {
+  const response = await supabaseRest(path, { method: "DELETE" });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    const error = new Error(payload?.message || fallbackMessage);
+    error.statusCode = response.status;
+    throw error;
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (!["GET", "POST", "PATCH", "DELETE"].includes(req.method)) {
     json(res, 405, { error: "Method not allowed" });
@@ -47,14 +57,13 @@ module.exports = async function handler(req, res) {
         return;
       }
 
-      const response = await supabaseRest(`people?id=eq.${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        json(res, response.status, { error: payload?.message || "Unable to delete person." });
-        return;
-      }
+      const personFilter = `person_id=eq.${encodeURIComponent(id)}`;
+      await deleteRows(supabaseRest, `person_follow_up_reminders?${personFilter}`, "Unable to delete profile reminders.");
+      await deleteRows(supabaseRest, `person_memory_cards?${personFilter}`, "Unable to delete profile memory cards.");
+      await deleteRows(supabaseRest, `person_interactions?${personFilter}`, "Unable to delete profile interactions.");
+      await deleteRows(supabaseRest, `ai_context_items?source_type=eq.person&source_id=eq.${encodeURIComponent(id)}`, "Unable to delete profile AI context.");
+      await deleteRows(supabaseRest, `people?id=eq.${encodeURIComponent(id)}`, "Unable to delete person.");
+
       json(res, 200, { ok: true });
       return;
     }
