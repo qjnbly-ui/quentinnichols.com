@@ -196,7 +196,7 @@ function extractPetNames(note) {
       names.push(match[1]);
     }
   });
-  return uniqueList(names, 6);
+  return uniqueList(names, 6).filter((name) => !["her", "his", "their", "my"].includes(name.toLowerCase()));
 }
 
 function extractPlaceNames(note) {
@@ -261,7 +261,8 @@ function extractMemoryCards(note) {
     const workValue = work[1].split(/\s+and\s+(?:is|was|has|will|asked|mentioned|said)\b/i)[0];
     cards.push({ label: "Work", value: cleanText(workValue, 180), confidence: 0.76 });
   }
-  const event = note.match(/\b(?:preparing for|getting ready for|going to|attending|hosting)\s+(?:an?\s+)?([^.!?]+?\b(?:market|booth|show|event|conference|wedding|graduation|dinner)\b[^.!?]*)/i);
+  const event = note.match(/\b(?:preparing for|getting ready for|going to|attending|hosting)\s+(?:an?\s+)?([^.!?]+?\b(?:market|booth|show|event|conference|wedding|graduation|dinner)\b[^.!?]*)/i)
+    || note.match(/\b(?:preparing|making|bringing|cooking)\s+(?:food|dessert|meal|meals|catering)?\s*for\s+(?:an?\s+)?([^.!?]+?\b(?:market|booth|show|event|conference|wedding|graduation|dinner)\b[^.!?]*)/i);
   if (event) {
     cards.push({ label: "Upcoming Event", value: cleanText(event[1], 180), confidence: 0.78 });
   }
@@ -456,8 +457,16 @@ function sanitizeDraft(draft, scriptDraft, note, knownPeople = []) {
 function extractReminder(note, topics, dateHint) {
   const lowerNote = note.toLowerCase();
   const hasFollowUpSignal = /\b(ask|follow up|check|remind|next time|later)\b/.test(lowerNote);
-  const importantTopic = topics.find((topic) => ["exam", "surgery", "promotion", "roof", "graduation", "dinner"].includes(topic));
+  const importantTopic = topics.find((topic) => ["exam", "surgery", "promotion", "roof", "graduation", "dinner", "appointment"].includes(topic));
   if (!hasFollowUpSignal && !importantTopic) return [];
+  const petAppointment = note.match(new RegExp(`\\b(?:his|her|their|my)\\s+(?:${PET_TYPE_PATTERN})\\s+([A-Z][a-z]+)\\s+has\\s+(?:an?\\s+)?([^.!?]*?appointment[^.!?]*?)(?:,?\\s+and\\s+I\\s+should\\s+ask\\s+how\\s+it\\s+went)?[.!?]`, "i"));
+  if (petAppointment) {
+    return [{
+      title: `Ask about ${petAppointment[1]}'s appointment`,
+      details: cleanText(petAppointment[2], 220),
+      confidence: 0.84,
+    }];
+  }
   const reminderMatch = note.match(/\bremind\s+(?:him|her|them|me)?\s*(?:about|to)?\s*([^.!?]+)/i)
     || note.match(/\b(?:check|follow up(?: on)?|ask about)\s+([^.!?]+)/i);
   if (reminderMatch) {
