@@ -120,6 +120,7 @@ ${formatBullets(interactions, (interaction) => {
 
 Memory cards:
 ${formatBullets(memoryCards, (card) => {
+  if (String(card.label || "").trim().toLowerCase() === "raw note") return "";
   const person = peopleById.get(card.person_id);
   return `- ${person?.name || "Unknown person"} | ${card.label}: ${card.value}`;
 })}

@@ -90,6 +90,31 @@
     return `<span class="qapp-pill">${escapeHtml(label)}</span>`;
   }
 
+  function firstSentence(value, maxLength = 220) {
+    const text = String(value || "").trim().replace(/\s+/g, " ");
+    if (!text) return "";
+    const sentence = text.split(/[.!?]/).find(Boolean) || text;
+    const cleanSentence = sentence.trim();
+    return cleanSentence.length > maxLength ? `${cleanSentence.slice(0, maxLength).trim()}...` : cleanSentence;
+  }
+
+  function isRawNoteMemory(card) {
+    return String(card?.label || "").trim().toLowerCase() === "raw note";
+  }
+
+  function buildProfileOverview({ manualOverview, existingOverview, note, draftSummary, forceUpdate = false }) {
+    const manual = String(manualOverview || "").trim();
+    if (manual) return manual.slice(0, 500);
+
+    const existing = String(existingOverview || "").trim();
+    const summary = firstSentence(draftSummary || note, 220);
+    if (!summary) return existing;
+
+    const existingLooksRaw = existing.length > 260 || existing.includes(String(note || "").slice(0, 80));
+    if (!existing || existingLooksRaw || forceUpdate) return summary;
+    return existing;
+  }
+
   function formatDate(value, fallback = "Recent") {
     if (!value) return fallback;
     const date = new Date(value);
@@ -123,12 +148,14 @@
       ...person,
       summary: person.overview || person.summary || "No overview yet.",
       tags: Array.isArray(person.tags) ? person.tags : [],
-      memoryCards: memoryCards.map((card) => ({
-        id: card.id || "",
-        category: card.category || "general",
-        label: card.label || card.category || "Memory",
-        value: card.value || "",
-      })),
+      memoryCards: memoryCards
+        .filter((card) => !isRawNoteMemory(card))
+        .map((card) => ({
+          id: card.id || "",
+          category: card.category || "general",
+          label: card.label || card.category || "Memory",
+          value: card.value || "",
+        })),
       reminders: reminders.map((reminder) => ({
         id: reminder.id || "",
         title: reminder.title || "Follow up",
@@ -977,12 +1004,6 @@
           value: String(formData.get(`memoryValue${index}`) || "").trim(),
         }))
         .filter((card) => card.label && card.value);
-      if (!memoryCards.length) {
-        memoryCards.push({
-          label: "Raw Note",
-          value: note.length > 180 ? `${note.slice(0, 180)}...` : note,
-        });
-      }
       const reminderTitle = String(formData.get("reminderTitle") || "").trim();
       const remindAt = String(formData.get("remindAt") || "").trim();
       const draftPersonIds = formData.getAll("draftPersonIds").map((value) => String(value || "").trim()).filter(Boolean);
@@ -1015,6 +1036,12 @@
       submitButton.textContent = "Saving...";
       try {
         const createPerson = async (personName) => {
+          const overview = buildProfileOverview({
+            manualOverview: formData.get("overview"),
+            note,
+            draftSummary: relationshipDraft?.summary,
+            forceUpdate: true,
+          });
           const created = await apiJson("/api/people", {
             method: "POST",
             body: {
@@ -1023,11 +1050,34 @@
               email: String(formData.get("email") || "").trim(),
               phone: String(formData.get("phone") || "").trim(),
               photoUrl: String(formData.get("photoUrl") || "").trim(),
-              overview: String(formData.get("overview") || "").trim() || note,
+              overview,
               firstMetLocation,
             },
           });
           return normalizePerson({ ...created.person, interactions: [], memoryCards: [], reminders: [] });
+        };
+
+        const updatePersonOverview = async (person) => {
+          const overview = buildProfileOverview({
+            manualOverview: formData.get("overview"),
+            existingOverview: person.overview || person.summary,
+            note,
+            draftSummary: relationshipDraft?.summary,
+          });
+          if (!overview || overview === (person.overview || "")) return;
+          await apiJson("/api/people", {
+            method: "PATCH",
+            body: {
+              id: person.id,
+              name: person.name,
+              email: person.email || "",
+              phone: person.phone || "",
+              photoUrl: person.photo_url || person.photoUrl || "",
+              firstMetLocation: person.first_met_location || person.firstMetLocation || "",
+              tags: person.tags || [],
+              overview,
+            },
+          });
         };
 
         const peopleToSave = draftPersonIds
@@ -1069,6 +1119,8 @@
             reminders: selectedReminders,
           },
         })));
+
+        await Promise.all(peopleToSave.map(updatePersonOverview));
 
         form.reset();
         relationshipCaptureNote = "";
