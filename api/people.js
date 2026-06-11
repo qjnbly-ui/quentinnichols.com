@@ -71,11 +71,12 @@ module.exports = async function handler(req, res) {
     const body = await readJsonBody(req);
     const id = cleanText(body.id || requestUrl.searchParams.get("id"), 80);
     const name = cleanText(body.name || requestUrl.searchParams.get("name"), 160);
+    const action = cleanText(body.action || requestUrl.searchParams.get("action"), 40);
 
-    if (req.method === "DELETE") {
+    if (req.method === "DELETE" || (req.method === "POST" && action === "delete")) {
       const personIds = await loadOwnedPersonIds(supabaseRest, { id, name, ownerId: user.id });
       if (!personIds.length) {
-        json(res, 400, { error: "A valid person is required." });
+        json(res, 400, { error: "A valid person is required. Refresh the app and try again." });
         return;
       }
       if (personIds.length > 1) {

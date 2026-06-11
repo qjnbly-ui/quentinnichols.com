@@ -795,9 +795,9 @@
       deletePersonButton.addEventListener("click", async () => {
         if (!window.confirm(`Delete ${activePerson.name} and all notebook data attached to this profile?`)) return;
         try {
-          await apiJson(`/api/people?id=${encodeURIComponent(activePerson.id || "")}&name=${encodeURIComponent(activePerson.name || "")}`, {
-            method: "DELETE",
-            body: { id: activePerson.id, name: activePerson.name },
+          await apiJson("/api/people", {
+            method: "POST",
+            body: { action: "delete", id: activePerson.id, name: activePerson.name },
           });
           selectedPersonId = "";
           peopleMode = "list";
