@@ -32,6 +32,13 @@
   let relationshipDraft = null;
   let relationshipDraftStatus = "idle";
   let relationshipDraftError = "";
+  let calendarEvents = [];
+  let calendarStatus = "idle";
+  let calendarError = "";
+  let calendarCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let selectedCalendarDate = toDateKey(new Date());
+  let calendarMode = "month";
+  let editingCalendarEventId = "";
 
   function escapeHtml(value) {
     return String(value || "")
@@ -74,6 +81,9 @@
     });
     closeDrawer();
     render();
+    if (currentRoute === "calendar" && calendarStatus === "idle") {
+      loadCalendarData();
+    }
   }
 
   function statusPill(label) {
@@ -110,6 +120,57 @@
     const date = new Date(value);
     if (!Number.isFinite(date.getTime())) return fallback;
     return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function toDateKey(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (!Number.isFinite(date.getTime())) return "";
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function dateFromKey(value) {
+    const [year, month, day] = String(value || "").split("-").map(Number);
+    if (!year || !month || !day) return null;
+    const date = new Date(year, month - 1, day);
+    return Number.isFinite(date.getTime()) ? date : null;
+  }
+
+  function formatDateKey(value, fallback = "Selected day") {
+    const date = dateFromKey(value);
+    if (!date) return fallback;
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function monthLabel(date) {
+    return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  }
+
+  function formatEventTime(event) {
+    if (event.all_day) return "All day";
+    const startsAt = new Date(event.starts_at);
+    const endsAt = event.ends_at ? new Date(event.ends_at) : null;
+    if (!Number.isFinite(startsAt.getTime())) return "Time not set";
+    const start = startsAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    if (!endsAt || !Number.isFinite(endsAt.getTime())) return start;
+    return `${start} - ${endsAt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
+  }
+
+  function toDateTimeLocal(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return "";
+    const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return offsetDate.toISOString().slice(0, 16);
+  }
+
+  function fromDateTimeLocal(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    const date = new Date(text);
+    return Number.isFinite(date.getTime()) ? date.toISOString() : "";
   }
 
   async function apiJson(url, options = {}) {
@@ -180,6 +241,23 @@
     } catch (error) {
       notebookStatus = "error";
       notebookError = error?.message || "Unable to load notebook.";
+    }
+    render();
+  }
+
+  async function loadCalendarData() {
+    calendarStatus = "loading";
+    calendarError = "";
+    render();
+    try {
+      const start = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1).toISOString();
+      const end = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 2, 0, 23, 59, 59).toISOString();
+      const payload = await apiJson(`/api/calendar-events?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+      calendarEvents = Array.isArray(payload.events) ? payload.events : [];
+      calendarStatus = "ready";
+    } catch (error) {
+      calendarStatus = "error";
+      calendarError = error?.message || "Unable to load calendar.";
     }
     render();
   }
@@ -620,6 +698,178 @@
     `;
   }
 
+  function eventsForDate(dateKey) {
+    return calendarEvents
+      .filter((event) => toDateKey(event.starts_at) === dateKey && event.status !== "cancelled")
+      .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+  }
+
+  function renderCalendarEventForm() {
+    const editingEvent = editingCalendarEventId
+      ? calendarEvents.find((event) => event.id === editingCalendarEventId)
+      : null;
+    const selectedDate = selectedCalendarDate || toDateKey(new Date());
+    const defaultStart = `${selectedDate}T09:00`;
+    const defaultEnd = `${selectedDate}T10:00`;
+    return `
+      <section class="qapp-panel">
+        <button class="qapp-text-button" data-calendar-action="back-month" type="button">Back to calendar</button>
+        <form id="qappCalendarForm" class="qapp-capture-form qapp-calendar-form">
+          <input name="id" type="hidden" value="${escapeHtml(editingEvent?.id || "")}">
+          <div class="qapp-form-section">
+            <div class="qapp-form-section-title">
+              <h3>${editingEvent ? "Edit event" : "New event"}</h3>
+            </div>
+            <label>
+              <span>Title</span>
+              <input name="title" type="text" value="${escapeHtml(editingEvent?.title || "")}" placeholder="Dinner, work block, appointment" required>
+            </label>
+            <div class="qapp-capture-grid">
+              <label>
+                <span>Start</span>
+                <input name="startsAt" type="datetime-local" value="${escapeHtml(editingEvent ? toDateTimeLocal(editingEvent.starts_at) : defaultStart)}" required>
+              </label>
+              <label>
+                <span>End</span>
+                <input name="endsAt" type="datetime-local" value="${escapeHtml(editingEvent ? toDateTimeLocal(editingEvent.ends_at) : defaultEnd)}">
+              </label>
+              <label>
+                <span>Location</span>
+                <input name="location" type="text" value="${escapeHtml(editingEvent?.location || "")}" placeholder="Optional">
+              </label>
+              <label>
+                <span>Status</span>
+                <select name="status">
+                  ${["confirmed", "tentative", "cancelled"].map((status) => `
+                    <option value="${status}" ${editingEvent?.status === status ? "selected" : ""}>${status}</option>
+                  `).join("")}
+                </select>
+              </label>
+            </div>
+            <label class="qapp-check-row">
+              <input name="allDay" type="checkbox" ${editingEvent?.all_day ? "checked" : ""}>
+              <span><strong>All day</strong><small>Use this for full-day reminders or events without a specific time.</small></span>
+            </label>
+            <label>
+              <span>Notes</span>
+              <textarea name="description" rows="4" placeholder="Details, context, or why it matters">${escapeHtml(editingEvent?.description || "")}</textarea>
+            </label>
+          </div>
+          <div class="qapp-action-row">
+            <button type="submit">${editingEvent ? "Save Event" : "Create Event"}</button>
+            ${editingEvent ? `<button class="qapp-danger-button" data-calendar-action="delete-event" data-event-id="${escapeHtml(editingEvent.id)}" type="button">Delete Event</button>` : ""}
+          </div>
+        </form>
+      </section>
+    `;
+  }
+
+  function renderCalendar() {
+    if (calendarStatus === "loading") {
+      return `<section class="qapp-panel"><p>Loading calendar...</p></section>`;
+    }
+
+    if (calendarStatus === "error") {
+      return `
+        <section class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Calendar load failed</h3>
+            ${statusPill("Error")}
+          </div>
+          <p>${escapeHtml(calendarError)}</p>
+          <button class="qapp-inline-button" data-calendar-action="reload" type="button">Try Again</button>
+        </section>
+      `;
+    }
+
+    if (calendarMode === "form") {
+      return renderCalendarEventForm();
+    }
+
+    const todayKey = toDateKey(new Date());
+    const firstOfMonth = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth(), 1);
+    const gridStart = new Date(firstOfMonth);
+    gridStart.setDate(firstOfMonth.getDate() - firstOfMonth.getDay());
+    const selectedEvents = eventsForDate(selectedCalendarDate);
+    const upcomingEvents = calendarEvents
+      .filter((event) => event.status !== "cancelled" && new Date(event.starts_at) >= new Date(new Date().setHours(0, 0, 0, 0)))
+      .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
+      .slice(0, 5);
+    const dayCells = Array.from({ length: 42 }, (_, index) => {
+      const date = new Date(gridStart);
+      date.setDate(gridStart.getDate() + index);
+      const dateKey = toDateKey(date);
+      const dayEvents = eventsForDate(dateKey);
+      const inMonth = date.getMonth() === calendarCursor.getMonth();
+      return `
+        <button class="qapp-calendar-day ${inMonth ? "" : "is-muted"} ${dateKey === todayKey ? "is-today" : ""} ${dateKey === selectedCalendarDate ? "is-selected" : ""}" data-calendar-action="select-day" data-date="${dateKey}" type="button">
+          <span>${date.getDate()}</span>
+          ${dayEvents.slice(0, 3).map((event) => `<small>${escapeHtml(event.title)}</small>`).join("")}
+          ${dayEvents.length > 3 ? `<em>+${dayEvents.length - 3}</em>` : ""}
+        </button>
+      `;
+    }).join("");
+
+    return `
+      <section class="qapp-calendar-shell">
+        <div class="qapp-calendar-toolbar">
+          <div>
+            <h3>${escapeHtml(monthLabel(calendarCursor))}</h3>
+            <p>${calendarEvents.length} event${calendarEvents.length === 1 ? "" : "s"} loaded</p>
+          </div>
+          <div class="qapp-action-row">
+            <button class="qapp-soft-button" data-calendar-action="prev-month" type="button">Prev</button>
+            <button class="qapp-soft-button" data-calendar-action="today" type="button">Today</button>
+            <button class="qapp-soft-button" data-calendar-action="next-month" type="button">Next</button>
+            <button class="qapp-inline-button" data-calendar-action="new-event" type="button">Add Event</button>
+          </div>
+        </div>
+        <div class="qapp-calendar-layout">
+          <section class="qapp-panel qapp-calendar-month" aria-label="Calendar month">
+            <div class="qapp-calendar-weekdays">
+              ${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => `<span>${day}</span>`).join("")}
+            </div>
+            <div class="qapp-calendar-grid">
+              ${dayCells}
+            </div>
+          </section>
+          <aside class="qapp-panel qapp-calendar-agenda">
+            <div class="qapp-panel-title-row">
+              <h3>${escapeHtml(formatDateKey(selectedCalendarDate, "Selected day"))}</h3>
+              ${statusPill(`${selectedEvents.length}`)}
+            </div>
+            <div class="qapp-calendar-event-list">
+              ${selectedEvents.length ? selectedEvents.map((event) => `
+                <article class="qapp-calendar-event">
+                  <span>${escapeHtml(formatEventTime(event))}</span>
+                  <strong>${escapeHtml(event.title)}</strong>
+                  ${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}
+                  ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
+                  <div class="qapp-item-actions">
+                    <button data-calendar-action="edit-event" data-event-id="${escapeHtml(event.id)}" type="button">Edit</button>
+                    <button data-calendar-action="delete-event" data-event-id="${escapeHtml(event.id)}" type="button">Delete</button>
+                  </div>
+                </article>
+              `).join("") : `<article class="qapp-calendar-event"><strong>No events</strong><p>Add an event or choose another day.</p></article>`}
+            </div>
+            <div class="qapp-subsection-title">
+              <h4>Upcoming</h4>
+              <span>${upcomingEvents.length}</span>
+            </div>
+            <div class="qapp-calendar-event-list">
+              ${upcomingEvents.length ? upcomingEvents.map((event) => `
+                <button class="qapp-calendar-upcoming" data-calendar-action="select-day" data-date="${escapeHtml(toDateKey(event.starts_at))}" type="button">
+                  <strong>${escapeHtml(event.title)}</strong>
+                  <span>${escapeHtml(formatDate(event.starts_at))} · ${escapeHtml(formatEventTime(event))}</span>
+                </button>
+              `).join("") : `<p>No upcoming events saved yet.</p>`}
+            </div>
+          </aside>
+        </div>
+      </section>
+    `;
+  }
+
   function renderPlaceholder(route, kicker, title, copy, items) {
     return `
       <section class="qapp-grid">
@@ -652,11 +902,8 @@
       view.innerHTML = renderPeople();
       bindPeopleForms();
     } else if (currentRoute === "calendar") {
-      view.innerHTML = renderPlaceholder("calendar", "Planning", "Calendar", "The Supabase schema has calendar_events ready for the private dashboard calendar.", [
-        { title: "Month View", status: "Planned", copy: "Browse commitments and schedule blocks from the dashboard." },
-        { title: "Daily Brief", status: "Planned", copy: "Summarize today, tomorrow, and upcoming commitments before the day starts." },
-        { title: "AI Suggestions", status: "Planned", copy: "Suggest whether to accept, decline, or reshape plans based on preferences." },
-      ]);
+      view.innerHTML = renderCalendar();
+      bindCalendarForms();
     } else if (currentRoute === "tasks") {
       view.innerHTML = renderPlaceholder("tasks", "Execution", "Tasks", "The tasks table is ready for priorities, due dates, statuses, and AI-created action items.", [
         { title: "Today", status: "Planned", copy: "A compact list of what actually needs attention." },
@@ -678,6 +925,126 @@
         { title: "AI Triage", status: "Future", copy: "Summarize leads and suggest follow-up responses." },
       ]);
     }
+  }
+
+  function bindCalendarForms() {
+    const calendarButtons = [...document.querySelectorAll("[data-calendar-action]")];
+    const form = document.getElementById("qappCalendarForm");
+
+    calendarButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        const action = button.dataset.calendarAction || "";
+        const eventId = button.dataset.eventId || "";
+        if (action === "reload") {
+          loadCalendarData();
+          return;
+        }
+        if (action === "prev-month") {
+          calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
+          selectedCalendarDate = toDateKey(calendarCursor);
+          await loadCalendarData();
+          return;
+        }
+        if (action === "next-month") {
+          calendarCursor = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 1, 1);
+          selectedCalendarDate = toDateKey(calendarCursor);
+          await loadCalendarData();
+          return;
+        }
+        if (action === "today") {
+          const today = new Date();
+          calendarCursor = new Date(today.getFullYear(), today.getMonth(), 1);
+          selectedCalendarDate = toDateKey(today);
+          await loadCalendarData();
+          return;
+        }
+        if (action === "select-day") {
+          selectedCalendarDate = button.dataset.date || selectedCalendarDate;
+          const selectedDate = new Date(`${selectedCalendarDate}T12:00:00`);
+          if (Number.isFinite(selectedDate.getTime()) && selectedDate.getMonth() !== calendarCursor.getMonth()) {
+            calendarCursor = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+            await loadCalendarData();
+          } else {
+            render();
+          }
+          return;
+        }
+        if (action === "new-event") {
+          editingCalendarEventId = "";
+          calendarMode = "form";
+          render();
+          return;
+        }
+        if (action === "edit-event") {
+          editingCalendarEventId = eventId;
+          calendarMode = "form";
+          render();
+          return;
+        }
+        if (action === "back-month") {
+          editingCalendarEventId = "";
+          calendarMode = "month";
+          render();
+          return;
+        }
+        if (action === "delete-event") {
+          if (!eventId) return;
+          if (!window.confirm("Delete this calendar event?")) return;
+          try {
+            await apiJson("/api/calendar-events", { method: "DELETE", body: { id: eventId } });
+            editingCalendarEventId = "";
+            calendarMode = "month";
+            await loadCalendarData();
+          } catch (error) {
+            window.alert(error?.message || "Unable to delete event.");
+          }
+        }
+      });
+    });
+
+    if (!form) return;
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submitButton = form.querySelector('button[type="submit"]');
+      const formData = new FormData(form);
+      const id = String(formData.get("id") || "").trim();
+      const startsAt = fromDateTimeLocal(formData.get("startsAt"));
+      const endsAt = fromDateTimeLocal(formData.get("endsAt"));
+      if (!startsAt) {
+        window.alert("A valid start date is required.");
+        return;
+      }
+      submitButton.disabled = true;
+      submitButton.textContent = "Saving...";
+      try {
+        await apiJson("/api/calendar-events", {
+          method: id ? "PATCH" : "POST",
+          body: {
+            id,
+            title: String(formData.get("title") || "").trim(),
+            description: String(formData.get("description") || "").trim(),
+            location: String(formData.get("location") || "").trim(),
+            startsAt,
+            endsAt,
+            allDay: formData.get("allDay") === "on",
+            status: String(formData.get("status") || "confirmed"),
+          },
+        });
+        selectedCalendarDate = toDateKey(startsAt) || selectedCalendarDate;
+        const selectedDate = new Date(`${selectedCalendarDate}T12:00:00`);
+        if (Number.isFinite(selectedDate.getTime())) {
+          calendarCursor = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+        }
+        editingCalendarEventId = "";
+        calendarMode = "month";
+        await loadCalendarData();
+      } catch (error) {
+        window.alert(error?.message || "Unable to save event.");
+        submitButton.disabled = false;
+        submitButton.textContent = id ? "Save Event" : "Create Event";
+      }
+    });
   }
 
   function bindPeopleForms() {

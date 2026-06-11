@@ -5183,7 +5183,8 @@ body.nav-menu-open {
 }
 
 .qapp-capture-form input,
-.qapp-capture-form textarea {
+.qapp-capture-form textarea,
+.qapp-capture-form select {
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid var(--qapp-border);
   border-radius: 8px;
@@ -5197,6 +5198,10 @@ body.nav-menu-open {
   min-height: 112px;
   padding: 14px;
   resize: vertical;
+}
+
+.qapp-capture-form select {
+  appearance: none;
 }
 
 .qapp-capture-form .qapp-check-row input {
@@ -5286,6 +5291,163 @@ body.nav-menu-open {
 .qapp-suggestion span {
   color: var(--qapp-muted);
   font-size: 0.76rem;
+}
+
+.qapp-calendar-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.qapp-calendar-toolbar {
+  align-items: center;
+  background: var(--qapp-panel);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.qapp-calendar-toolbar h3 {
+  font-size: 1.12rem;
+  margin: 0;
+}
+
+.qapp-calendar-toolbar p {
+  color: var(--qapp-muted);
+  margin: 4px 0 0;
+}
+
+.qapp-calendar-layout {
+  align-items: start;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.38fr);
+}
+
+.qapp-calendar-month {
+  display: grid;
+  gap: 10px;
+}
+
+.qapp-calendar-weekdays,
+.qapp-calendar-grid {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.qapp-calendar-weekdays span {
+  color: var(--qapp-muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.qapp-calendar-day {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  color: var(--qapp-text);
+  cursor: pointer;
+  display: grid;
+  gap: 5px;
+  min-height: 104px;
+  padding: 8px;
+  text-align: left;
+}
+
+.qapp-calendar-day:hover,
+.qapp-calendar-day:focus-visible {
+  border-color: var(--qapp-border-strong);
+  outline: none;
+}
+
+.qapp-calendar-day.is-muted {
+  opacity: 0.42;
+}
+
+.qapp-calendar-day.is-today {
+  border-color: rgba(200, 173, 106, 0.42);
+}
+
+.qapp-calendar-day.is-selected {
+  background: rgba(200, 173, 106, 0.12);
+  border-color: rgba(200, 173, 106, 0.58);
+}
+
+.qapp-calendar-day span {
+  font-weight: 900;
+}
+
+.qapp-calendar-day small,
+.qapp-calendar-day em {
+  background: rgba(200, 173, 106, 0.12);
+  border-radius: 6px;
+  color: #ead7a1;
+  display: block;
+  font-size: 0.68rem;
+  font-style: normal;
+  line-height: 1.25;
+  overflow: hidden;
+  padding: 4px 6px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qapp-calendar-agenda {
+  display: grid;
+  gap: 14px;
+  position: sticky;
+  top: calc(90px + env(safe-area-inset-top, 0px));
+}
+
+.qapp-calendar-event-list {
+  display: grid;
+  gap: 10px;
+}
+
+.qapp-calendar-event,
+.qapp-calendar-upcoming {
+  background: var(--qapp-panel-soft);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  color: var(--qapp-text);
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.qapp-calendar-upcoming {
+  cursor: pointer;
+}
+
+.qapp-calendar-upcoming:hover,
+.qapp-calendar-upcoming:focus-visible {
+  border-color: var(--qapp-border-strong);
+  outline: none;
+}
+
+.qapp-calendar-event span,
+.qapp-calendar-upcoming span {
+  color: var(--qapp-muted);
+  font-size: 0.78rem;
+}
+
+.qapp-calendar-event p {
+  color: var(--qapp-muted);
+  line-height: 1.4;
+  margin: 2px 0 0;
+}
+
+.qapp-calendar-form .qapp-action-row {
+  justify-content: space-between;
 }
 
 .qapp-drawer-overlay {
@@ -5450,8 +5612,33 @@ body.qapp-drawer-open {
   .qapp-profile-meta,
   .qapp-people-toolbar,
   .qapp-review-grid,
-  .qapp-memory-list {
+  .qapp-memory-list,
+  .qapp-calendar-layout {
     grid-template-columns: 1fr;
+  }
+
+  .qapp-calendar-toolbar {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .qapp-calendar-toolbar .qapp-action-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .qapp-calendar-day {
+    border-radius: 6px;
+    min-height: 74px;
+    padding: 6px;
+  }
+
+  .qapp-calendar-day small {
+    display: none;
+  }
+
+  .qapp-calendar-agenda {
+    position: static;
   }
 
   .qapp-person-row {
