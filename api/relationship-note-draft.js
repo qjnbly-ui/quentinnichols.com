@@ -227,6 +227,25 @@ function extractAliasNames(note) {
   return uniqueList(names, 6);
 }
 
+function extractRelationshipOnlyNames(note) {
+  const names = [];
+  const patterns = [
+    /\b(?:his|her|their)\s+(?:daughter|son|kid|child|wife|husband|spouse|mom|mother|dad|father)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
+    /\b(?:daughter|son|kid|child|wife|husband|spouse)\s+([A-Z][a-z]+)(?=\s+(?:has|had|is|was|will|starts|plays|goes|needs|wants)\b|[.,!?]|$)/gi,
+  ];
+  patterns.forEach((pattern) => {
+    for (const match of note.matchAll(pattern)) {
+      names.push(match[1]);
+    }
+  });
+  return uniqueList(names, 8);
+}
+
+function isDirectInteractionName(note, name) {
+  const escapedName = escapeRegExp(name);
+  return new RegExp(`\\b(?:met|saw|visited with|talked to|spoke with|had coffee with|had lunch with)\\s+(?:[^.!?]*\\b)?${escapedName}\\b`, "i").test(note);
+}
+
 function extractMemoryCards(note) {
   const cards = [];
   const knownAs = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\.\s+Known as\s+([A-Z][a-z]+)\b/i)
@@ -330,7 +349,8 @@ function normalizedCardKey(card) {
     .replace(new RegExp(`\\b(next|this|last)\\s+(month|week|year|${WEEKDAYS.join("|")})\\b`, "gi"), "")
     .replace(/\b(before|after)\s+\w+\b/g, "")
     .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+    .trim()
+    .replace(/^(?:a|an|the)\s+/, "");
 
   if (["pet", "pets", "dog", "cat", "border collie", "golden retriever", "horse"].includes(label)) {
     return `pet:${compactValue.split(/\s+/)[0] || compactValue}`;
@@ -429,10 +449,24 @@ function normalizePossiblePeople(draftPossiblePeople, scriptPossiblePeople, know
 
 function sanitizeDraft(draft, scriptDraft, note, knownPeople = []) {
   const petNames = new Set(extractPetNames(note).map((name) => name.toLowerCase()));
+  const relationshipOnlyNames = new Set(extractRelationshipOnlyNames(note).map((name) => name.toLowerCase()));
   const people = normalizeDraftPeople(draft.people, scriptDraft.people, knownPeople, note);
   const possiblePeople = normalizePossiblePeople(draft.possiblePeople, scriptDraft.possiblePeople, knownPeople, note);
-  const cleanPossiblePeople = possiblePeople.filter((person) => !petNames.has(String(person.name || "").toLowerCase()));
+  const cleanPossiblePeople = possiblePeople
+    .filter((person) => !petNames.has(String(person.name || "").toLowerCase()))
+    .filter((person) => {
+      const lowerName = String(person.name || "").toLowerCase();
+      return !relationshipOnlyNames.has(lowerName) || isDirectInteractionName(note, person.name);
+    });
   const hasExistingPeople = people.length;
+  const personNames = new Set([...people, ...cleanPossiblePeople].map((person) => String(person.name || "").toLowerCase()));
+  const memoryCards = mergeCards(scriptDraft.memoryCards, Array.isArray(draft.memoryCards) ? draft.memoryCards : [])
+    .filter((card) => {
+      const label = String(card.label || "").toLowerCase();
+      const value = String(card.value || "").toLowerCase();
+      if (!RELATION_WORDS.has(label)) return true;
+      return !personNames.has(value);
+    });
   const questions = hasExistingPeople
     ? Array.isArray(draft.questions) ? draft.questions : []
     : cleanPossiblePeople.length ? [`Create a new profile for ${cleanPossiblePeople.map((person) => person.name).join(", ")}?`] : [];
@@ -441,7 +475,7 @@ function sanitizeDraft(draft, scriptDraft, note, knownPeople = []) {
     ...draft,
     people,
     possiblePeople: cleanPossiblePeople,
-    memoryCards: mergeCards(scriptDraft.memoryCards, Array.isArray(draft.memoryCards) ? draft.memoryCards : []),
+    memoryCards,
     reminders: Array.isArray(draft.reminders) && draft.reminders.length ? draft.reminders : scriptDraft.reminders,
     questions: questions.filter((question) => ![...petNames].some((name) => question.toLowerCase().includes(name)))
       .filter((question) => !/\b(their|my|our|his|her)\s+(kid|child|dad|father|mom|mother)\b/i.test(question))
