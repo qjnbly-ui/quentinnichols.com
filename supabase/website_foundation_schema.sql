@@ -348,7 +348,12 @@ begin
 end;
 $$;
 
+alter function public.delete_person_profile(uuid) owner to postgres;
+
+revoke execute on function public.delete_person_profile(uuid) from public;
 grant execute on function public.delete_person_profile(uuid) to authenticated;
+
+revoke execute on function public.handle_new_user() from public;
 
 drop policy if exists "Profiles are owner readable" on public.profiles;
 create policy "Profiles are owner readable"
@@ -432,3 +437,16 @@ on public.ai_context_items for all
 to authenticated
 using (owner_id = auth.uid())
 with check (owner_id = auth.uid());
+
+drop policy if exists "Contact inquiries are authenticated readable" on public.contact_inquiries;
+create policy "Contact inquiries are authenticated readable"
+on public.contact_inquiries for select
+to authenticated
+using (true);
+
+drop policy if exists "Contact inquiries are authenticated manageable" on public.contact_inquiries;
+create policy "Contact inquiries are authenticated manageable"
+on public.contact_inquiries for update
+to authenticated
+using (true)
+with check (true);
