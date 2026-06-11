@@ -3789,6 +3789,115 @@ body.nav-menu-open {
   cursor: pointer;
 }
 
+.ai-page--embedded {
+  --qapp-border: rgba(245, 242, 234, 0.13);
+  --qapp-muted: rgba(245, 242, 234, 0.68);
+  --qapp-text: #f5f2ea;
+  background: #060709;
+  background-image: none;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.ai-page--embedded .site-nav,
+.ai-page--embedded .ai-hero,
+.ai-page--embedded .site-global-footer {
+  display: none;
+}
+
+.ai-page--embedded .ai-main {
+  min-height: 100dvh;
+  overflow: hidden;
+  padding: 0;
+}
+
+.ai-page--embedded .ai-main::before,
+.ai-page--embedded .ai-main::after {
+  display: none;
+}
+
+.ai-page--embedded .ai-chat,
+.ai-page--embedded .ai-inner {
+  height: 100dvh;
+  max-width: none;
+  width: 100%;
+}
+
+.ai-page--embedded .ai-card {
+  animation: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100dvh;
+  margin: 0;
+  min-height: 0;
+  padding: 16px;
+  text-align: left;
+}
+
+.ai-page--embedded .ai-toolbar {
+  margin: 0 0 12px;
+}
+
+.ai-page--embedded .ai-clear,
+.ai-page--embedded .ai-close,
+.ai-page--embedded .ai-tts,
+.ai-page--embedded .ai-tts-stop {
+  border-color: var(--qapp-border, rgba(245, 242, 234, 0.13));
+  color: var(--qapp-muted, rgba(245, 242, 234, 0.68));
+}
+
+.ai-page--embedded .ai-log {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--qapp-border, rgba(245, 242, 234, 0.13));
+  border-radius: 10px;
+  max-height: none;
+  min-height: 0;
+}
+
+.ai-page--embedded .ai-input {
+  margin-top: 12px;
+  padding-top: 0;
+}
+
+.ai-page--embedded .ai-input-row textarea {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--qapp-border, rgba(245, 242, 234, 0.13));
+  border-radius: 10px;
+  color: var(--qapp-text, #f5f2ea);
+}
+
+.ai-page--embedded .ai-input-row button,
+.ai-page--embedded .ai-voice-send-btn {
+  background: var(--qapp-text, #f5f2ea);
+  border: 0;
+  border-radius: 999px;
+  color: #090909;
+  font-weight: 900;
+}
+
+.ai-page--embedded .ai-voice-btn,
+.ai-page--embedded .ai-voice-cancel-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--qapp-border, rgba(245, 242, 234, 0.13));
+  border-radius: 999px;
+}
+
+.ai-page--embedded .ai-bubble {
+  border-radius: 10px;
+}
+
+.ai-page--embedded .ai-bubble--user {
+  background: rgba(245, 242, 234, 0.1);
+}
+
+.ai-page--embedded .ai-bubble--assistant {
+  background: rgba(255, 255, 255, 0.04);
+}
+
 @keyframes ai-rise {
   from {
     opacity: 0;

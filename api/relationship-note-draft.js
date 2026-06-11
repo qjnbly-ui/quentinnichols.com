@@ -197,28 +197,85 @@ function extractMemoryCards(note) {
   return cards.slice(0, 6);
 }
 
+function normalizeCard(card) {
+  const label = cleanText(card.label, 120);
+  let value = cleanText(card.value, 1000);
+  if (!label || !value) return null;
+
+  let normalizedLabel = label;
+  const petValue = value.match(/^([A-Z][a-z]+)\s*,\s*(.+)$/);
+  if (label.toLowerCase() === "pet" && petValue) {
+    value = petValue[1];
+    normalizedLabel = titleCase(petValue[2]);
+  }
+
+  return {
+    ...card,
+    label: normalizedLabel,
+    value,
+    confidence: Number.isFinite(Number(card.confidence)) ? Number(card.confidence) : 0.7,
+  };
+}
+
+function normalizedCardKey(card) {
+  const label = cleanText(card.label, 120).toLowerCase();
+  const value = cleanText(card.value, 1000).toLowerCase();
+  const compactValue = value
+    .replace(/\b(next|this|last)\s+(month|week|year)\b/g, "")
+    .replace(/\b(before|after)\s+\w+\b/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+  if (["pet", "dog", "cat", "border collie", "horse"].includes(label)) {
+    return `pet:${compactValue.split(/\s+/)[0] || compactValue}`;
+  }
+  if (label.includes("trip") || label.includes("travel") || value.includes("glacier national park")) {
+    return `trip:${compactValue}`;
+  }
+  if (label.includes("hobby")) {
+    return `hobby:${compactValue}`;
+  }
+  return `${label}:${compactValue}`;
+}
+
+function cardScore(card) {
+  const label = cleanText(card.label, 120).toLowerCase();
+  const value = cleanText(card.value, 1000).toLowerCase();
+  let score = Number(card.confidence) || 0;
+  if (label !== "pet") score += 0.2;
+  if (/\b(next|this|last)\s+(month|week|year)\b/.test(value)) score += 0.2;
+  if (label === "border collie") score += 0.2;
+  return score;
+}
+
 function mergeCards(primaryCards, fallbackCards) {
-  const seen = new Set();
-  return [...primaryCards, ...fallbackCards]
-    .filter((card) => card && cleanText(card.label, 120) && cleanText(card.value, 1000))
-    .filter((card) => {
-      const key = `${cleanText(card.label, 120).toLowerCase()}::${cleanText(card.value, 1000).toLowerCase()}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, 8);
+  const cardsByKey = new Map();
+  [...primaryCards, ...fallbackCards]
+    .map(normalizeCard)
+    .filter(Boolean)
+    .forEach((card) => {
+      const key = normalizedCardKey(card);
+      const existing = cardsByKey.get(key);
+      if (!existing || cardScore(card) > cardScore(existing)) {
+        cardsByKey.set(key, card);
+      }
+    });
+  return [...cardsByKey.values()].slice(0, 8);
 }
 
 function sanitizeDraft(draft, scriptDraft, note) {
   const petNames = new Set(extractPetNames(note).map((name) => name.toLowerCase()));
   const possiblePeople = Array.isArray(draft.possiblePeople) ? draft.possiblePeople : [];
-  const questions = Array.isArray(draft.questions) ? draft.questions : [];
+  const cleanPossiblePeople = possiblePeople.filter((person) => !petNames.has(String(person.name || "").toLowerCase()));
+  const hasExistingPeople = Array.isArray(draft.people) && draft.people.length;
+  const questions = hasExistingPeople
+    ? Array.isArray(draft.questions) ? draft.questions : []
+    : cleanPossiblePeople.length ? [`Create a new profile for ${cleanPossiblePeople.map((person) => person.name).join(", ")}?`] : [];
   return {
     ...scriptDraft,
     ...draft,
     people: Array.isArray(draft.people) ? draft.people : scriptDraft.people,
-    possiblePeople: possiblePeople.filter((person) => !petNames.has(String(person.name || "").toLowerCase())),
+    possiblePeople: cleanPossiblePeople,
     memoryCards: mergeCards(Array.isArray(draft.memoryCards) ? draft.memoryCards : [], scriptDraft.memoryCards),
     reminders: Array.isArray(draft.reminders) && draft.reminders.length ? draft.reminders : scriptDraft.reminders,
     questions: questions.filter((question) => ![...petNames].some((name) => question.toLowerCase().includes(name))),
@@ -279,7 +336,7 @@ function buildScriptDraft(note, people) {
     memoryCards,
     reminders,
     questions: possiblePeople.length
-      ? [`Did you mean an existing person when you mentioned ${possiblePeople.map((person) => person.name).join(", ")}?`]
+      ? [`Create a new profile for ${possiblePeople.map((person) => person.name).join(", ")}?`]
       : [],
   };
 }

@@ -19,6 +19,11 @@
   </script>
 </head>
 <body class="ai-page">
+  <script>
+    if (new URLSearchParams(window.location.search).get("embed") === "app") {
+      document.body.classList.add("ai-page--embedded");
+    }
+  </script>
   <nav class="site-nav" aria-label="Site">
     <div class="nav-shell">
       <details class="nav-menu">

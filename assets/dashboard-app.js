@@ -656,7 +656,7 @@
   function renderAiAssistant() {
     return `
       <section class="qapp-ai-app-shell" aria-label="AI Assistant">
-        <iframe class="qapp-ai-frame" src="/AI/" title="Quentin Nichols AI"></iframe>
+        <iframe class="qapp-ai-frame" src="/AI/?embed=app" title="Quentin Nichols AI"></iframe>
       </section>
     `;
   }
