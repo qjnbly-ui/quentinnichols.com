@@ -259,12 +259,21 @@ function extractTopics(note) {
 
 function extractDateHint(note) {
   const lowerNote = note.toLowerCase();
+  const exactWeekday = note.match(new RegExp(`\\b(?:next|this|last)\\s+(${WEEKDAYS.join("|")})\\b`, "i"));
+  if (exactWeekday) return exactWeekday[0];
+  const futureRelative = ["this weekend", "next month", "next week", "tomorrow", "tonight"].find((term) => lowerNote.includes(term));
+  if (futureRelative) return futureRelative;
   const weekday = WEEKDAYS.find((day) => new RegExp(`\\b${day}\\b`, "i").test(lowerNote));
   if (weekday) return weekday;
-  const relative = ["next month", "next week", "tomorrow", "tonight", "today"].find((term) => lowerNote.includes(term));
+  const relative = ["today"].find((term) => lowerNote.includes(term));
   if (relative) return relative;
   const dateMatch = note.match(/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}\b/i);
   return dateMatch?.[0] || "";
+}
+
+function sentenceForName(note, name) {
+  const escapedName = escapeRegExp(name);
+  return note.split(/(?<=[.!?])\s+/).find((sentence) => new RegExp(`\\b${escapedName}\\b`, "i").test(sentence)) || "";
 }
 
 function extractPetNames(note) {
@@ -363,8 +372,8 @@ function extractMemoryCards(note) {
     const workValue = work[1].split(/\s+and\s+(?:is|was|has|will|asked|mentioned|said)\b/i)[0];
     cards.push({ label: "Work", value: cleanText(workValue, 180), confidence: 0.76 });
   }
-  const event = note.match(/\b(?:preparing for|getting ready for|going to|attending|hosting)\s+(?:an?\s+)?([^.!?]+?\b(?:market|booth|show|event|conference|wedding|graduation|dinner)\b[^.!?]*)/i)
-    || note.match(/\b(?:preparing|making|bringing|cooking)\s+(?:food|dessert|meal|meals|catering)?\s*for\s+(?:an?\s+)?([^.!?]+?\b(?:market|booth|show|event|conference|wedding|graduation|dinner)\b[^.!?]*)/i);
+  const event = note.match(/\b(?:preparing for|getting ready for|going to|attending|hosting|organizing|helping organize)\s+(?:an?\s+)?([^.!?]+?\b(?:market|booth|show|event|conference|wedding|graduation|dinner|fundraiser|breakfast)\b[^.!?]*)/i)
+    || note.match(/\b(?:preparing|making|bringing|cooking)\s+(?:food|dessert|meal|meals|catering)?\s*for\s+(?:an?\s+)?([^.!?]+?\b(?:market|booth|show|event|conference|wedding|graduation|dinner|fundraiser|breakfast)\b[^.!?]*)/i);
   if (event) {
     cards.push({ label: "Upcoming Event", value: cleanText(event[1], 180), confidence: 0.78 });
   }
@@ -481,6 +490,49 @@ function mergeCards(primaryCards, fallbackCards) {
   return [...cardsByKey.values()].slice(0, 8);
 }
 
+function normalizedReminderKey(reminder) {
+  return cleanText(reminder.title, 220)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(ask|check|follow|up|back|about|the|a|an)\b/g, " ")
+    .trim();
+}
+
+function cleanReminder(reminder) {
+  const title = cleanText(reminder.title, 220)
+    .replace(/^Back About\b/i, "Check back about")
+    .replace(/^Check Recovery\b/i, "Check recovery");
+  if (!title) return null;
+  return {
+    title,
+    details: cleanText(reminder.details, 260),
+    confidence: Number.isFinite(Number(reminder.confidence)) ? Number(reminder.confidence) : 0.7,
+  };
+}
+
+function mergeReminders(primaryReminders, fallbackReminders) {
+  const remindersByKey = new Map();
+  [...primaryReminders, ...fallbackReminders]
+    .map(cleanReminder)
+    .filter(Boolean)
+    .forEach((reminder) => {
+      const key = normalizedReminderKey(reminder);
+      const existing = remindersByKey.get(key);
+      if (!existing || reminder.confidence > existing.confidence) {
+        remindersByKey.set(key, reminder);
+      }
+    });
+  return [...remindersByKey.values()].slice(0, 6);
+}
+
+function chooseDateHint(scriptDateHint, draftDateHint) {
+  const scriptHint = cleanText(scriptDateHint, 80);
+  const draftHint = cleanText(draftDateHint, 80);
+  if (!draftHint) return scriptHint;
+  if (draftHint.toLowerCase() === "today" && scriptHint && scriptHint.toLowerCase() !== "today") return scriptHint;
+  return draftHint;
+}
+
 function normalizeDraftPeople(draftPeople, scriptPeople, knownPeople, note) {
   const knownById = new Map(knownPeople.map((person) => [person.id, person]));
   const knownByName = new Map(knownPeople.map((person) => [person.name.toLowerCase(), person]));
@@ -553,19 +605,21 @@ function sanitizeDraft(draft, scriptDraft, note, knownPeople = []) {
   const questions = hasExistingPeople
     ? Array.isArray(draft.questions) ? draft.questions : []
     : cleanPossiblePeople.length ? [`Create a new profile for ${cleanPossiblePeople.map((person) => person.name).join(", ")}?`] : [];
+  const draftInteraction = draft.interaction && typeof draft.interaction === "object" ? draft.interaction : {};
   return {
     ...scriptDraft,
     ...draft,
     people,
     possiblePeople: cleanPossiblePeople,
     memoryCards,
-    reminders: Array.isArray(draft.reminders) && draft.reminders.length ? draft.reminders : scriptDraft.reminders,
+    reminders: mergeReminders(scriptDraft.reminders, Array.isArray(draft.reminders) ? draft.reminders : []),
     questions: questions.filter((question) => ![...petNames].some((name) => question.toLowerCase().includes(name)))
       .filter((question) => !/\b(their|my|our|his|her)\s+(kid|child|dad|father|mom|mother)\b/i.test(question))
       .filter((question) => !/quentin nichols/i.test(question)),
     interaction: {
       ...scriptDraft.interaction,
-      ...(draft.interaction && typeof draft.interaction === "object" ? draft.interaction : {}),
+      ...draftInteraction,
+      dateHint: chooseDateHint(scriptDraft.interaction?.dateHint, draftInteraction.dateHint),
       notes: note,
     },
   };
@@ -576,14 +630,37 @@ function extractReminder(note, topics, dateHint) {
   const hasFollowUpSignal = /\b(ask|follow up|check|remind|next time|later)\b/.test(lowerNote);
   const importantTopic = topics.find((topic) => ["exam", "surgery", "promotion", "roof", "graduation", "dinner", "appointment"].includes(topic));
   if (!hasFollowUpSignal && !importantTopic) return [];
+  const reminders = [];
+
+  const personOutcomePattern = /\bask\s+how\s+([A-Z][a-z]+)(?:['’]s)?\s+([^.!?,]+?)\s+went\b/gi;
+  for (const match of note.matchAll(personOutcomePattern)) {
+    const localDateHint = extractDateHint(sentenceForName(note, match[1]));
+    reminders.push({
+      title: `Ask about ${titleCase(match[1])}'s ${cleanText(match[2], 100)}`,
+      details: localDateHint ? `Possible timing mentioned: ${localDateHint}` : dateHint ? `Possible timing mentioned: ${dateHint}` : "",
+      confidence: 0.82,
+    });
+  }
+
+  const recoveryPattern = /\bcheck\s+back\s+about\s+([A-Z][a-z]+)(?:['’]s)?\s+recovery\b/gi;
+  for (const match of note.matchAll(recoveryPattern)) {
+    reminders.push({
+      title: `Check back about ${titleCase(match[1])}'s recovery`,
+      details: note.match(new RegExp(`\\b${escapeRegExp(match[1])}\\b[^.!?]*?\\b(surgery|appointment)[^.!?]*`, "i"))?.[0] || "",
+      confidence: 0.84,
+    });
+  }
+
   const petAppointment = note.match(new RegExp(`\\b(?:his|her|their|my)\\s+(?:${PET_TYPE_PATTERN})\\s+([A-Z][a-z]+)\\s+has\\s+(?:an?\\s+)?([^.!?]*?appointment[^.!?]*?)(?:,?\\s+and\\s+I\\s+should\\s+ask\\s+how\\s+it\\s+went)?[.!?]`, "i"));
   if (petAppointment) {
-    return [{
+    reminders.push({
       title: `Ask about ${petAppointment[1]}'s appointment`,
       details: cleanText(petAppointment[2], 220),
       confidence: 0.84,
-    }];
+    });
   }
+  if (reminders.length) return mergeReminders(reminders, []);
+
   const reminderMatch = note.match(/\bremind\s+(?:him|her|them|me)?\s*(?:about|to)?\s*([^.!?]+)/i)
     || note.match(/\b(?:check|follow up(?: on)?|ask about)\s+([^.!?]+)/i);
   if (reminderMatch) {
