@@ -248,7 +248,33 @@ function recentUserText(messages) {
     .join("\n");
 }
 
-function nextWeekdayDate(weekdayName, baseDate = new Date()) {
+function getZonedDateParts(date = new Date(), timeZone = USER_TIME_ZONE) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const year = Number(values.year);
+  const month = Number(values.month);
+  const day = Number(values.day);
+  if (!year || !month || !day) return null;
+  const weekday = new Date(Date.UTC(year, month - 1, day, 12)).getUTCDay();
+  return { year, month, day, weekday };
+}
+
+function addDaysToParts(parts, days) {
+  const date = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + days, 12));
+  return {
+    year: date.getUTCFullYear(),
+    month: date.getUTCMonth() + 1,
+    day: date.getUTCDate(),
+    weekday: date.getUTCDay(),
+  };
+}
+
+function nextWeekdayParts(weekdayName, baseDate = new Date()) {
   const weekdays = {
     sunday: 0,
     monday: 1,
@@ -260,12 +286,47 @@ function nextWeekdayDate(weekdayName, baseDate = new Date()) {
   };
   const target = weekdays[String(weekdayName || "").toLowerCase()];
   if (target === undefined) return null;
-  const date = new Date(baseDate);
-  date.setHours(0, 0, 0, 0);
-  let daysUntil = (target - date.getDay() + 7) % 7;
+  const parts = getZonedDateParts(baseDate);
+  if (!parts) return null;
+  let daysUntil = (target - parts.weekday + 7) % 7;
   if (daysUntil === 0) daysUntil = 7;
-  date.setDate(date.getDate() + daysUntil);
-  return date;
+  return addDaysToParts(parts, daysUntil);
+}
+
+function timeZoneOffsetMs(date, timeZone = USER_TIME_ZONE) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  const asUtc = Date.UTC(
+    Number(values.year),
+    Number(values.month) - 1,
+    Number(values.day),
+    Number(values.hour),
+    Number(values.minute),
+    Number(values.second)
+  );
+  return asUtc - date.getTime();
+}
+
+function zonedDateTimeToIso(parts, time, timeZone = USER_TIME_ZONE) {
+  const utcGuess = Date.UTC(parts.year, parts.month - 1, parts.day, time.hours, time.minutes, 0);
+  const firstPass = new Date(utcGuess - timeZoneOffsetMs(new Date(utcGuess), timeZone));
+  const secondPass = new Date(utcGuess - timeZoneOffsetMs(firstPass, timeZone));
+  return secondPass.toISOString();
+}
+
+function addHoursIso(isoDate, hours) {
+  const date = new Date(isoDate);
+  date.setUTCHours(date.getUTCHours() + hours);
+  return date.toISOString();
 }
 
 function parseClockTime(text) {
@@ -309,20 +370,19 @@ function buildCalendarAction(messages) {
   if (!wantsCalendar && !(hasDateSignal && clock)) return null;
 
   const weekdayMatch = latest.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i);
-  let startsAt = null;
+  let dateParts = null;
   if (/\btomorrow\b/i.test(latest)) {
-    startsAt = new Date();
-    startsAt.setDate(startsAt.getDate() + 1);
+    const today = getZonedDateParts();
+    dateParts = today ? addDaysToParts(today, 1) : null;
   } else if (/\btoday|tonight\b/i.test(latest)) {
-    startsAt = new Date();
+    dateParts = getZonedDateParts();
   } else if (weekdayMatch) {
-    startsAt = nextWeekdayDate(weekdayMatch[1]);
+    dateParts = nextWeekdayParts(weekdayMatch[1]);
   }
 
-  if (!startsAt || !clock) return null;
-  startsAt.setHours(clock.hours, clock.minutes, 0, 0);
-  const endsAt = new Date(startsAt);
-  endsAt.setHours(endsAt.getHours() + 1);
+  if (!dateParts || !clock) return null;
+  const startsAt = zonedDateTimeToIso(dateParts, clock);
+  const endsAt = addHoursIso(startsAt, 1);
 
   const title = cleanCalendarTitle(latest);
   if (!title || title.length < 2) return null;
@@ -333,8 +393,8 @@ function buildCalendarAction(messages) {
     label: "Add calendar event",
     payload: {
       title,
-      startsAt: startsAt.toISOString(),
-      endsAt: endsAt.toISOString(),
+      startsAt,
+      endsAt,
       allDay: false,
       status: "confirmed",
       source: "ai_assistant",

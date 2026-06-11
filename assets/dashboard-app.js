@@ -842,7 +842,7 @@
               ${selectedEvents.length ? selectedEvents.map((event) => `
                 <article class="qapp-calendar-event">
                   <span>${escapeHtml(formatEventTime(event))}</span>
-                  <strong>${escapeHtml(event.title)}</strong>
+                  <button class="qapp-calendar-event-title" data-calendar-action="edit-event" data-event-id="${escapeHtml(event.id)}" type="button">${escapeHtml(event.title)}</button>
                   ${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}
                   ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
                   <div class="qapp-item-actions">
@@ -858,7 +858,7 @@
             </div>
             <div class="qapp-calendar-event-list">
               ${upcomingEvents.length ? upcomingEvents.map((event) => `
-                <button class="qapp-calendar-upcoming" data-calendar-action="select-day" data-date="${escapeHtml(toDateKey(event.starts_at))}" type="button">
+                <button class="qapp-calendar-upcoming" data-calendar-action="edit-event" data-event-id="${escapeHtml(event.id)}" type="button">
                   <strong>${escapeHtml(event.title)}</strong>
                   <span>${escapeHtml(formatDate(event.starts_at))} · ${escapeHtml(formatEventTime(event))}</span>
                 </button>

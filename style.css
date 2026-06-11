@@ -5487,6 +5487,25 @@ body.nav-menu-open {
   cursor: pointer;
 }
 
+.qapp-calendar-event-title {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--qapp-text);
+  cursor: pointer;
+  display: block;
+  font: inherit;
+  font-weight: 900;
+  padding: 0;
+  text-align: left;
+}
+
+.qapp-calendar-event-title:hover,
+.qapp-calendar-event-title:focus-visible {
+  color: var(--qapp-gold);
+  outline: none;
+}
+
 .qapp-calendar-upcoming:hover,
 .qapp-calendar-upcoming:focus-visible {
   border-color: var(--qapp-border-strong);
