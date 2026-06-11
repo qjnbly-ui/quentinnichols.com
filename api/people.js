@@ -16,14 +16,16 @@ function looksLikeUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(String(value || ""));
 }
 
-async function deleteRows(supabaseRest, path, fallbackMessage) {
+async function deleteRows(supabaseRest, path, fallbackMessage, { optional = false } = {}) {
   const response = await supabaseRest(path, { method: "DELETE" });
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
+    if (optional) return false;
     const error = new Error(payload?.message || fallbackMessage);
     error.statusCode = response.status;
     throw error;
   }
+  return true;
 }
 
 module.exports = async function handler(req, res) {
@@ -33,7 +35,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { user, supabaseRest } = await getAuthedSupabase(req);
+    const { user, supabaseRest, supabaseAdminRest } = await getAuthedSupabase(req);
 
     if (req.method === "GET") {
       const response = await supabaseRest(
@@ -48,8 +50,9 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    const requestUrl = new URL(req.url, `https://${req.headers.host || "localhost"}`);
     const body = await readJsonBody(req);
-    const id = cleanText(body.id, 80);
+    const id = cleanText(body.id || requestUrl.searchParams.get("id"), 80);
 
     if (req.method === "DELETE") {
       if (!looksLikeUuid(id)) {
@@ -57,12 +60,19 @@ module.exports = async function handler(req, res) {
         return;
       }
 
-      const personFilter = `person_id=eq.${encodeURIComponent(id)}`;
-      await deleteRows(supabaseRest, `person_follow_up_reminders?${personFilter}`, "Unable to delete profile reminders.");
-      await deleteRows(supabaseRest, `person_memory_cards?${personFilter}`, "Unable to delete profile memory cards.");
-      await deleteRows(supabaseRest, `person_interactions?${personFilter}`, "Unable to delete profile interactions.");
-      await deleteRows(supabaseRest, `ai_context_items?source_type=eq.person&source_id=eq.${encodeURIComponent(id)}`, "Unable to delete profile AI context.");
-      await deleteRows(supabaseRest, `people?id=eq.${encodeURIComponent(id)}`, "Unable to delete person.");
+      const deleteRest = supabaseAdminRest || supabaseRest;
+      const ownerFilter = `owner_id=eq.${encodeURIComponent(user.id)}`;
+      const personFilter = `person_id=eq.${encodeURIComponent(id)}&${ownerFilter}`;
+      await deleteRows(deleteRest, `person_follow_up_reminders?${personFilter}`, "Unable to delete profile reminders.");
+      await deleteRows(deleteRest, `person_memory_cards?${personFilter}`, "Unable to delete profile memory cards.");
+      await deleteRows(deleteRest, `person_interactions?${personFilter}`, "Unable to delete profile interactions.");
+      await deleteRows(
+        deleteRest,
+        `ai_context_items?${ownerFilter}&source_type=eq.person&source_id=eq.${encodeURIComponent(id)}`,
+        "Unable to delete profile AI context.",
+        { optional: true }
+      );
+      await deleteRows(deleteRest, `people?id=eq.${encodeURIComponent(id)}&${ownerFilter}`, "Unable to delete person.");
 
       json(res, 200, { ok: true });
       return;

@@ -29,6 +29,7 @@ function json(res, statusCode, payload) {
 async function getAuthedSupabase(req) {
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!supabaseUrl || !supabaseAnonKey) {
     const error = new Error("Missing SUPABASE_URL or SUPABASE_ANON_KEY.");
     error.statusCode = 500;
@@ -84,7 +85,28 @@ async function getAuthedSupabase(req) {
     });
   }
 
-  return { user, supabaseRest };
+  async function supabaseAdminRest(path, options = {}) {
+    if (!supabaseServiceRoleKey) return supabaseRest(path, options);
+    const method = options.method || "GET";
+    const headers = {
+      apikey: supabaseServiceRoleKey,
+      Authorization: `Bearer ${supabaseServiceRoleKey}`,
+      Accept: "application/json",
+      ...options.headers,
+    };
+
+    if (options.body !== undefined) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    return fetch(`${supabaseUrl}/rest/v1/${path}`, {
+      method,
+      headers,
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    });
+  }
+
+  return { user, supabaseRest, supabaseAdminRest };
 }
 
 async function handleApiError(res, error) {
