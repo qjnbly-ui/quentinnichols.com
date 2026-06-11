@@ -504,45 +504,45 @@
   function renderPeopleCapture() {
     const selectedPerson = selectedPersonId ? notebook.people.find((person) => person.id === selectedPersonId) : null;
     return `
-      ${sectionHeader("Relationship Memory", "Add Conversation", "Write it naturally first. The app will suggest who it belongs to, what to remember, and what to follow up on.")}
+      ${sectionHeader("Relationship Memory", "Add Conversation", "Capture the interaction in plain language. The app will identify related people, key details, and possible follow-ups before saving.")}
       <section class="qapp-panel">
         <button class="qapp-text-button" data-action="back-to-people" type="button">Back to people</button>
         <form id="qappQuickCapture" class="qapp-capture-form">
           <div class="qapp-form-section">
             <div class="qapp-form-section-title">
-              <p class="qapp-kicker">Smart Capture</p>
-              <h3>Type or dictate the whole interaction</h3>
+              <p class="qapp-kicker">Capture</p>
+              <h3>Record the conversation or event</h3>
             </div>
             <label>
-              <span>Conversation note</span>
-              <textarea name="note" rows="6" placeholder="Visited with Marla and Bruce. Marla said Wyatt's graduation dinner is Friday. Bruce mentioned the roof project is still delayed.">${escapeHtml(relationshipCaptureNote)}</textarea>
+              <span>Notes</span>
+              <textarea name="note" rows="6" placeholder="Example: Met with Jordan after work. He mentioned his daughter starts college next month, his roof project is still delayed, and he wants to compare bids before winter.">${escapeHtml(relationshipCaptureNote)}</textarea>
             </label>
-            <button class="qapp-inline-button" data-action="review-relationship-note" type="button">Review Note</button>
+            <button class="qapp-inline-button" data-action="review-relationship-note" type="button">Review Before Saving</button>
           </div>
 
           ${renderRelationshipDraft()}
 
           <details class="qapp-optional-details">
-            <summary>Optional manual details</summary>
+            <summary>Advanced details</summary>
             <div class="qapp-form-section">
               <div class="qapp-form-section-title">
                 <p class="qapp-kicker">Contact Profile</p>
-                <h3>Only fill this if the note needs help</h3>
+                <h3>Override suggested profile details when needed</h3>
               </div>
               <div class="qapp-capture-grid">
                 <label class="qapp-person-picker">
                   <span>Name</span>
                   <input name="personId" type="hidden" value="${escapeHtml(selectedPerson?.id || "")}">
-                  <input name="name" type="text" value="${escapeHtml(selectedPerson?.name || "")}" placeholder="John">
+                  <input name="name" type="text" value="${escapeHtml(selectedPerson?.name || "")}" placeholder="Full name">
                   <div id="qappPersonSuggestions" class="qapp-suggestions" hidden></div>
                 </label>
                 <label>
                   <span>Tags</span>
-                  <input name="tags" type="text" value="${escapeHtml((selectedPerson?.tags || []).join(", "))}" placeholder="Friend, Fire Department, Customer">
+                  <input name="tags" type="text" value="${escapeHtml((selectedPerson?.tags || []).join(", "))}" placeholder="Friend, coworker, client">
                 </label>
                 <label>
                   <span>Email</span>
-                  <input name="email" type="email" value="${escapeHtml(selectedPerson?.email || "")}" placeholder="john@example.com">
+                  <input name="email" type="email" value="${escapeHtml(selectedPerson?.email || "")}" placeholder="name@example.com">
                 </label>
                 <label>
                   <span>Phone</span>
@@ -550,7 +550,7 @@
                 </label>
                 <label>
                   <span>Where you met</span>
-                  <input name="firstMetLocation" type="text" value="${escapeHtml(selectedPerson?.first_met_location || selectedPerson?.firstMetLocation || "")}" placeholder="Fire hall">
+                  <input name="firstMetLocation" type="text" value="${escapeHtml(selectedPerson?.first_met_location || selectedPerson?.firstMetLocation || "")}" placeholder="Meeting, event, or location">
                 </label>
                 <label>
                   <span>Photo URL</span>
@@ -559,78 +559,78 @@
               </div>
               <label>
                 <span>Overview</span>
-                <textarea name="overview" rows="3" placeholder="A few words about who they are and what stands out.">${escapeHtml(selectedPerson?.overview || "")}</textarea>
+                <textarea name="overview" rows="3" placeholder="Short profile summary. Leave blank to let the app generate one.">${escapeHtml(selectedPerson?.overview || "")}</textarea>
               </label>
             </div>
 
-          <div class="qapp-form-section">
-            <div class="qapp-form-section-title">
-              <p class="qapp-kicker">Conversation Log</p>
-              <h3>Optional overrides</h3>
+            <div class="qapp-form-section">
+              <div class="qapp-form-section-title">
+                <p class="qapp-kicker">Conversation Log</p>
+                <h3>Optional metadata</h3>
+              </div>
+              <div class="qapp-capture-grid">
+                <label>
+                  <span>Location</span>
+                  <input name="location" type="text" placeholder="Office, call, event, or location">
+                </label>
+                <label>
+                  <span>Tone</span>
+                  <input name="mood" type="text" placeholder="Positive, concerned, rushed">
+                </label>
+                <label>
+                  <span>Topics</span>
+                  <input name="topics" type="text" placeholder="work, family, travel">
+                </label>
+                <label>
+                  <span>Summary override</span>
+                  <input name="aiSummary" type="text" placeholder="Optional one-line summary">
+                </label>
+              </div>
             </div>
-            <div class="qapp-capture-grid">
-              <label>
-                <span>Conversation location</span>
-                <input name="location" type="text" placeholder="Fire hall">
-              </label>
-              <label>
-                <span>Mood</span>
-                <input name="mood" type="text" placeholder="Excited, tired, worried">
-              </label>
-              <label>
-                <span>Topics</span>
-                <input name="topics" type="text" placeholder="family, work, graduation">
-              </label>
-              <label>
-                <span>AI summary</span>
-                <input name="aiSummary" type="text" placeholder="Optional short summary">
-              </label>
-          </div>
-          </div>
 
-          <div class="qapp-form-section">
-            <div class="qapp-form-section-title">
-              <p class="qapp-kicker">Memory Cards</p>
-              <h3>Quick facts to remember next time</h3>
+            <div class="qapp-form-section">
+              <div class="qapp-form-section-title">
+                <p class="qapp-kicker">Memory Cards</p>
+                <h3>Specific facts to keep on the profile</h3>
+              </div>
+              <div class="qapp-memory-input-grid">
+                <label>
+                  <span>Fact 1 label</span>
+                  <input name="memoryLabel1" type="text" placeholder="Family">
+                </label>
+                <label>
+                  <span>Fact 1 value</span>
+                  <input name="memoryValue1" type="text" placeholder="Daughter starts college next month">
+                </label>
+                <label>
+                  <span>Fact 2 label</span>
+                  <input name="memoryLabel2" type="text" placeholder="Project">
+                </label>
+                <label>
+                  <span>Fact 2 value</span>
+                  <input name="memoryValue2" type="text" placeholder="Comparing roof bids before winter">
+                </label>
+              </div>
             </div>
-            <div class="qapp-memory-input-grid">
-              <label>
-                <span>Fact 1 label</span>
-                <input name="memoryLabel1" type="text" placeholder="Daughter">
-              </label>
-              <label>
-                <span>Fact 1 value</span>
-                <input name="memoryValue1" type="text" placeholder="Emily">
-              </label>
-              <label>
-                <span>Fact 2 label</span>
-                <input name="memoryLabel2" type="text" placeholder="Goal">
-              </label>
-              <label>
-                <span>Fact 2 value</span>
-                <input name="memoryValue2" type="text" placeholder="Becoming a paramedic">
-              </label>
-            </div>
-          </div>
 
-          <div class="qapp-form-section">
-            <div class="qapp-form-section-title">
-              <p class="qapp-kicker">Follow-Up Reminder</p>
-              <h3>One thing worth asking about later</h3>
+            <div class="qapp-form-section">
+              <div class="qapp-form-section-title">
+                <p class="qapp-kicker">Follow-Up Reminder</p>
+                <h3>Optional reminder created from this interaction</h3>
+              </div>
+              <div class="qapp-capture-grid">
+                <label>
+                  <span>Reminder</span>
+                  <input name="reminderTitle" type="text" placeholder="Follow up about roof bids">
+                </label>
+                <label>
+                  <span>Reminder date</span>
+                  <input name="remindAt" type="date">
+                </label>
+              </div>
             </div>
-            <div class="qapp-capture-grid">
-              <label>
-                <span>Reminder</span>
-                <input name="reminderTitle" type="text" placeholder="Ask about EMT exam">
-              </label>
-              <label>
-                <span>Remind date</span>
-                <input name="remindAt" type="date">
-              </label>
-            </div>
-          </div>
           </details>
-          <button type="submit">Save Conversation</button>
+          <button type="submit">Save Interaction</button>
         </form>
       </section>
     `;

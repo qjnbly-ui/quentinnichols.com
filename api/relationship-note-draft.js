@@ -27,6 +27,9 @@ const STOPWORDS = new Set([
   "said",
   "met",
   "saw",
+  "he",
+  "she",
+  "it",
 ]);
 
 function cleanText(value, maxLength = 5000) {
@@ -78,11 +81,26 @@ function findKnownPeople(note, people) {
 
 function findPossibleNames(note, knownPeople) {
   const knownNames = new Set(knownPeople.flatMap((person) => person.aliases.map((alias) => alias.toLowerCase())));
-  const matches = note.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
+  const petNames = new Set(extractPetNames(note).map((name) => name.toLowerCase()));
+  const placeNames = new Set(extractPlaceNames(note).map((name) => name.toLowerCase()));
+  const explicitMatches = [];
+  const explicitPatterns = [
+    /\b(?:met|saw|visited with|talked to|spoke with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:at|after|today|yesterday|and|about|because)\b|[.,!?]|$)/gi,
+    /\bwith\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:at|after|today|yesterday|and|about|because)\b|[.,!?]|$)/gi,
+  ];
+  explicitPatterns.forEach((pattern) => {
+    for (const match of note.matchAll(pattern)) {
+      explicitMatches.push(match[1]);
+    }
+  });
+
+  const matches = explicitMatches.length ? explicitMatches : note.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
   return uniqueList(matches, 8)
     .filter((name) => !knownNames.has(name.toLowerCase()))
+    .filter((name) => !petNames.has(name.toLowerCase()))
+    .filter((name) => !placeNames.has(name.toLowerCase()))
     .filter((name) => !STOPWORDS.has(name.toLowerCase()))
-    .map((name) => ({ name: titleCase(name), confidence: 0.45 }));
+    .map((name) => ({ name: titleCase(name), confidence: explicitMatches.length ? 0.9 : 0.45 }));
 }
 
 function extractTopics(note) {
@@ -111,10 +129,38 @@ function extractDateHint(note) {
   const lowerNote = note.toLowerCase();
   const weekday = WEEKDAYS.find((day) => new RegExp(`\\b${day}\\b`, "i").test(lowerNote));
   if (weekday) return weekday;
-  const relative = ["today", "tomorrow", "tonight", "next week", "next month"].find((term) => lowerNote.includes(term));
+  const relative = ["next month", "next week", "tomorrow", "tonight", "today"].find((term) => lowerNote.includes(term));
   if (relative) return relative;
   const dateMatch = note.match(/\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}\b/i);
   return dateMatch?.[0] || "";
+}
+
+function extractPetNames(note) {
+  const names = [];
+  const patterns = [
+    /\b(?:dog|cat|pet|border collie|horse)\s+(?:named|called)\s+([A-Z][a-z]+)\b/gi,
+    /\b([A-Z][a-z]+)\s+(?:the\s+)?(?:dog|cat|border collie|horse)\b/gi,
+  ];
+  patterns.forEach((pattern) => {
+    for (const match of note.matchAll(pattern)) {
+      names.push(match[1]);
+    }
+  });
+  return uniqueList(names, 6);
+}
+
+function extractPlaceNames(note) {
+  const names = [];
+  const patterns = [
+    /\b(?:trip|travel|vacation)\s+to\s+([A-Z][A-Za-z]*(?:\s+[A-Z][A-Za-z]*){0,4})/g,
+    /\bplanning\s+a\s+trip\s+to\s+([A-Z][A-Za-z]*(?:\s+[A-Z][A-Za-z]*){0,4})/g,
+  ];
+  patterns.forEach((pattern) => {
+    for (const match of note.matchAll(pattern)) {
+      names.push(match[1].replace(/\s+(?:next|this|last)\b.*$/i, "").trim());
+    }
+  });
+  return uniqueList(names, 6);
 }
 
 function extractMemoryCards(note) {
@@ -122,6 +168,23 @@ function extractMemoryCards(note) {
   const daughter = note.match(/\b(?:daughter|kid|son|wife|husband|spouse|mom|dad|mother|father)\s+([A-Z][a-z]+)\b/);
   if (daughter) {
     cards.push({ label: titleCase(daughter[0].replace(daughter[1], "").trim()), value: daughter[1], confidence: 0.72 });
+  }
+  const petNames = extractPetNames(note);
+  petNames.forEach((name) => {
+    const petType = note.match(new RegExp(`\\b(border collie|dog|cat|pet|horse)\\s+(?:named\\s+)?${name}\\b`, "i"))?.[1] || "Pet";
+    cards.push({ label: titleCase(petType), value: name, confidence: 0.88 });
+  });
+  const hobby = note.match(/\b((?:repairs|collects|builds|restores|photographs|makes)\s+[^.!?]+?)\s+as a hobby\b/i)
+    || note.match(/\bhobby\s+(?:is|:)\s*([^.!?]+)/i);
+  if (hobby) {
+    const value = cleanText(hobby[1].replace(/^(?:he|she|they)\s+/i, ""), 180);
+    cards.push({ label: "Hobby", value, confidence: 0.78 });
+  }
+  const trip = note.match(/\b(?:trip|travel|vacation)\s+to\s+([^.!?]+)/i)
+    || note.match(/\bplanning\s+a\s+trip\s+to\s+([^.!?]+)/i);
+  if (trip) {
+    const tripValue = trip[1].split(/\s+and\s+(?:asked|said|mentioned|wants|needs)\b/i)[0];
+    cards.push({ label: "Upcoming Trip", value: cleanText(tripValue, 180), confidence: 0.78 });
   }
   const worried = note.match(/\b(?:worried|concerned)\s+about\s+([^.!?]+)/i);
   if (worried) {
@@ -131,7 +194,40 @@ function extractMemoryCards(note) {
   if (goal) {
     cards.push({ label: "Goal", value: cleanText(goal[1], 180), confidence: 0.6 });
   }
-  return cards.slice(0, 4);
+  return cards.slice(0, 6);
+}
+
+function mergeCards(primaryCards, fallbackCards) {
+  const seen = new Set();
+  return [...primaryCards, ...fallbackCards]
+    .filter((card) => card && cleanText(card.label, 120) && cleanText(card.value, 1000))
+    .filter((card) => {
+      const key = `${cleanText(card.label, 120).toLowerCase()}::${cleanText(card.value, 1000).toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 8);
+}
+
+function sanitizeDraft(draft, scriptDraft, note) {
+  const petNames = new Set(extractPetNames(note).map((name) => name.toLowerCase()));
+  const possiblePeople = Array.isArray(draft.possiblePeople) ? draft.possiblePeople : [];
+  const questions = Array.isArray(draft.questions) ? draft.questions : [];
+  return {
+    ...scriptDraft,
+    ...draft,
+    people: Array.isArray(draft.people) ? draft.people : scriptDraft.people,
+    possiblePeople: possiblePeople.filter((person) => !petNames.has(String(person.name || "").toLowerCase())),
+    memoryCards: mergeCards(Array.isArray(draft.memoryCards) ? draft.memoryCards : [], scriptDraft.memoryCards),
+    reminders: Array.isArray(draft.reminders) && draft.reminders.length ? draft.reminders : scriptDraft.reminders,
+    questions: questions.filter((question) => ![...petNames].some((name) => question.toLowerCase().includes(name))),
+    interaction: {
+      ...scriptDraft.interaction,
+      ...(draft.interaction && typeof draft.interaction === "object" ? draft.interaction : {}),
+      notes: note,
+    },
+  };
 }
 
 function extractReminder(note, topics, dateHint) {
@@ -139,6 +235,16 @@ function extractReminder(note, topics, dateHint) {
   const hasFollowUpSignal = /\b(ask|follow up|check|remind|next time|later)\b/.test(lowerNote);
   const importantTopic = topics.find((topic) => ["exam", "surgery", "promotion", "roof", "graduation", "dinner"].includes(topic));
   if (!hasFollowUpSignal && !importantTopic) return [];
+  const reminderMatch = note.match(/\bremind\s+(?:him|her|them|me)?\s*(?:about|to)?\s*([^.!?]+)/i)
+    || note.match(/\b(?:check|follow up(?: on)?|ask about)\s+([^.!?]+)/i);
+  if (reminderMatch) {
+    const reminderText = cleanText(reminderMatch[1].replace(/^checking\s+/i, "check "), 160);
+    return [{
+      title: titleCase(reminderText),
+      details: dateHint ? `Possible timing mentioned: ${dateHint}` : "",
+      confidence: 0.74,
+    }];
+  }
   const title = hasFollowUpSignal
     ? cleanText(note.split(/[.!?]/).find((sentence) => /\b(ask|follow up|check|remind)\b/i.test(sentence)) || `Follow up about ${importantTopic || "conversation"}`, 160)
     : `Ask about ${importantTopic}`;
@@ -213,7 +319,7 @@ async function buildAiDraft(note, people, scriptDraft) {
         {
           role: "system",
           content:
-            "You organize Quentin Nichols' private relationship notes. Return only valid JSON. Do not invent facts. Prefer existing people when names clearly match. If ambiguous, ask a question instead of assuming.",
+            "You organize Quentin Nichols' private relationship notes. Return only valid JSON. Do not invent facts. Prefer existing people when names clearly match. Pets, animals, projects, places, and organizations are memory cards or topics, not people profiles. If ambiguous, ask a question instead of assuming.",
         },
         {
           role: "user",
@@ -240,16 +346,7 @@ async function buildAiDraft(note, people, scriptDraft) {
   const payload = await response.json().catch(() => ({}));
   const parsed = safeJsonFromText(payload?.choices?.[0]?.message?.content);
   if (!parsed || typeof parsed !== "object") return scriptDraft;
-  return {
-    ...scriptDraft,
-    ...parsed,
-    source: "ai",
-    interaction: {
-      ...scriptDraft.interaction,
-      ...(parsed.interaction && typeof parsed.interaction === "object" ? parsed.interaction : {}),
-      notes: note,
-    },
-  };
+  return sanitizeDraft({ ...parsed, source: "ai" }, scriptDraft, note);
 }
 
 module.exports = async function handler(req, res) {
