@@ -411,7 +411,8 @@ function normalizeCard(card) {
     return null;
   }
 
-  let normalizedLabel = label;
+  let normalizedLabel = titleCase(label);
+  value = value.replace(/^(?:a|an|the)\s+/i, "");
   const petValue = value.match(/^([A-Z][a-z]+)\s*,\s*(.+)$/);
   if (["pet", "pets"].includes(lowerLabel) && petValue) {
     value = petValue[1];
@@ -491,11 +492,61 @@ function mergeCards(primaryCards, fallbackCards) {
 }
 
 function normalizedReminderKey(reminder) {
-  return cleanText(reminder.title, 220)
+  const title = cleanText(reminder.title, 220).toLowerCase().replace(/[’]/g, "'");
+  const adjustmentMatch = title.match(/\b(?:ask\s+how|ask\s+about)\s+([a-z]+)(?:'s)?\s+(?:is\s+adjusting|adjustment)\b/);
+  if (adjustmentMatch) {
+    return `${adjustmentMatch[1]}:adjusting`;
+  }
+  const appointmentMatch = title.match(/\b(?:ask\s+about|check\s+whether)\s+([a-z]+)(?:'s)?\s+appointment\b/);
+  if (appointmentMatch) {
+    return `${appointmentMatch[1]}:appointment`;
+  }
+  const specificMatch = title.match(/\b(?:ask|check|whether)\s+(?:how\s+)?([a-z]+)(?:['’]s)?\s+(.+?)(?:\s+went|\s+is\s+adjusting|$)/);
+  if (specificMatch) {
+    return `${specificMatch[1]}:${specificMatch[2].replace(/[^a-z0-9]+/g, " ").trim()}`;
+  }
+  return title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\b(ask|check|follow|up|back|about|the|a|an)\b/g, " ")
     .trim();
+}
+
+function splitReminder(reminder) {
+  const title = cleanText(reminder.title, 220);
+  const details = cleanText(reminder.details, 260);
+  const confidence = Number.isFinite(Number(reminder.confidence)) ? Number(reminder.confidence) : 0.7;
+  const cleanTitle = title.replace(/[’]/g, "'");
+  const combined = cleanTitle.match(/\bask\s+how\s+([A-Z][a-z]+)\s+is\s+adjusting\s+and\s+check\s+whether\s+([A-Z][a-z]+)'s\s+appointment(?:\s+went\s+okay)?\b/i)
+    || cleanTitle.match(/\bask\s+about\s+([A-Z][a-z]+)'s\s+is\s+adjusting\s+and\s+check\s+whether\s+([A-Z][a-z]+)'s\s+appointment(?:\s+went\s+okay)?\b/i);
+  if (combined) {
+    return [
+      {
+        title: `Ask how ${titleCase(combined[1])} is adjusting`,
+        details,
+        confidence: Math.max(confidence, 0.78),
+      },
+      {
+        title: `Check whether ${titleCase(combined[2])}'s appointment went okay`,
+        details,
+        confidence: Math.max(confidence, 0.78),
+      },
+    ];
+  }
+  const looseCombined = cleanTitle.match(/\bask\s+(?:how\s+)?([A-Z][a-z]+)(?:'s)?\s+(.+?)\s+and\s+check\s+(?:whether\s+)?([A-Z][a-z]+)(?:'s)?\s+(.+)/i);
+  if (!looseCombined) return [reminder];
+  return [
+    {
+      title: `Ask about ${titleCase(looseCombined[1])}'s ${cleanText(looseCombined[2], 90).replace(/\s+is\s+adjusting$/i, " adjustment")}`,
+      details,
+      confidence: Math.max(confidence, 0.78),
+    },
+    {
+      title: `Check whether ${titleCase(looseCombined[3])}'s ${cleanText(looseCombined[4], 90).replace(/\s+went\s+okay$/i, "went okay")}`,
+      details,
+      confidence: Math.max(confidence, 0.78),
+    },
+  ];
 }
 
 function cleanReminder(reminder) {
@@ -510,15 +561,25 @@ function cleanReminder(reminder) {
   };
 }
 
+function reminderScore(reminder) {
+  const title = cleanText(reminder.title, 220).toLowerCase();
+  const details = cleanText(reminder.details, 260).toLowerCase();
+  let score = Number(reminder.confidence) || 0;
+  if (/\b(went okay|went|recovery|adjusting|tournament)\b/.test(title)) score += 0.18;
+  if (/\b(vet appointment|surgery|next|this weekend)\b/.test(details)) score += 0.08;
+  return score;
+}
+
 function mergeReminders(primaryReminders, fallbackReminders) {
   const remindersByKey = new Map();
   [...primaryReminders, ...fallbackReminders]
+    .flatMap(splitReminder)
     .map(cleanReminder)
     .filter(Boolean)
     .forEach((reminder) => {
       const key = normalizedReminderKey(reminder);
       const existing = remindersByKey.get(key);
-      if (!existing || reminder.confidence > existing.confidence) {
+      if (!existing || reminderScore(reminder) > reminderScore(existing)) {
         remindersByKey.set(key, reminder);
       }
     });
@@ -637,6 +698,26 @@ function extractReminder(note, topics, dateHint) {
     const localDateHint = extractDateHint(sentenceForName(note, match[1]));
     reminders.push({
       title: `Ask about ${titleCase(match[1])}'s ${cleanText(match[2], 100)}`,
+      details: localDateHint ? `Possible timing mentioned: ${localDateHint}` : dateHint ? `Possible timing mentioned: ${dateHint}` : "",
+      confidence: 0.82,
+    });
+  }
+
+  const adjustmentPattern = /\bask\s+how\s+([A-Z][a-z]+)\s+is\s+adjusting\b/gi;
+  for (const match of note.matchAll(adjustmentPattern)) {
+    const localDateHint = extractDateHint(sentenceForName(note, match[1]));
+    reminders.push({
+      title: `Ask how ${titleCase(match[1])} is adjusting`,
+      details: localDateHint ? `Possible timing mentioned: ${localDateHint}` : dateHint ? `Possible timing mentioned: ${dateHint}` : "",
+      confidence: 0.82,
+    });
+  }
+
+  const appointmentOutcomePattern = /\bcheck\s+whether\s+([A-Z][a-z]+)(?:['’]s)?\s+appointment\s+went\s+okay\b/gi;
+  for (const match of note.matchAll(appointmentOutcomePattern)) {
+    const localDateHint = extractDateHint(sentenceForName(note, match[1]));
+    reminders.push({
+      title: `Check whether ${titleCase(match[1])}'s appointment went okay`,
       details: localDateHint ? `Possible timing mentioned: ${localDateHint}` : dateHint ? `Possible timing mentioned: ${dateHint}` : "",
       confidence: 0.82,
     });
