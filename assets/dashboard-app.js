@@ -124,14 +124,23 @@
       summary: person.overview || person.summary || "No overview yet.",
       tags: Array.isArray(person.tags) ? person.tags : [],
       memoryCards: memoryCards.map((card) => ({
+        id: card.id || "",
+        category: card.category || "general",
         label: card.label || card.category || "Memory",
         value: card.value || "",
       })),
       reminders: reminders.map((reminder) => ({
+        id: reminder.id || "",
         title: reminder.title || "Follow up",
+        details: reminder.details || "",
+        status: reminder.status || "open",
+        priority: reminder.priority || "normal",
+        remind_at: reminder.remind_at || "",
         due: reminder.remind_at ? formatDate(reminder.remind_at, "Scheduled") : "Soon",
       })),
       interactions: interactions.map((interaction) => ({
+        id: interaction.id || "",
+        occurred_at: interaction.occurred_at || "",
         date: formatDate(interaction.occurred_at),
         location: interaction.location || "Not specified",
         mood: interaction.mood || "",
@@ -296,7 +305,11 @@
             <span><strong>Phone</strong>${escapeHtml(person.phone || "Not saved")}</span>
             <span><strong>First Met</strong>${escapeHtml(person.first_met_location || person.firstMetLocation || "Not saved")}</span>
           </div>
-          <button class="qapp-inline-button" data-action="add-note-for-person" data-person-id="${escapeHtml(person.id)}" type="button">Add Conversation</button>
+          <div class="qapp-action-row">
+            <button class="qapp-inline-button" data-action="add-note-for-person" data-person-id="${escapeHtml(person.id)}" type="button">Add Conversation</button>
+            <button class="qapp-soft-button" data-action="edit-person" data-person-id="${escapeHtml(person.id)}" type="button">Edit Profile</button>
+            <button class="qapp-danger-button" data-action="delete-person" data-person-id="${escapeHtml(person.id)}" type="button">Delete Profile</button>
+          </div>
           <div class="qapp-subsection-title">
             <h4>Memory Cards</h4>
             <span>${person.memoryCards.length}</span>
@@ -306,6 +319,10 @@
               <div class="qapp-memory-card">
                 <span>${escapeHtml(card.label)}</span>
                 <strong>${escapeHtml(card.value)}</strong>
+                ${card.id ? `<div class="qapp-item-actions">
+                  <button data-action="edit-memory" data-item-id="${escapeHtml(card.id)}" type="button">Edit</button>
+                  <button data-action="delete-memory" data-item-id="${escapeHtml(card.id)}" type="button">Delete</button>
+                </div>` : ""}
               </div>
             `).join("") : `<div class="qapp-memory-card"><span>Memory Cards</span><strong>No facts saved yet.</strong></div>`}
           </div>
@@ -319,6 +336,10 @@
                 <span>${escapeHtml(interaction.date)} - ${escapeHtml(interaction.location)}</span>
                 <p>${escapeHtml(interaction.notes)}</p>
                 <div class="qapp-tag-row">${interaction.topics.map(statusPill).join("")}</div>
+                ${interaction.id ? `<div class="qapp-item-actions">
+                  <button data-action="edit-interaction" data-item-id="${escapeHtml(interaction.id)}" type="button">Edit</button>
+                  <button data-action="delete-interaction" data-item-id="${escapeHtml(interaction.id)}" type="button">Delete</button>
+                </div>` : ""}
               </div>
             `).join("") : `<div class="qapp-log-entry"><span>Conversation Log</span><p>No conversations saved yet.</p></div>`}
           </div>
@@ -331,6 +352,10 @@
               <div class="qapp-reminder">
                 <strong>${escapeHtml(reminder.title)}</strong>
                 <span>${escapeHtml(reminder.due)}</span>
+                ${reminder.id ? `<div class="qapp-item-actions">
+                  <button data-action="edit-reminder" data-item-id="${escapeHtml(reminder.id)}" type="button">Edit</button>
+                  <button data-action="delete-reminder" data-item-id="${escapeHtml(reminder.id)}" type="button">Delete</button>
+                </div>` : ""}
               </div>
             `).join("") : `<div class="qapp-reminder"><strong>No follow-ups yet</strong><span>Add one from a conversation note.</span></div>`}
           </div>
@@ -603,44 +628,14 @@
 
   function renderAiAssistant() {
     return `
-      ${sectionHeader("Assistant", "AI inside the app", "Use the site-grounded assistant without leaving the private application.")}
-      <section class="qapp-panel qapp-ai-frame-panel">
-        <div class="qapp-panel-title-row">
-          <div>
-            <p class="qapp-kicker">Private Tool</p>
-            <h3>Quentin Nichols AI</h3>
-          </div>
-          ${statusPill("Protected")}
-        </div>
+      <section class="qapp-ai-app-shell" aria-label="AI Assistant">
         <iframe class="qapp-ai-frame" src="/AI/" title="Quentin Nichols AI"></iframe>
-      </section>
-      <section class="qapp-grid">
-        <article class="qapp-panel">
-          <div class="qapp-panel-title-row">
-            <h3>Context Items</h3>
-            ${statusPill("Schema Ready")}
-          </div>
-          <p>Store facts the AI should remember across calendar, tasks, notes, and people.</p>
-        </article>
-        <article class="qapp-panel">
-          <div class="qapp-panel-title-row">
-            <h3>Conversations</h3>
-            ${statusPill("Schema Ready")}
-          </div>
-          <p>Persist important AI chats without mixing them into random browser storage.</p>
-        </article>
-        <article class="qapp-panel">
-          <div class="qapp-panel-title-row">
-            <h3>Decision Log</h3>
-            ${statusPill("Planned")}
-          </div>
-          <p>Track why the AI suggested or arranged something.</p>
-        </article>
       </section>
     `;
   }
 
   function render() {
+    view.classList.toggle("qapp-view--ai", currentRoute === "ai");
     if (currentRoute === "today") {
       view.innerHTML = renderToday();
     } else if (currentRoute === "people") {
@@ -684,6 +679,10 @@
     const addForPersonButton = document.querySelector('[data-action="add-note-for-person"]');
     const reviewButton = document.querySelector('[data-action="review-relationship-note"]');
     const personRows = [...document.querySelectorAll('[data-action="open-person"]')];
+    const editPersonButton = document.querySelector('[data-action="edit-person"]');
+    const deletePersonButton = document.querySelector('[data-action="delete-person"]');
+    const itemActionButtons = [...document.querySelectorAll("[data-item-id]")];
+    const activePerson = selectedPersonId ? notebook.people.find((person) => person.id === selectedPersonId) : null;
 
     if (reloadButton) {
       reloadButton.addEventListener("click", loadNotebookData);
@@ -745,6 +744,129 @@
         render();
       });
     }
+
+    if (editPersonButton && activePerson) {
+      editPersonButton.addEventListener("click", async () => {
+        const name = window.prompt("Name", activePerson.name || "");
+        if (!name) return;
+        const email = (window.prompt("Email", activePerson.email || "") ?? activePerson.email) || "";
+        const phone = (window.prompt("Phone", activePerson.phone || "") ?? activePerson.phone) || "";
+        const firstMetLocation = (window.prompt("Where you met", activePerson.first_met_location || "") ?? activePerson.first_met_location) || "";
+        const tags = (window.prompt("Tags, comma separated", (activePerson.tags || []).join(", ")) || "")
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        const overview = (window.prompt("Overview", activePerson.overview || activePerson.summary || "") ?? activePerson.overview) || "";
+        try {
+          await apiJson("/api/people", {
+            method: "PATCH",
+            body: {
+              id: activePerson.id,
+              name,
+              email,
+              phone,
+              firstMetLocation,
+              tags,
+              overview,
+              photoUrl: activePerson.photo_url || activePerson.photoUrl || "",
+            },
+          });
+          await loadNotebookData();
+          selectedPersonId = activePerson.id;
+          peopleMode = "profile";
+          render();
+        } catch (error) {
+          window.alert(error?.message || "Unable to update profile.");
+        }
+      });
+    }
+
+    if (deletePersonButton && activePerson) {
+      deletePersonButton.addEventListener("click", async () => {
+        if (!window.confirm(`Delete ${activePerson.name} and all notebook data attached to this profile?`)) return;
+        try {
+          await apiJson("/api/people", {
+            method: "DELETE",
+            body: { id: activePerson.id },
+          });
+          selectedPersonId = "";
+          peopleMode = "list";
+          await loadNotebookData();
+          render();
+        } catch (error) {
+          window.alert(error?.message || "Unable to delete profile.");
+        }
+      });
+    }
+
+    itemActionButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        if (!activePerson) return;
+        const action = button.dataset.action || "";
+        const itemId = button.dataset.itemId || "";
+        const isDelete = action.startsWith("delete-");
+        const type = action.replace("edit-", "").replace("delete-", "");
+        const memory = activePerson.memoryCards.find((item) => item.id === itemId);
+        const interaction = activePerson.interactions.find((item) => item.id === itemId);
+        const reminder = activePerson.reminders.find((item) => item.id === itemId);
+
+        try {
+          if (type === "interaction") {
+            if (isDelete) {
+              if (!window.confirm("Delete this conversation entry?")) return;
+              await apiJson("/api/person-interactions", { method: "DELETE", body: { id: itemId } });
+            } else if (interaction) {
+              const notes = window.prompt("Conversation notes", interaction.notes || "");
+              if (!notes) return;
+              const location = (window.prompt("Location", interaction.location || "") ?? interaction.location) || "";
+              const topics = (window.prompt("Topics, comma separated", (interaction.topics || []).join(", ")) || "")
+                .split(",")
+                .map((topic) => topic.trim())
+                .filter(Boolean);
+              await apiJson("/api/person-interactions", {
+                method: "PATCH",
+                body: { id: itemId, notes, location, topics, mood: interaction.mood || "" },
+              });
+            }
+          } else if (type === "memory") {
+            if (isDelete) {
+              if (!window.confirm("Delete this memory card?")) return;
+              await apiJson("/api/relationship-items", { method: "DELETE", body: { type: "memory", id: itemId } });
+            } else if (memory) {
+              const label = window.prompt("Memory label", memory.label || "");
+              if (!label) return;
+              const value = window.prompt("Memory value", memory.value || "");
+              if (!value) return;
+              await apiJson("/api/relationship-items", {
+                method: "PATCH",
+                body: { type: "memory", id: itemId, label, value, category: memory.category || "general" },
+              });
+            }
+          } else if (type === "reminder") {
+            if (isDelete) {
+              if (!window.confirm("Delete this follow-up reminder?")) return;
+              await apiJson("/api/relationship-items", { method: "DELETE", body: { type: "reminder", id: itemId } });
+            } else if (reminder) {
+              const title = window.prompt("Reminder", reminder.title || "");
+              if (!title) return;
+              const details = (window.prompt("Details", reminder.details || "") ?? reminder.details) || "";
+              const remindAt = (window.prompt("Remind date/time", reminder.remind_at || "") ?? reminder.remind_at) || "";
+              await apiJson("/api/relationship-items", {
+                method: "PATCH",
+                body: { type: "reminder", id: itemId, title, details, remindAt, status: reminder.status || "open", priority: reminder.priority || "normal" },
+              });
+            }
+          }
+
+          await loadNotebookData();
+          selectedPersonId = activePerson.id;
+          peopleMode = "profile";
+          render();
+        } catch (error) {
+          window.alert(error?.message || "Unable to update item.");
+        }
+      });
+    });
 
     if (!form) return;
 

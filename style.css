@@ -4615,6 +4615,14 @@ body.nav-menu-open {
   padding: 22px 16px 28px;
 }
 
+.qapp-view--ai {
+  display: block;
+  height: calc(100dvh - 74px - 78px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  max-width: none;
+  overflow: hidden;
+  padding: 0;
+}
+
 .qapp-section-head {
   display: grid;
   gap: 10px;
@@ -4656,19 +4664,18 @@ body.nav-menu-open {
   gap: 12px;
 }
 
-.qapp-ai-frame-panel {
-  display: grid;
-  gap: 16px;
-  padding: 14px;
+.qapp-ai-app-shell {
+  height: 100%;
+  overflow: hidden;
 }
 
 .qapp-ai-frame {
   background: #050505;
-  border: 1px solid var(--qapp-border);
-  border-radius: 8px;
+  border: 0;
+  border-radius: 0;
   display: block;
-  height: min(760px, calc(100dvh - 190px));
-  min-height: 560px;
+  height: 100%;
+  min-height: 0;
   width: 100%;
 }
 
@@ -4825,6 +4832,63 @@ body.nav-menu-open {
 .qapp-profile-head {
   display: grid;
   gap: 14px;
+}
+
+.qapp-action-row,
+.qapp-item-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.qapp-action-row .qapp-inline-button {
+  margin-top: 0;
+}
+
+.qapp-soft-button,
+.qapp-danger-button,
+.qapp-item-actions button {
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.qapp-soft-button,
+.qapp-danger-button {
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+.qapp-soft-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--qapp-border);
+  color: var(--qapp-text);
+}
+
+.qapp-danger-button {
+  background: rgba(255, 93, 93, 0.1);
+  border: 1px solid rgba(255, 93, 93, 0.3);
+  color: #ffb7b7;
+}
+
+.qapp-item-actions {
+  margin-top: 10px;
+}
+
+.qapp-item-actions button {
+  background: transparent;
+  border: 1px solid var(--qapp-border);
+  color: var(--qapp-muted);
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+.qapp-item-actions button:hover,
+.qapp-item-actions button:focus-visible {
+  border-color: var(--qapp-border-strong);
+  color: var(--qapp-text);
+  outline: none;
 }
 
 .qapp-person-main {

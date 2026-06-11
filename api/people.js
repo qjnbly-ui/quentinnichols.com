@@ -12,8 +12,12 @@ function cleanTags(value) {
     .slice(0, 12);
 }
 
+function looksLikeUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{12}$/i.test(String(value || ""));
+}
+
 module.exports = async function handler(req, res) {
-  if (!["GET", "POST"].includes(req.method)) {
+  if (!["GET", "POST", "PATCH", "DELETE"].includes(req.method)) {
     json(res, 405, { error: "Method not allowed" });
     return;
   }
@@ -35,14 +39,33 @@ module.exports = async function handler(req, res) {
     }
 
     const body = await readJsonBody(req);
+    const id = cleanText(body.id, 80);
+
+    if (req.method === "DELETE") {
+      if (!looksLikeUuid(id)) {
+        json(res, 400, { error: "A valid person is required." });
+        return;
+      }
+
+      const response = await supabaseRest(`people?id=eq.${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        json(res, response.status, { error: payload?.message || "Unable to delete person." });
+        return;
+      }
+      json(res, 200, { ok: true });
+      return;
+    }
+
     const name = cleanText(body.name, 160);
     if (!name) {
       json(res, 400, { error: "Name is required." });
       return;
     }
 
-    const insert = {
-      owner_id: user.id,
+    const record = {
       name,
       preferred_name: cleanText(body.preferredName || body.preferred_name, 160) || null,
       photo_url: cleanText(body.photoUrl || body.photo_url, 1000) || null,
@@ -53,6 +76,32 @@ module.exports = async function handler(req, res) {
       first_met_location: cleanText(body.firstMetLocation || body.first_met_location, 240) || null,
       overview: cleanText(body.overview, 2000) || null,
       metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {},
+    };
+
+    if (req.method === "PATCH") {
+      if (!looksLikeUuid(id)) {
+        json(res, 400, { error: "A valid person is required." });
+        return;
+      }
+
+      const response = await supabaseRest(`people?id=eq.${encodeURIComponent(id)}&select=*`, {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: record,
+      });
+      const payload = await response.json().catch(() => []);
+      if (!response.ok) {
+        json(res, response.status, { error: payload?.message || "Unable to update person." });
+        return;
+      }
+
+      json(res, 200, { person: payload[0] || null });
+      return;
+    }
+
+    const insert = {
+      owner_id: user.id,
+      ...record,
     };
 
     const response = await supabaseRest("people?select=*", {

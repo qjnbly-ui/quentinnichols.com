@@ -38,7 +38,7 @@ async function insertRows(supabaseRest, table, rows) {
 }
 
 module.exports = async function handler(req, res) {
-  if (!["GET", "POST"].includes(req.method)) {
+  if (!["GET", "POST", "PATCH", "DELETE"].includes(req.method)) {
     json(res, 405, { error: "Method not allowed" });
     return;
   }
@@ -67,14 +67,64 @@ module.exports = async function handler(req, res) {
     }
 
     const body = await readJsonBody(req);
+    const id = cleanText(body.id, 80);
+
+    if (req.method === "DELETE") {
+      if (!looksLikeUuid(id)) {
+        json(res, 400, { error: "A valid interaction is required." });
+        return;
+      }
+
+      const response = await supabaseRest(`person_interactions?id=eq.${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        json(res, response.status, { error: payload?.message || "Unable to delete interaction." });
+        return;
+      }
+      json(res, 200, { ok: true });
+      return;
+    }
+
     const personId = cleanText(body.personId || body.person_id, 80);
     const notes = cleanText(body.notes, 5000);
-    if (!looksLikeUuid(personId)) {
+    if (req.method === "POST" && !looksLikeUuid(personId)) {
       json(res, 400, { error: "A valid person is required." });
       return;
     }
     if (!notes) {
       json(res, 400, { error: "Conversation notes are required." });
+      return;
+    }
+
+    if (req.method === "PATCH") {
+      if (!looksLikeUuid(id)) {
+        json(res, 400, { error: "A valid interaction is required." });
+        return;
+      }
+
+      const update = {
+        location: cleanText(body.location, 240) || null,
+        notes,
+        mood: cleanText(body.mood, 120) || null,
+        topics: cleanList(body.topics),
+        ai_summary: cleanText(body.aiSummary || body.ai_summary, 2000) || null,
+        metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {},
+      };
+      const occurredAt = cleanText(body.occurredAt || body.occurred_at, 80);
+      if (occurredAt) update.occurred_at = occurredAt;
+      const response = await supabaseRest(`person_interactions?id=eq.${encodeURIComponent(id)}&select=*`, {
+        method: "PATCH",
+        headers: { Prefer: "return=representation" },
+        body: update,
+      });
+      const payload = await response.json().catch(() => []);
+      if (!response.ok) {
+        json(res, response.status, { error: payload?.message || "Unable to update interaction." });
+        return;
+      }
+      json(res, 200, { interaction: payload[0] || null });
       return;
     }
 
