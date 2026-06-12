@@ -265,6 +265,22 @@ function previousUserMessage(messages) {
   return "";
 }
 
+function latestUserIndex(messages) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role === "user" && typeof messages[index].content === "string") return index;
+  }
+  return -1;
+}
+
+function previousAssistantMessage(messages, beforeIndex = messages.length) {
+  for (let index = Math.min(beforeIndex - 1, messages.length - 1); index >= 0; index -= 1) {
+    if (messages[index]?.role === "assistant" && typeof messages[index].content === "string") {
+      return messages[index].content;
+    }
+  }
+  return "";
+}
+
 function getZonedDateParts(date = new Date(), timeZone = USER_TIME_ZONE) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone,
@@ -608,9 +624,16 @@ function cleanMemoryNoteText(text) {
     .trim();
 }
 
+function isAddReferenceCommand(text) {
+  const value = String(text || "").trim();
+  return /^(?:please\s+)?(?:add|save|record|remember|note)\s+(?:it|that|this)\.?$/i.test(value)
+    || /\b(?:add|save|record|remember|note)\s+(?:it|that|this)\b/i.test(value);
+}
+
 function isContextReferenceMemoryRequest(text) {
   const value = String(text || "").trim();
   const saveVerb = /\b(add|save|record|remember|note)\b/i.test(value);
+  if (isAddReferenceCommand(value)) return true;
   if (saveVerb && /\b(?:above|previous|prior|last)\s+(?:note|message)\b/i.test(value)) return true;
   return saveVerb
     && /\b(this|that|it)\b/i.test(value)
@@ -639,6 +662,68 @@ function looksLikePeopleEncounterNote(text) {
   if (value.length < 40) return false;
   if (!/\b(?:I|we)\s+(?:saw|met|talked to|spoke with|ran into|visited with)\s+[A-Z][a-z]+/i.test(value)) return false;
   return /\b(today|yesterday|at|with|and|his|her|their|son|daughter|mom|dad|friend|coworker)\b/i.test(value);
+}
+
+function isBareProfileName(text) {
+  const value = String(text || "").trim();
+  if (!value || value.length > 80) return false;
+  if (/\b(add|save|record|remember|note|task|calendar|event|remind)\b/i.test(value)) return false;
+  const parts = value.split(/\s+/).filter(Boolean);
+  if (parts.length < 1 || parts.length > 3) return false;
+  return parts.every((part) => /^[a-z][a-z'-]*$/i.test(part));
+}
+
+function assistantAskedForPeopleProfile(text) {
+  return /\bpeople conversation entry\b/i.test(String(text || ""))
+    && /\bperson or profile\b/i.test(String(text || ""));
+}
+
+function memoryCandidateFromRecentUsers(messages, beforeIndex) {
+  for (let index = beforeIndex - 1; index >= 0; index -= 1) {
+    const msg = messages[index];
+    if (msg?.role !== "user" || typeof msg.content !== "string") continue;
+    const value = msg.content.trim();
+    if (!value) continue;
+    if (isAddReferenceCommand(value) || wantsPeopleMemoryAction(value) || isBareProfileName(value)) continue;
+    const cleaned = cleanMemoryNoteText(value);
+    if (cleaned.length >= 4) return cleaned;
+  }
+  return "";
+}
+
+function profileHintFromRecentUsers(messages, beforeIndex) {
+  for (let index = beforeIndex - 1; index >= 0; index -= 1) {
+    const msg = messages[index];
+    if (msg?.role !== "user" || typeof msg.content !== "string") continue;
+    const value = msg.content.trim();
+    if (isBareProfileName(value)) return value;
+  }
+  return "";
+}
+
+function noteWithProfileHint(note, profileHint) {
+  const cleanNote = String(note || "").trim();
+  const cleanHint = String(profileHint || "").trim();
+  if (!cleanHint || new RegExp(`\\b${cleanHint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(cleanNote)) {
+    return cleanNote;
+  }
+  return `${cleanHint}\n${cleanNote}`.trim();
+}
+
+function pendingPeopleMemoryNote(messages) {
+  const index = latestUserIndex(messages);
+  if (index < 0) return null;
+  const latest = messages[index].content.trim();
+  if (isBareProfileName(latest) && assistantAskedForPeopleProfile(previousAssistantMessage(messages, index))) {
+    const note = memoryCandidateFromRecentUsers(messages, index);
+    return note ? { note: noteWithProfileHint(note, latest), actionRequest: latest } : null;
+  }
+  if (isAddReferenceCommand(latest)) {
+    const profileHint = profileHintFromRecentUsers(messages, index);
+    const note = memoryCandidateFromRecentUsers(messages, index);
+    return note ? { note: noteWithProfileHint(note, profileHint), actionRequest: latest } : null;
+  }
+  return null;
 }
 
 function referencedMemoryNote(messages, latest) {
@@ -687,12 +772,13 @@ function actionClarificationReply(messages) {
 
 async function buildPeopleMemoryAction(messages, supabaseRest) {
   const latest = latestUserMessage(messages);
-  const explicitRequest = wantsPeopleMemoryAction(latest);
+  const pendingRequest = pendingPeopleMemoryNote(messages);
+  const explicitRequest = Boolean(pendingRequest) || wantsPeopleMemoryAction(latest);
   const suggestedFromEncounter = !explicitRequest && looksLikePeopleEncounterNote(latest);
   if (!explicitRequest && !suggestedFromEncounter) return null;
-  const note = explicitRequest
+  const note = pendingRequest?.note || (explicitRequest
     ? referencedMemoryNote(messages, latest)
-    : cleanMemoryNoteText(latest);
+    : cleanMemoryNoteText(latest));
   if (!note || note.length < 4) return null;
   const draft = await buildRelationshipDraft(supabaseRest, note);
   const hasProfile = Array.isArray(draft.people) && draft.people.length;
@@ -708,7 +794,7 @@ async function buildPeopleMemoryAction(messages, supabaseRest) {
       note,
       draft,
       source: "ai_assistant",
-      actionRequest: explicitRequest ? latest : "",
+      actionRequest: pendingRequest?.actionRequest || (explicitRequest ? latest : ""),
       suggested: suggestedFromEncounter,
     },
   };
