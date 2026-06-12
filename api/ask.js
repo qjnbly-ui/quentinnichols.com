@@ -2,6 +2,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const { enforceRateLimit } = require("./_rate-limit");
 const { getAuthedSupabase } = require("./_supabase-request");
+const { buildRelationshipDraft } = require("./relationship-note-draft");
 
 const MODEL = "llama-3.3-70b-versatile";
 const MAX_CONTEXT_TOKENS = 100000;
@@ -227,6 +228,8 @@ Avoid repeating the same points across consecutive responses unless the user ask
 
 Private dashboard context is the best source for Quentin's current personal app data, including people, coworkers, family, conversations, memory cards, follow-ups, calendar events, tasks, and notes. For broad questions like "who is my coworker", "what do you know about my foreman", "who did I talk to", or "what should I follow up on", search the private dashboard context first before using website writing context. Do not say "your life, not Quentin's" because the user is Quentin. Still answer in second person: "your foreman was..." not "my foreman was...".
 
+Saving rules: You cannot directly save calendar events, tasks, people entries, conversations, memory cards, or reminders from free-form text. If Quentin asks you to add, save, record, remember, or create something, do not say "I added", "I've added", "saved", or "recorded" unless the confirmed action result is already present in the conversation. Instead, say that the app should show a draft to confirm, or ask for the missing detail.
+
 Answer questions based ONLY on the website content and private dashboard context unless asked otherwise. If something isn't covered, say so clearly.
 When sharing site links, use Markdown with human-readable titles (e.g., [Photography](/photography/)) and avoid raw URLs.
 When Quentin asks for a dashboard section link, use the private app route: [Calendar](/app/#calendar), [Tasks](/app/#tasks), [People](/app/#people), [Notes](/app/#notes), or [AI](/app/#ai). For a short follow-up like "link?" after a calendar answer, give the relevant dashboard link directly.`;
@@ -247,6 +250,19 @@ function recentUserText(messages) {
     .slice(-3)
     .map((msg) => msg.content)
     .join("\n");
+}
+
+function previousUserMessage(messages) {
+  let seenLatest = false;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index]?.role !== "user" || typeof messages[index].content !== "string") continue;
+    if (!seenLatest) {
+      seenLatest = true;
+      continue;
+    }
+    return messages[index].content;
+  }
+  return "";
 }
 
 function getZonedDateParts(date = new Date(), timeZone = USER_TIME_ZONE) {
@@ -370,6 +386,20 @@ function cleanCalendarTitle(text) {
   return titleCaseEvent(cleaned || "Event");
 }
 
+function cleanTaskTitle(text) {
+  const textValue = String(text || "");
+  const colonMatch = textValue.match(/\b(?:add|create|make|save)\s+(?:this\s+)?(?:task|todo|to-do)\s*:\s*(.+)$/i);
+  const source = colonMatch?.[1] || textValue;
+  const cleaned = source
+    .replace(/\b(add|create|make|save|please|task|todo|to-do|to|my|on|at|this|next|remind|me)\b/gi, " ")
+    .replace(/\b(urgent|important|high priority|low priority|normal priority)\b/gi, " ")
+    .replace(/\b(today|tomorrow|tonight|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi, " ")
+    .replace(/\b\d{1,2}(?::\d{2})?\s*(am|pm)?\b/gi, " ")
+    .replace(/^[\s:;,.!?-]+|[\s:;,.!?-]+$/g, "")
+    .replace(/\s+/g, " ");
+  return titleCaseEvent(cleaned || "Task");
+}
+
 function weekdayIndex(name) {
   return {
     sunday: 0,
@@ -448,6 +478,7 @@ function buildHaircutCalendarAction(text) {
 function buildCalendarAction(messages) {
   const latest = latestUserMessage(messages);
   const recent = recentUserText(messages);
+  if (/\b(task|todo|to-do)\b/i.test(latest) && !/\b(calendar|event|appointment)\b/i.test(latest)) return null;
   const haircutAction = buildHaircutCalendarAction(latest);
   if (haircutAction) return haircutAction;
   const wantsCalendar =
@@ -494,9 +525,119 @@ function buildCalendarAction(messages) {
   };
 }
 
-function extractActions(messages) {
-  const action = buildCalendarAction(messages);
-  return action ? [action] : [];
+function buildDueAtFromText(text) {
+  const weekdayMatch = String(text || "").match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i);
+  let dateParts = null;
+  if (/\btomorrow\b/i.test(text)) {
+    const today = getZonedDateParts();
+    dateParts = today ? addDaysToParts(today, 1) : null;
+  } else if (/\btoday|tonight\b/i.test(text)) {
+    dateParts = getZonedDateParts();
+  } else if (weekdayMatch) {
+    dateParts = nextWeekdayParts(weekdayMatch[1]);
+  }
+  if (!dateParts) return "";
+  return zonedDateTimeToIso(dateParts, parseClockTime(text) || { hours: 9, minutes: 0 });
+}
+
+function buildTaskAction(messages) {
+  const latest = latestUserMessage(messages);
+  const wantsTask = /\b(add|create|make|save)\b/i.test(latest) && /\b(task|todo|to-do)\b/i.test(latest);
+  if (!wantsTask) return null;
+  const title = cleanTaskTitle(latest);
+  if (!title || title.length < 2) return null;
+  return {
+    type: "create_task",
+    status: "draft",
+    label: "Add task",
+    payload: {
+      title,
+      description: latest,
+      dueAt: buildDueAtFromText(latest) || null,
+      status: "todo",
+      priority: /\burgent\b/i.test(latest) ? "urgent" : /\b(important|high priority)\b/i.test(latest) ? "high" : "normal",
+      source: "ai_assistant",
+      metadata: {
+        created_by: "ai_assistant",
+        original_text: latest,
+        user_timezone: USER_TIME_ZONE,
+      },
+    },
+  };
+}
+
+function stripMemoryCommand(text) {
+  return String(text || "")
+    .replace(/^\s*(?:can\s+you\s+|could\s+you\s+|please\s+)?(?:remember|save|record|note|add)\s+(?:this|that|it)?\s*(?:as\s+a?\s*)?(?:to\s+)?(?:my\s+)?(?:people\s+entry|person\s+entry|people\s+notebook|relationship\s+notebook|memory|memories|profile|people|notebook)?\s*:?\s*/i, "")
+    .trim() || String(text || "").trim();
+}
+
+function isContextReferenceMemoryRequest(text) {
+  const value = String(text || "").trim();
+  return /\b(add|save|record|remember|note)\b/i.test(value)
+    && /\b(this|that|it)\b/i.test(value)
+    && /\b(people entry|person entry|people notebook|relationship notebook|profile|memory|conversation|notebook)\b/i.test(value);
+}
+
+function wantsPeopleMemoryAction(text) {
+  const value = String(text || "").trim();
+  if (!value) return false;
+  if (/\b(add|save|record|remember|note)\b/i.test(value) && /\b(people notebook|relationship notebook|person|people|profile|memory|conversation|remember|notebook)\b/i.test(value)) {
+    return true;
+  }
+  if (/^\s*(?:remember|save|record|note)\s+(?:that\s+)?/i.test(value) && /\b(my|your)\s+(mom|mother|dad|father|sister|brother|cousin|friend|coworker|co-worker|boss|manager|foreman)\b/i.test(value)) {
+    return true;
+  }
+  if (/\b(my|your)\s+(mom|mother|dad|father|sister|brother|cousin|friend|coworker|co-worker|boss|manager|foreman)\s+(?:is|was|named)\b/i.test(value) && /\b(remember|save|record|note|add)\b/i.test(value)) {
+    return true;
+  }
+  return false;
+}
+
+function looksLikePeopleEncounterNote(text) {
+  const value = String(text || "").trim();
+  if (value.length < 40) return false;
+  if (!/\b(?:I|we)\s+(?:saw|met|talked to|spoke with|ran into|visited with)\s+[A-Z][a-z]+/i.test(value)) return false;
+  return /\b(today|yesterday|at|with|and|his|her|their|son|daughter|mom|dad|friend|coworker)\b/i.test(value);
+}
+
+async function buildPeopleMemoryAction(messages, supabaseRest) {
+  const latest = latestUserMessage(messages);
+  const explicitRequest = wantsPeopleMemoryAction(latest);
+  const suggestedFromEncounter = !explicitRequest && looksLikePeopleEncounterNote(latest);
+  if (!explicitRequest && !suggestedFromEncounter) return null;
+  const prior = previousUserMessage(messages);
+  const note = explicitRequest && isContextReferenceMemoryRequest(latest) && prior
+    ? prior
+    : stripMemoryCommand(latest);
+  if (!note || note.length < 4) return null;
+  const draft = await buildRelationshipDraft(supabaseRest, note);
+  const hasProfile = Array.isArray(draft.people) && draft.people.length;
+  const hasNewProfile = Array.isArray(draft.possiblePeople) && draft.possiblePeople.some((person) => Number(person.confidence || 0) >= 0.75);
+  const hasMemory = Array.isArray(draft.memoryCards) && draft.memoryCards.length;
+  const hasReminder = Array.isArray(draft.reminders) && draft.reminders.length;
+  if (!hasProfile && !hasNewProfile && !hasMemory && !hasReminder) return null;
+  return {
+    type: "update_people_memory",
+    status: "draft",
+    label: suggestedFromEncounter ? "Save People Notebook Entry" : "Update People Notebook",
+    payload: {
+      note,
+      draft,
+      source: "ai_assistant",
+      actionRequest: explicitRequest ? latest : "",
+      suggested: suggestedFromEncounter,
+    },
+  };
+}
+
+async function extractActions(messages, supabaseRest) {
+  const calendarAction = buildCalendarAction(messages);
+  if (calendarAction) return [calendarAction];
+  const taskAction = buildTaskAction(messages);
+  if (taskAction) return [taskAction];
+  const peopleMemoryAction = await buildPeopleMemoryAction(messages, supabaseRest);
+  return peopleMemoryAction ? [peopleMemoryAction] : [];
 }
 
 module.exports = async function handler(req, res) {
@@ -528,10 +669,16 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    let authedSupabase = null;
     const [siteContext, privateAppContext] = await Promise.all([
       loadSiteContext(),
       loadPrivateAppContext(req),
     ]);
+    try {
+      authedSupabase = await getAuthedSupabase(req);
+    } catch (_error) {
+      authedSupabase = null;
+    }
     const systemPrompt = buildSystemPrompt(siteContext, privateAppContext);
 
     const trimmedMessages = messages
@@ -563,9 +710,15 @@ module.exports = async function handler(req, res) {
 
     const data = await response.json();
     const reply = data?.choices?.[0]?.message?.content?.trim() || "";
-    const actions = extractActions(trimmedMessages);
-    const finalReply = actions.length
+    const actions = authedSupabase ? await extractActions(trimmedMessages, authedSupabase.supabaseRest) : [];
+    const finalReply = actions.length && actions[0]?.payload?.suggested
+      ? reply
+      : actions.length && actions[0]?.type === "create_calendar_event"
       ? "I drafted this calendar event. Confirm it below to save it."
+      : actions.length && actions[0]?.type === "create_task"
+        ? "I drafted this task. Confirm it below to save it."
+      : actions.length && actions[0]?.type === "update_people_memory"
+        ? "I drafted a People Notebook update. Confirm it below to save it and refresh the profile overview."
       : reply;
     res.status(200).json({ reply: finalReply, actions });
   } catch (err) {

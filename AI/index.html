@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
   <title>Quentin Nichols AI</title>
   <meta name="description" content="A private, local-first chat experience grounded in Quentin Nichols' writing and work.">
-  <link rel="stylesheet" href="/style.css?v=20260611-ai-modal">
+  <link rel="stylesheet" href="/style.css?v=20260611-ai-action-preview">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ESFM9WKBF9"></script>
   <script>
@@ -271,8 +271,103 @@
       });
     }
 
-    function renderActionCard(action, index) {
-      if (!action || action.type !== "create_calendar_event") return null;
+    function actionSummary(action) {
+      const payload = action?.payload || {};
+      if (action?.type === "create_calendar_event") {
+        return `${payload.title || "Untitled event"} · ${formatActionDate(payload.startsAt)}`;
+      }
+      if (action?.type === "update_people_memory") {
+        const draft = payload.draft || {};
+        const people = [
+          ...(Array.isArray(draft.people) ? draft.people.map((person) => person.name).filter(Boolean) : []),
+          ...(Array.isArray(draft.possiblePeople) ? draft.possiblePeople.filter((person) => Number(person.confidence || 0) >= 0.75).map((person) => person.name).filter(Boolean) : []),
+        ];
+        const memoryCount = Array.isArray(draft.memoryCards) ? draft.memoryCards.length : 0;
+        const reminderCount = Array.isArray(draft.reminders) ? draft.reminders.length : 0;
+        const pieces = [];
+        if (people.length) pieces.push(`Profiles: ${people.join(", ")}`);
+        if (memoryCount) pieces.push(`${memoryCount} memor${memoryCount === 1 ? "y" : "ies"}`);
+        if (reminderCount) pieces.push(`${reminderCount} follow-up${reminderCount === 1 ? "" : "s"}`);
+        return pieces.join(" · ") || "People Notebook update";
+      }
+      if (action?.type === "create_task") {
+        return `${payload.title || "Untitled task"}${payload.dueAt ? ` · Due ${formatActionDate(payload.dueAt)}` : ""}`;
+      }
+      return "Suggested action";
+    }
+
+    function actionConfirmLabel(action) {
+      if (action?.type === "create_calendar_event") return "Add to Calendar";
+      if (action?.type === "update_people_memory") return action?.payload?.suggested ? "Save Entry" : "Save to People";
+      if (action?.type === "create_task") return "Add Task";
+      return "Confirm";
+    }
+
+    function actionDoneLabel(action) {
+      if (action?.type === "create_calendar_event") return "Added";
+      if (action?.type === "update_people_memory") return "Saved";
+      if (action?.type === "create_task") return "Added";
+      return "Done";
+    }
+
+    function actionViewLabel(action) {
+      if (action?.type === "create_calendar_event") return "View in Calendar";
+      if (action?.type === "update_people_memory") return "View in People";
+      if (action?.type === "create_task") return "View Tasks";
+      return "View";
+    }
+
+    function getMessageActions(message) {
+      if (Array.isArray(message?.actions)) return message.actions;
+      return message?.action ? [message.action] : [];
+    }
+
+    function getAction(messageIndex, actionIndex = 0) {
+      return getMessageActions(messages[messageIndex])[actionIndex] || null;
+    }
+
+    function renderActionDetails(action) {
+      const payload = action?.payload || {};
+      const draft = payload.draft || {};
+      const details = document.createElement("div");
+      details.className = "ai-action-details";
+
+      if (action?.type === "update_people_memory") {
+        const cards = Array.isArray(draft.memoryCards) ? draft.memoryCards.slice(0, 4) : [];
+        cards.forEach((card) => {
+          const item = document.createElement("span");
+          item.textContent = `${card.label || "Memory"}: ${card.value || ""}`;
+          details.appendChild(item);
+        });
+      } else if (action?.type === "create_calendar_event") {
+        if (payload.description) {
+          const item = document.createElement("span");
+          item.textContent = payload.description;
+          details.appendChild(item);
+        }
+        if (payload.allDay) {
+          const item = document.createElement("span");
+          item.textContent = "All day";
+          details.appendChild(item);
+        }
+      } else if (action?.type === "create_task") {
+        if (payload.description) {
+          const item = document.createElement("span");
+          item.textContent = payload.description;
+          details.appendChild(item);
+        }
+        if (payload.priority) {
+          const item = document.createElement("span");
+          item.textContent = `Priority: ${payload.priority}`;
+          details.appendChild(item);
+        }
+      }
+
+      return details.childElementCount ? details : null;
+    }
+
+    function renderActionCard(action, messageIndex, actionIndex) {
+      if (!action) return null;
       const payload = action.payload || {};
       const card = document.createElement("div");
       card.className = `ai-action-card ai-action-card--${action.status || "draft"}`;
@@ -280,21 +375,25 @@
       const title = document.createElement("strong");
       title.textContent = action.label || "Suggested action";
       const summary = document.createElement("p");
-      summary.textContent = `${payload.title || "Untitled event"} · ${formatActionDate(payload.startsAt)}`;
+      summary.textContent = actionSummary(action);
       card.appendChild(title);
       card.appendChild(summary);
+
+      const details = renderActionDetails(action);
+      if (details) card.appendChild(details);
 
       if (action.status === "done") {
         const done = document.createElement("span");
         done.className = "ai-action-status";
-        done.textContent = "Added";
+        done.textContent = actionDoneLabel(action);
         card.appendChild(done);
         const controls = document.createElement("div");
         controls.className = "ai-action-controls";
         const view = document.createElement("button");
         view.type = "button";
-        view.dataset.actionView = String(index);
-        view.textContent = "View in Calendar";
+        view.dataset.actionViewMessage = String(messageIndex);
+        view.dataset.actionViewIndex = String(actionIndex);
+        view.textContent = actionViewLabel(action);
         controls.appendChild(view);
         card.appendChild(controls);
       } else if (action.status === "saving") {
@@ -317,11 +416,13 @@
         controls.className = "ai-action-controls";
         const apply = document.createElement("button");
         apply.type = "button";
-        apply.dataset.actionApply = String(index);
-        apply.textContent = "Add to Calendar";
+        apply.dataset.actionApplyMessage = String(messageIndex);
+        apply.dataset.actionApplyIndex = String(actionIndex);
+        apply.textContent = actionConfirmLabel(action);
         const dismiss = document.createElement("button");
         dismiss.type = "button";
-        dismiss.dataset.actionDismiss = String(index);
+        dismiss.dataset.actionDismissMessage = String(messageIndex);
+        dismiss.dataset.actionDismissIndex = String(actionIndex);
         dismiss.textContent = "Dismiss";
         controls.appendChild(apply);
         controls.appendChild(dismiss);
@@ -345,9 +446,11 @@
         }
         row.appendChild(textEl);
 
-        if (msg.role === "assistant" && msg.action) {
-          const actionCard = renderActionCard(msg.action, index);
-          if (actionCard) row.appendChild(actionCard);
+        if (msg.role === "assistant") {
+          getMessageActions(msg).forEach((action, actionIndex) => {
+            const actionCard = renderActionCard(action, index, actionIndex);
+            if (actionCard) row.appendChild(actionCard);
+          });
         }
 
         if (msg.role === "assistant" && msg.text && msg.text !== "Thinking...") {
@@ -412,7 +515,7 @@
       const data = await response.json();
       return {
         reply: data.reply || "Sorry, I couldn't generate a response.",
-        action: Array.isArray(data.actions) ? data.actions[0] || null : null,
+        actions: Array.isArray(data.actions) ? data.actions : [],
       };
     }
 
@@ -481,7 +584,7 @@
       try {
         const result = await sendMessage(payloadMessages);
         messages[pendingIndex].text = result.reply;
-        if (result.action) messages[pendingIndex].action = result.action;
+        if (result.actions?.length) messages[pendingIndex].actions = result.actions;
       } catch (err) {
         messages[pendingIndex].text = "Sorry, something went wrong. Please try again.";
       }
@@ -490,54 +593,79 @@
       saveMessages(messages);
     }
 
-    async function applyAction(index) {
-      const message = messages[index];
-      const action = message?.action;
-      if (!action || action.type !== "create_calendar_event") return;
+    async function applyAction(messageIndex, actionIndex = 0) {
+      const message = messages[messageIndex];
+      const action = getAction(messageIndex, actionIndex);
+      if (!message || !action) return;
 
       action.status = "saving";
       render(messages);
       saveMessages(messages);
 
       try {
-        const response = await fetch("/api/calendar-events", {
+        const response = await fetch("/api/ai-actions", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
-          body: JSON.stringify(action.payload || {}),
+          body: JSON.stringify({ action }),
         });
         const payload = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(payload?.error || "Calendar event could not be saved.");
+          throw new Error(payload?.error || "Action could not be saved.");
         }
         action.status = "done";
-        action.eventId = payload?.event?.id || "";
-        message.text = `Added "${action.payload?.title || "the event"}" to your calendar.`;
+        action.result = payload;
+        if (payload?.event) {
+          action.eventId = payload.event.id || "";
+          message.text = `Added "${action.payload?.title || "the event"}" to your calendar.`;
+        } else if (payload?.task) {
+          action.taskId = payload.task.id || "";
+          message.text = `Added "${action.payload?.title || "the task"}" to Tasks.`;
+        } else if (payload?.people?.length) {
+          action.personIds = payload.people.map((person) => person.id).filter(Boolean);
+          const names = payload.people.map((person) => person.name).filter(Boolean).join(", ");
+          const overviewErrors = payload.people.map((person) => person.overviewError).filter(Boolean);
+          message.text = overviewErrors.length
+            ? `Saved the People Notebook update for ${names || "the selected profile"}, but the overview refresh needs another try.`
+            : `Saved the People Notebook update for ${names || "the selected profile"} and refreshed the overview.`;
+        } else {
+          message.text = "Saved.";
+        }
       } catch (err) {
         action.status = "error";
-        action.error = err?.message || "Calendar event could not be saved.";
+        action.error = err?.message || "Action could not be saved.";
       }
 
       render(messages);
       saveMessages(messages);
     }
 
-    function dismissAction(index) {
-      const message = messages[index];
-      if (!message?.action) return;
-      message.action.status = "dismissed";
+    function dismissAction(messageIndex, actionIndex = 0) {
+      const action = getAction(messageIndex, actionIndex);
+      if (!action) return;
+      action.status = "dismissed";
       render(messages);
       saveMessages(messages);
     }
 
-    function viewAction(index) {
-      const action = messages[index]?.action;
-      if (!action || action.type !== "create_calendar_event") return;
-      const message = {
-        type: "qapp:view-calendar-event",
-        eventId: action.eventId || "",
-        startsAt: action.payload?.startsAt || "",
-      };
+    function viewAction(messageIndex, actionIndex = 0) {
+      const action = getAction(messageIndex, actionIndex);
+      if (!action) return;
+      const message = action.type === "update_people_memory"
+        ? {
+          type: "qapp:view-person-profile",
+          personId: action.personIds?.[0] || action.result?.people?.[0]?.id || "",
+        }
+        : action.type === "create_task"
+        ? {
+          type: "qapp:set-route",
+          route: "tasks",
+        }
+        : {
+          type: "qapp:view-calendar-event",
+          eventId: action.eventId || "",
+          startsAt: action.payload?.startsAt || "",
+        };
       if (window.parent && window.parent !== window) {
         window.parent.postMessage(message, window.location.origin);
       } else {
@@ -852,19 +980,28 @@
       const applyButton = event.target.closest("[data-action-apply]");
       if (applyButton) {
         applyButton.disabled = true;
-        await applyAction(Number(applyButton.dataset.actionApply));
+        await applyAction(
+          Number(applyButton.dataset.actionApplyMessage),
+          Number(applyButton.dataset.actionApplyIndex || 0)
+        );
         return;
       }
 
       const dismissButton = event.target.closest("[data-action-dismiss]");
       if (dismissButton) {
-        dismissAction(Number(dismissButton.dataset.actionDismiss));
+        dismissAction(
+          Number(dismissButton.dataset.actionDismissMessage),
+          Number(dismissButton.dataset.actionDismissIndex || 0)
+        );
         return;
       }
 
       const viewButton = event.target.closest("[data-action-view]");
       if (viewButton) {
-        viewAction(Number(viewButton.dataset.actionView));
+        viewAction(
+          Number(viewButton.dataset.actionViewMessage),
+          Number(viewButton.dataset.actionViewIndex || 0)
+        );
       }
     });
 

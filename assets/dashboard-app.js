@@ -39,6 +39,11 @@
   let selectedCalendarDate = toDateKey(new Date());
   let calendarMode = "month";
   let editingCalendarEventId = "";
+  let tasks = [];
+  let tasksStatus = "idle";
+  let tasksError = "";
+  let tasksMode = "list";
+  let editingTaskId = "";
 
   function escapeHtml(value) {
     return String(value || "")
@@ -86,6 +91,9 @@
     render();
     if (currentRoute === "calendar" && calendarStatus === "idle") {
       loadCalendarData();
+    }
+    if (currentRoute === "tasks" && tasksStatus === "idle") {
+      loadTasksData();
     }
   }
 
@@ -340,6 +348,21 @@
     } catch (error) {
       calendarStatus = "error";
       calendarError = error?.message || "Unable to load calendar.";
+    }
+    render();
+  }
+
+  async function loadTasksData() {
+    tasksStatus = "loading";
+    tasksError = "";
+    render();
+    try {
+      const payload = await apiJson("/api/tasks");
+      tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
+      tasksStatus = "ready";
+    } catch (error) {
+      tasksStatus = "error";
+      tasksError = error?.message || "Unable to load tasks.";
     }
     render();
   }
@@ -953,6 +976,180 @@
     `;
   }
 
+  function taskIsDone(task) {
+    return task.status === "done" || task.status === "archived";
+  }
+
+  function taskDueKey(task) {
+    return task.due_at ? toDateKey(task.due_at) : "";
+  }
+
+  function formatTaskDue(task) {
+    if (!task.due_at) return "No due date";
+    const date = new Date(task.due_at);
+    if (!Number.isFinite(date.getTime())) return "No due date";
+    const today = toDateKey(new Date());
+    const dueKey = toDateKey(date);
+    const prefix = dueKey < today && !taskIsDone(task) ? "Overdue: " : dueKey === today ? "Today: " : "Due ";
+    return `${prefix}${date.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })}`;
+  }
+
+  function sortTasksForList(taskList) {
+    return [...taskList].sort((a, b) => {
+      if (taskIsDone(a) !== taskIsDone(b)) return taskIsDone(a) ? 1 : -1;
+      const aDue = a.due_at ? new Date(a.due_at).getTime() : Number.MAX_SAFE_INTEGER;
+      const bDue = b.due_at ? new Date(b.due_at).getTime() : Number.MAX_SAFE_INTEGER;
+      if (aDue !== bDue) return aDue - bDue;
+      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+    });
+  }
+
+  function renderTaskCard(task) {
+    const done = taskIsDone(task);
+    return `
+      <article class="qapp-task-card ${done ? "is-done" : ""}">
+        <div>
+          <div class="qapp-task-title-row">
+            <strong>${escapeHtml(task.title)}</strong>
+            <span class="qapp-task-priority qapp-task-priority--${escapeHtml(task.priority || "normal")}">${escapeHtml(task.priority || "normal")}</span>
+          </div>
+          <p>${escapeHtml(formatTaskDue(task))}</p>
+          ${task.description ? `<p>${escapeHtml(task.description)}</p>` : ""}
+          <div class="qapp-tag-row">
+            ${statusPill(task.status || "todo")}
+            ${task.source === "ai_assistant" ? statusPill("AI") : ""}
+          </div>
+        </div>
+        <div class="qapp-item-actions">
+          ${done
+            ? `<button data-task-action="reopen-task" data-task-id="${escapeHtml(task.id)}" type="button">Reopen</button>`
+            : `<button data-task-action="complete-task" data-task-id="${escapeHtml(task.id)}" type="button">Done</button>`}
+          <button data-task-action="edit-task" data-task-id="${escapeHtml(task.id)}" type="button">Edit</button>
+          <button data-task-action="delete-task" data-task-id="${escapeHtml(task.id)}" type="button">Delete</button>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderTaskGroup(title, taskList, emptyCopy) {
+    return `
+      <section class="qapp-panel qapp-task-section">
+        <div class="qapp-panel-title-row">
+          <h3>${escapeHtml(title)}</h3>
+          ${statusPill(String(taskList.length))}
+        </div>
+        <div class="qapp-task-list">
+          ${taskList.length ? taskList.map(renderTaskCard).join("") : `<article class="qapp-task-card"><strong>${escapeHtml(emptyCopy)}</strong></article>`}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderTaskForm() {
+    const editingTask = editingTaskId ? tasks.find((task) => task.id === editingTaskId) : null;
+    const selectedStatus = editingTask?.status || "todo";
+    const selectedPriority = editingTask?.priority || "normal";
+    return `
+      <section class="qapp-panel">
+        <button class="qapp-text-button" data-task-action="back-list" type="button">Back to tasks</button>
+        <form id="qappTaskForm" class="qapp-capture-form">
+          <input name="id" type="hidden" value="${escapeHtml(editingTask?.id || "")}">
+          <div class="qapp-form-section">
+            <div class="qapp-form-section-title">
+              <h3>${editingTask ? "Edit task" : "New task"}</h3>
+            </div>
+            <label>
+              <span>Title</span>
+              <input name="title" type="text" value="${escapeHtml(editingTask?.title || "")}" placeholder="What needs to happen?" required>
+            </label>
+            <div class="qapp-capture-grid">
+              <label>
+                <span>Due</span>
+                <input name="dueAt" type="datetime-local" value="${escapeHtml(toDateTimeLocal(editingTask?.due_at || ""))}">
+              </label>
+              <label>
+                <span>Priority</span>
+                <select name="priority">
+                  ${["low", "normal", "high", "urgent"].map((priority) => `
+                    <option value="${priority}" ${selectedPriority === priority ? "selected" : ""}>${priority}</option>
+                  `).join("")}
+                </select>
+              </label>
+              <label>
+                <span>Status</span>
+                <select name="status">
+                  ${["todo", "in_progress", "done", "archived"].map((status) => `
+                    <option value="${status}" ${selectedStatus === status ? "selected" : ""}>${status}</option>
+                  `).join("")}
+                </select>
+              </label>
+            </div>
+            <label>
+              <span>Notes</span>
+              <textarea name="description" rows="4" placeholder="Context, links, or why it matters">${escapeHtml(editingTask?.description || "")}</textarea>
+            </label>
+          </div>
+          <div class="qapp-action-row">
+            <button type="submit">${editingTask ? "Save Task" : "Create Task"}</button>
+            ${editingTask ? `<button class="qapp-danger-button" data-task-action="delete-task" data-task-id="${escapeHtml(editingTask.id)}" type="button">Delete Task</button>` : ""}
+          </div>
+        </form>
+      </section>
+    `;
+  }
+
+  function renderTasks() {
+    if (tasksStatus === "idle" || tasksStatus === "loading") {
+      return `<section class="qapp-panel"><p>Loading tasks...</p></section>`;
+    }
+
+    if (tasksStatus === "error") {
+      return `
+        <section class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Tasks load failed</h3>
+            ${statusPill("Error")}
+          </div>
+          <p>${escapeHtml(tasksError)}</p>
+          <button class="qapp-inline-button" data-task-action="reload" type="button">Try Again</button>
+        </section>
+      `;
+    }
+
+    if (tasksMode === "form") {
+      return renderTaskForm();
+    }
+
+    const todayKey = toDateKey(new Date());
+    const sorted = sortTasksForList(tasks);
+    const todayTasks = sorted.filter((task) => !taskIsDone(task) && taskDueKey(task) && taskDueKey(task) <= todayKey);
+    const upcomingTasks = sorted.filter((task) => !taskIsDone(task) && (!taskDueKey(task) || taskDueKey(task) > todayKey));
+    const doneTasks = sorted.filter(taskIsDone).slice(0, 12);
+
+    return `
+      <section class="qapp-panel qapp-tasks-toolbar">
+        <div>
+          <h3>Tasks</h3>
+          <p>${tasks.length} task${tasks.length === 1 ? "" : "s"} saved</p>
+        </div>
+        <div class="qapp-action-row">
+          <button class="qapp-soft-button" data-task-action="reload" type="button">Reload</button>
+          <button class="qapp-inline-button" data-task-action="new-task" type="button">Add Task</button>
+        </div>
+      </section>
+      <div class="qapp-task-board">
+        ${renderTaskGroup("Today & Overdue", todayTasks, "Nothing due right now.")}
+        ${renderTaskGroup("Upcoming", upcomingTasks, "No upcoming tasks.")}
+        ${renderTaskGroup("Done", doneTasks, "No completed tasks yet.")}
+      </div>
+    `;
+  }
+
   function renderPlaceholder(route, kicker, title, copy, items) {
     return `
       <section class="qapp-grid">
@@ -988,11 +1185,8 @@
       view.innerHTML = renderCalendar();
       bindCalendarForms();
     } else if (currentRoute === "tasks") {
-      view.innerHTML = renderPlaceholder("tasks", "Execution", "Tasks", "The tasks table is ready for priorities, due dates, statuses, and AI-created action items.", [
-        { title: "Today", status: "Planned", copy: "A compact list of what actually needs attention." },
-        { title: "Follow-Ups", status: "Linked", copy: "Relationship reminders can become tasks when action is needed." },
-        { title: "Done Log", status: "Planned", copy: "Keep a searchable record of completed work." },
-      ]);
+      view.innerHTML = renderTasks();
+      bindTaskForms();
     } else if (currentRoute === "notes") {
       view.innerHTML = renderPlaceholder("notes", "Capture", "Notes", "Notes will hold quick thoughts, planning entries, and raw material before AI organizes it.", [
         { title: "Quick Note", status: "Planned", copy: "Capture a thought without deciding where it belongs yet." },
@@ -1126,6 +1320,134 @@
         await qappAlert(error?.message || "Unable to save event.", "Calendar error");
         submitButton.disabled = false;
         submitButton.textContent = id ? "Save Event" : "Create Event";
+      }
+    });
+  }
+
+  function taskPayloadFromForm(form) {
+    const formData = new FormData(form);
+    const status = String(formData.get("status") || "todo");
+    return {
+      id: String(formData.get("id") || "").trim(),
+      title: String(formData.get("title") || "").trim(),
+      description: String(formData.get("description") || "").trim(),
+      dueAt: fromDateTimeLocal(formData.get("dueAt")),
+      priority: String(formData.get("priority") || "normal"),
+      status,
+      completedAt: status === "done" ? new Date().toISOString() : "",
+    };
+  }
+
+  async function patchTaskStatus(task, status) {
+    await apiJson("/api/tasks", {
+      method: "PATCH",
+      body: {
+        id: task.id,
+        title: task.title,
+        description: task.description || "",
+        dueAt: task.due_at || "",
+        priority: task.priority || "normal",
+        status,
+        completedAt: status === "done" ? new Date().toISOString() : "",
+        metadata: task.metadata || {},
+        source: task.source || "dashboard",
+      },
+    });
+  }
+
+  function bindTaskForms() {
+    const taskButtons = [...document.querySelectorAll("[data-task-action]")];
+    const form = document.getElementById("qappTaskForm");
+
+    taskButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        const action = button.dataset.taskAction || "";
+        const taskId = button.dataset.taskId || "";
+        const task = taskId ? tasks.find((item) => item.id === taskId) : null;
+
+        if (action === "reload") {
+          loadTasksData();
+          return;
+        }
+        if (action === "new-task") {
+          editingTaskId = "";
+          tasksMode = "form";
+          render();
+          return;
+        }
+        if (action === "edit-task") {
+          editingTaskId = taskId;
+          tasksMode = "form";
+          render();
+          return;
+        }
+        if (action === "back-list") {
+          editingTaskId = "";
+          tasksMode = "list";
+          render();
+          return;
+        }
+        if (action === "complete-task" && task) {
+          button.disabled = true;
+          try {
+            await patchTaskStatus(task, "done");
+            await loadTasksData();
+          } catch (error) {
+            await qappAlert(error?.message || "Unable to complete task.", "Task error");
+            button.disabled = false;
+          }
+          return;
+        }
+        if (action === "reopen-task" && task) {
+          button.disabled = true;
+          try {
+            await patchTaskStatus(task, "todo");
+            await loadTasksData();
+          } catch (error) {
+            await qappAlert(error?.message || "Unable to reopen task.", "Task error");
+            button.disabled = false;
+          }
+          return;
+        }
+        if (action === "delete-task") {
+          if (!taskId) return;
+          if (!await qappConfirm("Delete this task?", "Delete task", { confirmLabel: "Delete", danger: true })) return;
+          try {
+            await apiJson("/api/tasks", { method: "DELETE", body: { id: taskId } });
+            editingTaskId = "";
+            tasksMode = "list";
+            await loadTasksData();
+          } catch (error) {
+            await qappAlert(error?.message || "Unable to delete task.", "Task error");
+          }
+        }
+      });
+    });
+
+    if (!form) return;
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const submitButton = form.querySelector('button[type="submit"]');
+      const payload = taskPayloadFromForm(form);
+      if (!payload.title) {
+        await qappAlert("Task title is required.", "Task");
+        return;
+      }
+      submitButton.disabled = true;
+      submitButton.textContent = "Saving...";
+      try {
+        await apiJson("/api/tasks", {
+          method: payload.id ? "PATCH" : "POST",
+          body: payload,
+        });
+        editingTaskId = "";
+        tasksMode = "list";
+        await loadTasksData();
+      } catch (error) {
+        await qappAlert(error?.message || "Unable to save task.", "Task error");
+        submitButton.disabled = false;
+        submitButton.textContent = payload.id ? "Save Task" : "Create Task";
       }
     });
   }
@@ -1643,6 +1965,22 @@
     const data = event.data || {};
     if (data.type === "qapp:set-route") {
       setRoute(data.route);
+      if (data.route === "tasks" && tasksStatus !== "loading") {
+        await loadTasksData();
+      }
+      return;
+    }
+    if (data.type === "qapp:view-person-profile") {
+      const personId = String(data.personId || "").trim();
+      selectedPersonId = personId;
+      peopleMode = personId ? "profile" : "list";
+      setRoute("people");
+      if (notebookStatus !== "loading") {
+        await loadNotebookData();
+        selectedPersonId = personId;
+        peopleMode = personId ? "profile" : "list";
+        render();
+      }
       return;
     }
     if (data.type !== "qapp:view-calendar-event") return;

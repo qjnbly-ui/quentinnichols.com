@@ -154,6 +154,13 @@ function titleCase(value) {
     .join(" ");
 }
 
+function isUsableCapturedName(name) {
+  const parts = cleanText(name, 120).split(/\s+/).filter(Boolean);
+  if (!parts.length || parts.length > 3) return false;
+  const blocked = new Set(["who", "that", "which", "recently", "just", "my", "your", "his", "her", "their"]);
+  return !parts.some((part) => blocked.has(part.toLowerCase()) || STOPWORDS.has(part.toLowerCase()));
+}
+
 function escapeRegExp(value) {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -346,13 +353,14 @@ function extractMemoryCards(note) {
     cards.push({ label: "Preferred Name", value: `${titleCase(knownAs[1])}: ${titleCase(knownAs[2])}`, confidence: 0.9 });
   }
   const familyContext = [];
-  const cousinContext = note.match(/\bmy\s+cousin\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
-  if (cousinContext) familyContext.push(`${titleCase(cousinContext[1])} is my cousin`);
+  const cousinContext = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+cousin\b/)
+    || note.match(/\bmy\s+cousin\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:just|recently|graduated|is|was|has|had|will|and)\b|[.,!?]|$)/);
+  if (cousinContext && isUsableCapturedName(cousinContext[1])) familyContext.push(`${titleCase(cousinContext[1])} is my cousin`);
   const mom = note.match(/\bmy\s+(?:mom|mother)\s+is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
-  if (mom) familyContext.push(`${titleCase(mom[1])} is my mom`);
+  if (mom && isUsableCapturedName(mom[1])) familyContext.push(`${titleCase(mom[1])} is my mom`);
   const sister = note.match(/\bmy\s+(?:younger\s+|older\s+)?sister\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i)
     || note.match(/\b(?:younger\s+|older\s+)?sister\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
-  if (sister) familyContext.push(`${titleCase(sister[1])} is my${/\byounger sister\b/i.test(note) ? " younger" : ""} sister`);
+  if (sister && isUsableCapturedName(sister[1])) familyContext.push(`${titleCase(sister[1])} is my${/\byounger sister\b/i.test(note) ? " younger" : ""} sister`);
   const cameIntoLives = note.match(/\bbefore\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+came into our lives\b/i);
   if (cameIntoLives) familyContext.push(`${titleCase(cameIntoLives[1])} came into our lives`);
   if (familyContext.length) {
@@ -362,9 +370,10 @@ function extractMemoryCards(note) {
   if (daughter) {
     cards.push({ label: titleCase(daughter[0].replace(daughter[1], "").trim()), value: daughter[1], confidence: 0.72 });
   }
-  const graduation = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:just\s+)?graduated\s+([^.!?]+)/i)
-    || note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:just\s+)?graduated\b/i);
-  if (graduation) {
+  const graduation = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:just\s+|recently\s+)?graduated\s+([^.!?]+)/)
+    || note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?:\s+(?:is|was|my|your|cousin|who|that|just|recently)){1,8}\s+graduated\s+([^.!?]+)/)
+    || note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:just\s+|recently\s+)?graduated\b/);
+  if (graduation && isUsableCapturedName(graduation[1])) {
     const detail = cleanText(graduation[2] || "graduated", 160);
     cards.push({ label: "School Milestone", value: `${titleCase(graduation[1])} graduated ${detail}`.replace(/\s+/g, " "), confidence: 0.86 });
   }
@@ -873,7 +882,23 @@ async function buildAiDraft(note, people, scriptDraft) {
   return sanitizeDraft({ ...parsed, source: "ai" }, scriptDraft, note, people);
 }
 
-module.exports = async function handler(req, res) {
+async function buildRelationshipDraft(supabaseRest, note, options = {}) {
+  const peopleResponse = await supabaseRest(
+    "people?select=id,name,preferred_name,tags,email,phone,overview&order=updated_at.desc"
+  );
+  const peoplePayload = await peopleResponse.json().catch(() => []);
+  if (!peopleResponse.ok) {
+    const error = new Error(peoplePayload?.message || "Unable to load people.");
+    error.statusCode = peopleResponse.status;
+    throw error;
+  }
+
+  const people = normalizePeople(peoplePayload);
+  const scriptDraft = buildScriptDraft(note, people);
+  return options.useAi === false ? scriptDraft : await buildAiDraft(note, people, scriptDraft);
+}
+
+async function handler(req, res) {
   if (req.method !== "POST") {
     json(res, 405, { error: "Method not allowed" });
     return;
@@ -888,21 +913,13 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const peopleResponse = await supabaseRest(
-      "people?select=id,name,preferred_name,tags,email,phone,overview&order=updated_at.desc"
-    );
-    const peoplePayload = await peopleResponse.json().catch(() => []);
-    if (!peopleResponse.ok) {
-      json(res, peopleResponse.status, { error: peoplePayload?.message || "Unable to load people." });
-      return;
-    }
-
-    const people = normalizePeople(peoplePayload);
-    const scriptDraft = buildScriptDraft(note, people);
-    const draft = body.useAi === false ? scriptDraft : await buildAiDraft(note, people, scriptDraft);
+    const draft = await buildRelationshipDraft(supabaseRest, note, { useAi: body.useAi });
 
     json(res, 200, { draft });
   } catch (error) {
     await handleApiError(res, error);
   }
-};
+}
+
+module.exports = handler;
+module.exports.buildRelationshipDraft = buildRelationshipDraft;

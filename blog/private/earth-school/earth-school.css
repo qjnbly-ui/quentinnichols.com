@@ -13,6 +13,11 @@
 }
 
 body.earth-school-page {
+  --qapp-border: rgba(237, 244, 255, 0.16);
+  --qapp-border-strong: rgba(120, 190, 255, 0.34);
+  --qapp-muted: rgba(237, 244, 255, 0.68);
+  --qapp-text: #edf4ff;
+  --qapp-gold: #89f0ff;
   background:
     linear-gradient(180deg, rgba(5, 12, 21, 0.72), rgba(5, 12, 21, 0.88)),
     url("/assets/soul.png") center center / cover no-repeat,

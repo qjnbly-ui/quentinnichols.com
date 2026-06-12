@@ -141,6 +141,74 @@
     document.body.classList.remove("earth-consent-open");
   }
 
+  function earthConfirm(options) {
+    return new Promise(function (resolve) {
+      const overlay = document.createElement("div");
+      overlay.className = "qapp-modal-overlay";
+      overlay.setAttribute("role", "presentation");
+
+      const modal = document.createElement("div");
+      modal.className = "qapp-modal";
+      modal.setAttribute("role", "dialog");
+      modal.setAttribute("aria-modal", "true");
+      modal.setAttribute("aria-labelledby", "earth-confirm-title");
+
+      const header = document.createElement("div");
+      header.className = "qapp-modal-header";
+
+      const title = document.createElement("h2");
+      title.id = "earth-confirm-title";
+      title.textContent = options.title || "Confirm";
+
+      const message = document.createElement("p");
+      message.textContent = options.message || "Are you sure?";
+
+      const actions = document.createElement("div");
+      actions.className = "qapp-modal-actions";
+
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.className = "qapp-modal-cancel";
+      cancelButton.textContent = options.cancelLabel || "Cancel";
+
+      const confirmButton = document.createElement("button");
+      confirmButton.type = "button";
+      confirmButton.className = "qapp-modal-confirm" + (options.danger ? " is-danger" : "");
+      confirmButton.textContent = options.confirmLabel || "OK";
+
+      function finish(value) {
+        document.removeEventListener("keydown", onKeydown);
+        overlay.remove();
+        resolve(value);
+      }
+
+      function onKeydown(event) {
+        if (event.key === "Escape") finish(false);
+      }
+
+      header.append(title, message);
+      actions.append(cancelButton, confirmButton);
+      modal.append(header, actions);
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      cancelButton.addEventListener("click", function () {
+        finish(false);
+      });
+
+      confirmButton.addEventListener("click", function () {
+        finish(true);
+      });
+
+      overlay.addEventListener("click", function (event) {
+        if (event.target === overlay) finish(false);
+      });
+
+      document.addEventListener("keydown", onKeydown);
+      cancelButton.focus();
+    });
+  }
+
   function loadEarthAiMessages() {
     try {
       const raw = localStorage.getItem(earthAiStorageKey);
@@ -403,8 +471,14 @@
       saveEarthAiMessages(earthAiMessages);
     });
 
-    earthAiClear.addEventListener("click", function () {
-      if (!confirm("Clear this Earth School chat from your device?")) return;
+    earthAiClear.addEventListener("click", async function () {
+      const confirmed = await earthConfirm({
+        title: "Clear Chat",
+        message: "Clear this Earth School chat from your device?",
+        confirmLabel: "Clear",
+        danger: true,
+      });
+      if (!confirmed) return;
       earthAiMessages.length = 0;
       saveEarthAiMessages(earthAiMessages);
       renderEarthAi(earthAiMessages);

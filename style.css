@@ -3703,6 +3703,19 @@ body.nav-menu-open {
   font-size: 13px;
 }
 
+.ai-action-details {
+  display: grid;
+  gap: 6px;
+}
+
+.ai-action-details span {
+  border-left: 2px solid rgba(214, 185, 101, 0.42);
+  color: rgba(245, 242, 234, 0.72);
+  font-size: 12px;
+  line-height: 1.45;
+  padding-left: 8px;
+}
+
 .ai-action-controls {
   display: flex;
   flex-wrap: wrap;
@@ -5542,6 +5555,90 @@ body.nav-menu-open {
   justify-content: space-between;
 }
 
+.qapp-tasks-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
+.qapp-tasks-toolbar h3,
+.qapp-tasks-toolbar p {
+  margin: 0;
+}
+
+.qapp-tasks-toolbar p {
+  color: var(--qapp-muted);
+  margin-top: 4px;
+}
+
+.qapp-task-board {
+  align-items: start;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+}
+
+.qapp-task-board .qapp-task-section:first-child {
+  grid-row: span 2;
+}
+
+.qapp-task-list {
+  display: grid;
+  gap: 10px;
+}
+
+.qapp-task-card {
+  background: var(--qapp-panel-soft);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  color: var(--qapp-text);
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+}
+
+.qapp-task-card.is-done {
+  opacity: 0.68;
+}
+
+.qapp-task-card.is-done strong {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.qapp-task-title-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.qapp-task-card p {
+  color: var(--qapp-muted);
+  line-height: 1.4;
+  margin: 6px 0 0;
+}
+
+.qapp-task-priority {
+  border: 1px solid var(--qapp-border);
+  border-radius: 999px;
+  color: var(--qapp-muted);
+  flex: 0 0 auto;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  text-transform: uppercase;
+}
+
+.qapp-task-priority--high,
+.qapp-task-priority--urgent {
+  border-color: rgba(255, 145, 120, 0.4);
+  color: #ffb39f;
+}
+
 .qapp-drawer-overlay {
   background: rgba(0, 0, 0, 0.58);
   inset: 0;
@@ -5819,8 +5916,18 @@ body.qapp-drawer-open {
   .qapp-people-toolbar,
   .qapp-review-grid,
   .qapp-memory-list,
-  .qapp-calendar-layout {
+  .qapp-calendar-layout,
+  .qapp-task-board {
     grid-template-columns: 1fr;
+  }
+
+  .qapp-task-board .qapp-task-section:first-child {
+    grid-row: auto;
+  }
+
+  .qapp-tasks-toolbar {
+    align-items: stretch;
+    display: grid;
   }
 
   .qapp-calendar-toolbar {
