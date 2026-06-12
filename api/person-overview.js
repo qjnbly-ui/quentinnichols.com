@@ -6,7 +6,13 @@ function cleanText(value, maxLength = 1000) {
 }
 
 function looksLikeUuid(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
+}
+
+function cleanRecordId(value) {
+  const id = cleanText(value, 80);
+  if (looksLikeUuid(id) || /^\d+$/.test(id)) return id;
+  return "";
 }
 
 module.exports = async function handler(req, res) {
@@ -19,15 +25,14 @@ module.exports = async function handler(req, res) {
     const { supabaseRest } = await getAuthedSupabase(req);
     const requestUrl = new URL(req.url, `https://${req.headers.host || "localhost"}`);
     const body = await readJsonBody(req);
-    const personId = cleanText(
+    const personId = cleanRecordId(
       body.personId
         || body.person_id
         || body.id
         || requestUrl.searchParams.get("person_id")
         || requestUrl.searchParams.get("id"),
-      80
     );
-    if (!looksLikeUuid(personId)) {
+    if (!personId) {
       json(res, 400, { error: "A valid person is required." });
       return;
     }
