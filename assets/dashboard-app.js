@@ -1233,9 +1233,9 @@
         refreshOverviewButton.disabled = true;
         refreshOverviewButton.textContent = "Refreshing...";
         try {
-          await apiJson("/api/person-overview", {
+          await apiJson(`/api/person-overview?person_id=${encodeURIComponent(activePerson.id)}`, {
             method: "POST",
-            body: { personId: activePerson.id },
+            body: { personId: activePerson.id, id: activePerson.id },
           });
           await loadNotebookData();
           selectedPersonId = activePerson.id;

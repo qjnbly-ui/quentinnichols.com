@@ -7,6 +7,7 @@ const PROTECTED_PATHS = [
   "/api/stt",
   "/api/voice",
   "/api/people",
+  "/api/person-overview",
   "/api/person-interactions",
   "/api/relationship-items",
   "/api/relationship-note-draft",

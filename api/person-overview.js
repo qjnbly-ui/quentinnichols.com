@@ -17,8 +17,16 @@ module.exports = async function handler(req, res) {
 
   try {
     const { supabaseRest } = await getAuthedSupabase(req);
+    const requestUrl = new URL(req.url, `https://${req.headers.host || "localhost"}`);
     const body = await readJsonBody(req);
-    const personId = cleanText(body.personId || body.person_id, 80);
+    const personId = cleanText(
+      body.personId
+        || body.person_id
+        || body.id
+        || requestUrl.searchParams.get("person_id")
+        || requestUrl.searchParams.get("id"),
+      80
+    );
     if (!looksLikeUuid(personId)) {
       json(res, 400, { error: "A valid person is required." });
       return;
