@@ -362,6 +362,17 @@ function parseClockTime(text) {
   return null;
 }
 
+function parseNamedTime(text) {
+  const value = String(text || "");
+  if (/\bnoon\b/i.test(value)) return { hours: 12, minutes: 0 };
+  if (/\bmidnight\b/i.test(value)) return { hours: 0, minutes: 0 };
+  if (/\bmorning\b/i.test(value)) return { hours: 9, minutes: 0 };
+  if (/\bafternoon\b/i.test(value)) return { hours: 14, minutes: 0 };
+  if (/\bevening\b/i.test(value)) return { hours: 18, minutes: 0 };
+  if (/\btonight\b/i.test(value)) return { hours: 20, minutes: 0 };
+  return null;
+}
+
 function titleCaseEvent(value) {
   return String(value || "")
     .trim()
@@ -379,7 +390,7 @@ function cleanCalendarTitle(text) {
   const cleaned = source
     .replace(/\b(add|create|put|please|schedule|calendar|appointment|reminder|to|my|on|at|this|next)\b/gi, " ")
     .replace(/\bevent\b/gi, " ")
-    .replace(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi, " ")
+    .replace(/\b(today|tomorrow|tonight|morning|afternoon|evening|noon|midnight|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi, " ")
     .replace(/\b\d{1,2}(?::\d{2})?\s*(am|pm)?\b/gi, " ")
     .replace(/^[\s:;,.!?-]+|[\s:;,.!?-]+$/g, "")
     .replace(/\s+/g, " ");
@@ -391,9 +402,9 @@ function cleanTaskTitle(text) {
   const colonMatch = textValue.match(/\b(?:add|create|make|save)\s+(?:this\s+)?(?:task|todo|to-do)\s*:\s*(.+)$/i);
   const source = colonMatch?.[1] || textValue;
   const cleaned = source
-    .replace(/\b(add|create|make|save|please|task|todo|to-do|to|my|on|at|this|next|remind|me)\b/gi, " ")
+    .replace(/\b(add|create|make|save|please|task|todo|to-do|to|my|on|at|this|next|remind|reminder|me)\b/gi, " ")
     .replace(/\b(urgent|important|high priority|low priority|normal priority)\b/gi, " ")
-    .replace(/\b(today|tomorrow|tonight|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi, " ")
+    .replace(/\b(today|tomorrow|tonight|morning|afternoon|evening|noon|midnight|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi, " ")
     .replace(/\b\d{1,2}(?::\d{2})?\s*(am|pm)?\b/gi, " ")
     .replace(/^[\s:;,.!?-]+|[\s:;,.!?-]+$/g, "")
     .replace(/\s+/g, " ");
@@ -498,8 +509,9 @@ function buildCalendarAction(messages) {
     dateParts = nextWeekdayParts(weekdayMatch[1]);
   }
 
-  if (!dateParts || !clock) return null;
-  const startsAt = zonedDateTimeToIso(dateParts, clock);
+  const time = clock || parseNamedTime(latest);
+  if (!dateParts || !time) return null;
+  const startsAt = zonedDateTimeToIso(dateParts, time);
   const endsAt = addHoursIso(startsAt, 1);
 
   const title = cleanCalendarTitle(latest);
@@ -537,15 +549,32 @@ function buildDueAtFromText(text) {
     dateParts = nextWeekdayParts(weekdayMatch[1]);
   }
   if (!dateParts) return "";
-  return zonedDateTimeToIso(dateParts, parseClockTime(text) || { hours: 9, minutes: 0 });
+  return zonedDateTimeToIso(dateParts, parseClockTime(text) || parseNamedTime(text) || { hours: 9, minutes: 0 });
+}
+
+function looksLikeReminderRequest(text) {
+  return /\b(?:remind\s+me|reminder)\b/i.test(String(text || ""));
+}
+
+function wantsCalendarFromText(text) {
+  const value = String(text || "");
+  return /\b(calendar|event|appointment)\b/i.test(value);
+}
+
+function hasDateSignal(text) {
+  return /\b(today|tomorrow|tonight|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i.test(String(text || ""));
 }
 
 function buildTaskAction(messages) {
   const latest = latestUserMessage(messages);
-  const wantsTask = /\b(add|create|make|save)\b/i.test(latest) && /\b(task|todo|to-do)\b/i.test(latest);
+  const reminderRequest = looksLikeReminderRequest(latest);
+  const wantsTask = (/\b(add|create|make|save)\b/i.test(latest) && /\b(task|todo|to-do)\b/i.test(latest))
+    || (reminderRequest && !wantsCalendarFromText(latest));
   if (!wantsTask) return null;
   const title = cleanTaskTitle(latest);
   if (!title || title.length < 2) return null;
+  const dueAt = buildDueAtFromText(latest) || null;
+  if (reminderRequest && !dueAt) return null;
   return {
     type: "create_task",
     status: "draft",
@@ -553,7 +582,7 @@ function buildTaskAction(messages) {
     payload: {
       title,
       description: latest,
-      dueAt: buildDueAtFromText(latest) || null,
+      dueAt,
       status: "todo",
       priority: /\burgent\b/i.test(latest) ? "urgent" : /\b(important|high priority)\b/i.test(latest) ? "high" : "normal",
       source: "ai_assistant",
@@ -601,6 +630,36 @@ function looksLikePeopleEncounterNote(text) {
   return /\b(today|yesterday|at|with|and|his|her|their|son|daughter|mom|dad|friend|coworker)\b/i.test(value);
 }
 
+function replyClaimsSave(reply) {
+  return /\b(?:I(?:'ve| have)?\s+)?(?:added|saved|recorded|created)\b/i.test(String(reply || ""));
+}
+
+function actionClarificationReply(messages) {
+  const latest = latestUserMessage(messages);
+  const recent = recentUserText(messages);
+  if (!latest) return "";
+
+  if (looksLikeReminderRequest(latest) && !wantsCalendarFromText(latest) && !buildDueAtFromText(latest)) {
+    return "I can make that a task reminder, but I need a date or time first. When should I remind you?";
+  }
+
+  if (wantsCalendarFromText(latest)) {
+    const missingDate = !hasDateSignal(latest);
+    const missingTime = !parseClockTime(latest) && !parseNamedTime(latest);
+    if (missingDate && missingTime) return "I can draft a calendar event for review. What date and time should I use?";
+    if (missingDate) return "I can draft a calendar event for review. What date should I put it on?";
+    if (missingTime) return "I can draft a calendar event for review. What time should I use?";
+  }
+
+  const saveLike = /\b(add|create|make|save|record|remember|note|remind)\b/i.test(latest);
+  const hasKnownTarget = /\b(task|todo|to-do|calendar|event|appointment|people|person|profile|memory|conversation|notebook)\b/i.test(recent);
+  if (saveLike && !hasKnownTarget) {
+    return "Should I turn that into a task reminder, a calendar event, or a people conversation entry?";
+  }
+
+  return "";
+}
+
 async function buildPeopleMemoryAction(messages, supabaseRest) {
   const latest = latestUserMessage(messages);
   const explicitRequest = wantsPeopleMemoryAction(latest);
@@ -620,7 +679,7 @@ async function buildPeopleMemoryAction(messages, supabaseRest) {
   return {
     type: "update_people_memory",
     status: "draft",
-    label: suggestedFromEncounter ? "Save People Notebook Entry" : "Update People Notebook",
+    label: "Review Conversation Entry",
     payload: {
       note,
       draft,
@@ -711,14 +770,19 @@ module.exports = async function handler(req, res) {
     const data = await response.json();
     const reply = data?.choices?.[0]?.message?.content?.trim() || "";
     const actions = authedSupabase ? await extractActions(trimmedMessages, authedSupabase.supabaseRest) : [];
-    const finalReply = actions.length && actions[0]?.payload?.suggested
-      ? reply
+    const clarification = actions.length ? "" : actionClarificationReply(trimmedMessages);
+    const finalReply = clarification
+      ? clarification
+      : actions.length && actions[0]?.payload?.suggested
+      ? replyClaimsSave(reply)
+        ? "I drafted a conversation entry from that. Review it below before saving."
+        : reply
       : actions.length && actions[0]?.type === "create_calendar_event"
-      ? "I drafted this calendar event. Confirm it below to save it."
+      ? "I drafted this calendar event. Review it below before saving."
       : actions.length && actions[0]?.type === "create_task"
-        ? "I drafted this task. Confirm it below to save it."
+        ? "I drafted this task. Review it below before saving."
       : actions.length && actions[0]?.type === "update_people_memory"
-        ? "I drafted a People Notebook update. Confirm it below to save it and refresh the profile overview."
+        ? "I drafted a conversation entry. Review it below before saving."
       : reply;
     res.status(200).json({ reply: finalReply, actions });
   } catch (err) {

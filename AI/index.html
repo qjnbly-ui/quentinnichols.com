@@ -271,6 +271,20 @@
       });
     }
 
+    function toDateTimeLocal(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      if (!Number.isFinite(date.getTime())) return "";
+      const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+      return local.toISOString().slice(0, 16);
+    }
+
+    function fromDateTimeLocal(value) {
+      if (!value) return "";
+      const date = new Date(value);
+      return Number.isFinite(date.getTime()) ? date.toISOString() : "";
+    }
+
     function actionSummary(action) {
       const payload = action?.payload || {};
       if (action?.type === "create_calendar_event") {
@@ -288,7 +302,7 @@
         if (people.length) pieces.push(`Profiles: ${people.join(", ")}`);
         if (memoryCount) pieces.push(`${memoryCount} memor${memoryCount === 1 ? "y" : "ies"}`);
         if (reminderCount) pieces.push(`${reminderCount} follow-up${reminderCount === 1 ? "" : "s"}`);
-        return pieces.join(" · ") || "People Notebook update";
+        return pieces.join(" · ") || "Conversation review";
       }
       if (action?.type === "create_task") {
         return `${payload.title || "Untitled task"}${payload.dueAt ? ` · Due ${formatActionDate(payload.dueAt)}` : ""}`;
@@ -297,15 +311,15 @@
     }
 
     function actionConfirmLabel(action) {
-      if (action?.type === "create_calendar_event") return "Add to Calendar";
-      if (action?.type === "update_people_memory") return action?.payload?.suggested ? "Save Entry" : "Save to People";
-      if (action?.type === "create_task") return "Add Task";
+      if (action?.type === "create_calendar_event") return "Review Calendar";
+      if (action?.type === "update_people_memory") return "Review Conversation";
+      if (action?.type === "create_task") return "Review Task";
       return "Confirm";
     }
 
     function actionDoneLabel(action) {
       if (action?.type === "create_calendar_event") return "Added";
-      if (action?.type === "update_people_memory") return "Saved";
+      if (action?.type === "update_people_memory") return "Saved Conversation";
       if (action?.type === "create_task") return "Added";
       return "Done";
     }
@@ -364,6 +378,223 @@
       }
 
       return details.childElementCount ? details : null;
+    }
+
+    function peopleActionReviewText(action) {
+      const draft = action?.payload?.draft || {};
+      const people = [
+        ...(Array.isArray(draft.people) ? draft.people.map((person) => person.name).filter(Boolean) : []),
+        ...(Array.isArray(draft.possiblePeople) ? draft.possiblePeople.filter((person) => Number(person.confidence || 0) >= 0.75).map((person) => person.name).filter(Boolean) : []),
+      ];
+      const memoryCards = Array.isArray(draft.memoryCards) ? draft.memoryCards : [];
+      const reminders = Array.isArray(draft.reminders) ? draft.reminders : [];
+      return [
+        people.length ? `Profiles: ${people.join(", ")}` : "Profiles: none confidently matched",
+        memoryCards.length ? `Memory cards:\n${memoryCards.map((card) => `- ${card.label || "Memory"}: ${card.value || ""}`).join("\n")}` : "Memory cards: none",
+        reminders.length ? `Follow-ups:\n${reminders.map((reminder) => `- ${reminder.title || "Follow up"}`).join("\n")}` : "Follow-ups: none",
+      ].join("\n\n");
+    }
+
+    function reviewPeopleAction(action) {
+      return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "qapp-modal-overlay";
+        overlay.innerHTML = `
+          <section class="qapp-modal" role="dialog" aria-modal="true" aria-labelledby="aiReviewTitle">
+            <div class="qapp-modal-header">
+              <h2 id="aiReviewTitle">Review Conversation</h2>
+              <p>This will save as a conversation entry, attach selected memories, and refresh the profile overview.</p>
+            </div>
+            <div class="qapp-modal-fields">
+              <label>
+                <span>Conversation note</span>
+                <textarea data-review-note rows="6"></textarea>
+              </label>
+              <label>
+                <span>Detected details</span>
+                <textarea data-review-details rows="7" readonly></textarea>
+              </label>
+            </div>
+            <div class="qapp-modal-actions">
+              <button class="qapp-modal-cancel" type="button">Cancel</button>
+              <button class="qapp-modal-confirm" type="button">Save Conversation</button>
+            </div>
+          </section>
+        `;
+        const noteField = overlay.querySelector("[data-review-note]");
+        const detailsField = overlay.querySelector("[data-review-details]");
+        noteField.value = action?.payload?.note || "";
+        detailsField.value = peopleActionReviewText(action);
+
+        function close(result) {
+          document.removeEventListener("keydown", onKeydown);
+          overlay.remove();
+          resolve(result);
+        }
+
+        function onKeydown(event) {
+          if (event.key === "Escape") close(null);
+        }
+
+        overlay.querySelector(".qapp-modal-cancel").addEventListener("click", () => close(null));
+        overlay.querySelector(".qapp-modal-confirm").addEventListener("click", () => {
+          const note = String(noteField.value || "").trim();
+          if (!note) {
+            noteField.focus();
+            return;
+          }
+          close({ note });
+        });
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) close(null);
+        });
+        document.addEventListener("keydown", onKeydown);
+        document.body.appendChild(overlay);
+        setTimeout(() => noteField.focus(), 0);
+      });
+    }
+
+    function reviewTaskAction(action) {
+      return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "qapp-modal-overlay";
+        overlay.innerHTML = `
+          <section class="qapp-modal" role="dialog" aria-modal="true" aria-labelledby="aiTaskReviewTitle">
+            <div class="qapp-modal-header">
+              <h2 id="aiTaskReviewTitle">Review Task</h2>
+              <p>This will create a task only after you save it here.</p>
+            </div>
+            <div class="qapp-modal-fields">
+              <label>
+                <span>Title</span>
+                <input data-review-title type="text">
+              </label>
+              <label>
+                <span>Due</span>
+                <input data-review-due type="datetime-local">
+              </label>
+              <label>
+                <span>Notes</span>
+                <textarea data-review-description rows="5"></textarea>
+              </label>
+            </div>
+            <div class="qapp-modal-actions">
+              <button class="qapp-modal-cancel" type="button">Cancel</button>
+              <button class="qapp-modal-confirm" type="button">Save Task</button>
+            </div>
+          </section>
+        `;
+        const titleField = overlay.querySelector("[data-review-title]");
+        const dueField = overlay.querySelector("[data-review-due]");
+        const descriptionField = overlay.querySelector("[data-review-description]");
+        titleField.value = action?.payload?.title || "";
+        dueField.value = toDateTimeLocal(action?.payload?.dueAt);
+        descriptionField.value = action?.payload?.description || "";
+
+        function close(result) {
+          document.removeEventListener("keydown", onKeydown);
+          overlay.remove();
+          resolve(result);
+        }
+
+        function onKeydown(event) {
+          if (event.key === "Escape") close(null);
+        }
+
+        overlay.querySelector(".qapp-modal-cancel").addEventListener("click", () => close(null));
+        overlay.querySelector(".qapp-modal-confirm").addEventListener("click", () => {
+          const title = String(titleField.value || "").trim();
+          if (!title) {
+            titleField.focus();
+            return;
+          }
+          close({
+            title,
+            dueAt: fromDateTimeLocal(dueField.value) || null,
+            description: String(descriptionField.value || "").trim(),
+          });
+        });
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) close(null);
+        });
+        document.addEventListener("keydown", onKeydown);
+        document.body.appendChild(overlay);
+        setTimeout(() => titleField.focus(), 0);
+      });
+    }
+
+    function reviewCalendarAction(action) {
+      return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "qapp-modal-overlay";
+        overlay.innerHTML = `
+          <section class="qapp-modal" role="dialog" aria-modal="true" aria-labelledby="aiCalendarReviewTitle">
+            <div class="qapp-modal-header">
+              <h2 id="aiCalendarReviewTitle">Review Calendar Event</h2>
+              <p>This will add an event only after you save it here.</p>
+            </div>
+            <div class="qapp-modal-fields">
+              <label>
+                <span>Title</span>
+                <input data-review-title type="text">
+              </label>
+              <label>
+                <span>Starts</span>
+                <input data-review-start type="datetime-local">
+              </label>
+              <label>
+                <span>Notes</span>
+                <textarea data-review-description rows="5"></textarea>
+              </label>
+            </div>
+            <div class="qapp-modal-actions">
+              <button class="qapp-modal-cancel" type="button">Cancel</button>
+              <button class="qapp-modal-confirm" type="button">Save Event</button>
+            </div>
+          </section>
+        `;
+        const titleField = overlay.querySelector("[data-review-title]");
+        const startField = overlay.querySelector("[data-review-start]");
+        const descriptionField = overlay.querySelector("[data-review-description]");
+        titleField.value = action?.payload?.title || "";
+        startField.value = toDateTimeLocal(action?.payload?.startsAt);
+        descriptionField.value = action?.payload?.description || "";
+
+        function close(result) {
+          document.removeEventListener("keydown", onKeydown);
+          overlay.remove();
+          resolve(result);
+        }
+
+        function onKeydown(event) {
+          if (event.key === "Escape") close(null);
+        }
+
+        overlay.querySelector(".qapp-modal-cancel").addEventListener("click", () => close(null));
+        overlay.querySelector(".qapp-modal-confirm").addEventListener("click", () => {
+          const title = String(titleField.value || "").trim();
+          const startsAt = fromDateTimeLocal(startField.value);
+          if (!title) {
+            titleField.focus();
+            return;
+          }
+          if (!startsAt) {
+            startField.focus();
+            return;
+          }
+          close({
+            title,
+            startsAt,
+            description: String(descriptionField.value || "").trim(),
+          });
+        });
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) close(null);
+        });
+        document.addEventListener("keydown", onKeydown);
+        document.body.appendChild(overlay);
+        setTimeout(() => titleField.focus(), 0);
+      });
     }
 
     function renderActionCard(action, messageIndex, actionIndex) {
@@ -598,6 +829,34 @@
       const action = getAction(messageIndex, actionIndex);
       if (!message || !action) return;
 
+      if (action.type === "update_people_memory") {
+        const reviewed = await reviewPeopleAction(action);
+        if (!reviewed) return;
+        action.payload.note = reviewed.note;
+        if (action.payload.draft?.interaction) {
+          action.payload.draft.interaction.notes = reviewed.note;
+        }
+      } else if (action.type === "create_task") {
+        const reviewed = await reviewTaskAction(action);
+        if (!reviewed) return;
+        action.payload.title = reviewed.title;
+        action.payload.dueAt = reviewed.dueAt;
+        action.payload.description = reviewed.description;
+      } else if (action.type === "create_calendar_event") {
+        const reviewed = await reviewCalendarAction(action);
+        if (!reviewed) return;
+        const previousStart = action.payload.startsAt ? new Date(action.payload.startsAt).getTime() : NaN;
+        const previousEnd = action.payload.endsAt ? new Date(action.payload.endsAt).getTime() : NaN;
+        const durationMs = Number.isFinite(previousStart) && Number.isFinite(previousEnd)
+          ? Math.max(previousEnd - previousStart, 30 * 60000)
+          : 60 * 60000;
+        const reviewedStartMs = new Date(reviewed.startsAt).getTime();
+        action.payload.title = reviewed.title;
+        action.payload.startsAt = reviewed.startsAt;
+        action.payload.endsAt = new Date(reviewedStartMs + durationMs).toISOString();
+        action.payload.description = reviewed.description;
+      }
+
       action.status = "saving";
       render(messages);
       saveMessages(messages);
@@ -626,8 +885,8 @@
           const names = payload.people.map((person) => person.name).filter(Boolean).join(", ");
           const overviewErrors = payload.people.map((person) => person.overviewError).filter(Boolean);
           message.text = overviewErrors.length
-            ? `Saved the People Notebook update for ${names || "the selected profile"}, but the overview refresh needs another try.`
-            : `Saved the People Notebook update for ${names || "the selected profile"} and refreshed the overview.`;
+            ? `Saved the conversation entry for ${names || "the selected profile"}, but the overview refresh needs another try.`
+            : `Saved the conversation entry for ${names || "the selected profile"} and refreshed the overview.`;
         } else {
           message.text = "Saved.";
         }
