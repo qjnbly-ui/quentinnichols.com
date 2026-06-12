@@ -1236,9 +1236,8 @@
     });
 
     log.addEventListener("click", async (event) => {
-      const applyButton = event.target.closest("[data-action-apply]");
+      const applyButton = event.target.closest("[data-action-apply-message]");
       if (applyButton) {
-        applyButton.disabled = true;
         await applyAction(
           Number(applyButton.dataset.actionApplyMessage),
           Number(applyButton.dataset.actionApplyIndex || 0)
@@ -1246,7 +1245,7 @@
         return;
       }
 
-      const dismissButton = event.target.closest("[data-action-dismiss]");
+      const dismissButton = event.target.closest("[data-action-dismiss-message]");
       if (dismissButton) {
         dismissAction(
           Number(dismissButton.dataset.actionDismissMessage),
@@ -1255,7 +1254,7 @@
         return;
       }
 
-      const viewButton = event.target.closest("[data-action-view]");
+      const viewButton = event.target.closest("[data-action-view-message]");
       if (viewButton) {
         viewAction(
           Number(viewButton.dataset.actionViewMessage),
