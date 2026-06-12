@@ -88,6 +88,16 @@ function gradeText(value) {
   return grade ? `${grade[1]}th grade` : cleanText(value, 80);
 }
 
+function normalizeProfileFacts(facts, person) {
+  const name = cleanText(person?.name, 160) || "This person";
+  const factSet = new Set(facts.map((fact) => cleanText(fact, 260)).filter(Boolean));
+  const specificSister = [...factSet].some((fact) => new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} is your (?:younger|older) sister\\.$`, "i").test(fact));
+  const specificBrother = [...factSet].some((fact) => new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} is your (?:younger|older) brother\\.$`, "i").test(fact));
+  if (specificSister) factSet.delete(`${name} is your sister.`);
+  if (specificBrother) factSet.delete(`${name} is your brother.`);
+  return [...factSet];
+}
+
 function extractProfileFacts(person, interactions, memoryCards) {
   const name = cleanText(person?.name, 160) || "This person";
   const facts = [];
@@ -146,7 +156,76 @@ function extractProfileFacts(person, interactions, memoryCards) {
     }
   });
 
-  return facts.slice(0, 8);
+  return normalizeProfileFacts(facts, person).slice(0, 8);
+}
+
+function memoryCardFromFact(fact, person) {
+  const name = cleanText(person?.name, 160) || "This person";
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const relation = fact.match(new RegExp(`^${escapedName} is your ((?:younger|older)\\s+)?(sister|brother|cousin)\\.$`, "i"));
+  if (relation) {
+    return {
+      category: "family",
+      label: "Family Context",
+      value: `${name} is your ${cleanText(`${relation[1] || ""}${relation[2]}`, 80)}.`,
+      confidence: 1,
+    };
+  }
+
+  const graduation = fact.match(new RegExp(`^${escapedName} recently graduated (.+)\\.$`, "i"));
+  if (graduation) {
+    return {
+      category: "school",
+      label: "School Milestone",
+      value: `${name} graduated ${cleanText(graduation[1], 120)}.`,
+      confidence: 1,
+    };
+  }
+
+  return null;
+}
+
+function normalizedMemoryKey(card) {
+  return [
+    cleanText(card.label, 120).toLowerCase(),
+    cleanText(card.value, 1000)
+      .toLowerCase()
+      .replace(/\bmy\b/g, "your")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim(),
+  ].join(":");
+}
+
+async function backfillMemoryCardsFromFacts(supabaseRest, person, interactions, memoryCards) {
+  const facts = extractProfileFacts(person, interactions, memoryCards);
+  const existingKeys = new Set(memoryCards.map(normalizedMemoryKey));
+  const rows = facts
+    .map((fact) => memoryCardFromFact(fact, person))
+    .filter(Boolean)
+    .filter((card) => !existingKeys.has(normalizedMemoryKey(card)))
+    .map((card) => ({
+      owner_id: person.owner_id,
+      person_id: person.id,
+      category: card.category,
+      label: card.label,
+      value: card.value,
+      confidence: card.confidence,
+      metadata: { source: "overview_refresh" },
+    }));
+
+  if (!rows.length) return memoryCards;
+  const response = await supabaseRest("person_memory_cards?select=*", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: rows,
+  });
+  const payload = await response.json().catch(() => []);
+  if (!response.ok) {
+    const error = new Error(payload?.message || "Unable to backfill memory cards.");
+    error.statusCode = response.status;
+    throw error;
+  }
+  return [...payload, ...memoryCards];
 }
 
 function buildProfileOverview(person, interactions, memoryCards) {
@@ -281,10 +360,10 @@ async function buildAiProfileOverview(person, interactions, memoryCards, fallbac
 
 async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
   const encodedPersonId = encodeURIComponent(personId);
-  const [people, interactions, memoryCards] = await Promise.all([
+  const [people, interactions, loadedMemoryCards] = await Promise.all([
     loadRows(
       supabaseRest,
-      `people?select=id,name,preferred_name,tags&limit=1&id=eq.${encodedPersonId}`,
+      `people?select=id,owner_id,name,preferred_name,tags&limit=1&id=eq.${encodedPersonId}`,
       "Unable to load person."
     ),
     loadRows(
@@ -298,6 +377,10 @@ async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
       "Unable to load memory cards."
     ),
   ]);
+  let memoryCards = loadedMemoryCards;
+  if (options.backfillMemoryCards && people[0]) {
+    memoryCards = await backfillMemoryCardsFromFacts(supabaseRest, people[0], interactions, loadedMemoryCards);
+  }
   const fallbackOverview = buildProfileOverview(people[0], interactions, memoryCards);
   let overview = fallbackOverview;
   if (options.useAi) {

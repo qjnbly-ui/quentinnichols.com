@@ -191,7 +191,11 @@ module.exports = async function handler(req, res) {
     let overview = "";
     let overviewError = "";
     try {
-      overview = await rebuildPersonOverview(supabaseRest, personId, { useAi: true, requireAi: true });
+      overview = await rebuildPersonOverview(supabaseRest, personId, {
+        useAi: true,
+        requireAi: true,
+        backfillMemoryCards: true,
+      });
     } catch (error) {
       overviewError = error?.message || "AI overview refresh failed.";
     }
