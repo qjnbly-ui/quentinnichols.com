@@ -601,9 +601,18 @@ function stripMemoryCommand(text) {
     .trim() || String(text || "").trim();
 }
 
+function cleanMemoryNoteText(text) {
+  return stripMemoryCommand(text)
+    .replace(/\s*(?:can\s+you\s+|could\s+you\s+|please\s+)?(?:add|save|record|remember|note)\s+(?:that|this|it)?\s*(?:and\s+)?(?:the\s+)?(?:above|previous|prior|last)?\s*(?:note|message)?\s*(?:i\s+made\s+)?(?:about\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)?\s*$/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function isContextReferenceMemoryRequest(text) {
   const value = String(text || "").trim();
-  return /\b(add|save|record|remember|note)\b/i.test(value)
+  const saveVerb = /\b(add|save|record|remember|note)\b/i.test(value);
+  if (saveVerb && /\b(?:above|previous|prior|last)\s+(?:note|message)\b/i.test(value)) return true;
+  return saveVerb
     && /\b(this|that|it)\b/i.test(value)
     && /\b(people entry|person entry|people notebook|relationship notebook|profile|memory|conversation|notebook)\b/i.test(value);
 }
@@ -611,6 +620,8 @@ function isContextReferenceMemoryRequest(text) {
 function wantsPeopleMemoryAction(text) {
   const value = String(text || "").trim();
   if (!value) return false;
+  if (isContextReferenceMemoryRequest(value)) return true;
+  if (/\b(add|save|record|remember|note)\b/i.test(value) && /\babout\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/.test(value)) return true;
   if (/\b(add|save|record|remember|note)\b/i.test(value) && /\b(people notebook|relationship notebook|person|people|profile|memory|conversation|remember|notebook)\b/i.test(value)) {
     return true;
   }
@@ -628,6 +639,16 @@ function looksLikePeopleEncounterNote(text) {
   if (value.length < 40) return false;
   if (!/\b(?:I|we)\s+(?:saw|met|talked to|spoke with|ran into|visited with)\s+[A-Z][a-z]+/i.test(value)) return false;
   return /\b(today|yesterday|at|with|and|his|her|their|son|daughter|mom|dad|friend|coworker)\b/i.test(value);
+}
+
+function referencedMemoryNote(messages, latest) {
+  const current = cleanMemoryNoteText(latest);
+  const prior = previousUserMessage(messages);
+  if (/\b(?:above|previous|prior|last)\s+(?:note|message)\b/i.test(latest) && prior) {
+    return [prior, current].map((part) => String(part || "").trim()).filter(Boolean).join("\n");
+  }
+  if (isContextReferenceMemoryRequest(latest) && prior && !current) return prior;
+  return current || prior || stripMemoryCommand(latest);
 }
 
 function replyClaimsSave(reply) {
@@ -651,6 +672,10 @@ function actionClarificationReply(messages) {
     if (missingTime) return "I can draft a calendar event for review. What time should I use?";
   }
 
+  if (wantsPeopleMemoryAction(latest)) {
+    return "I can draft that as a people conversation entry, but I need the person or profile it should attach to.";
+  }
+
   const saveLike = /\b(add|create|make|save|record|remember|note|remind)\b/i.test(latest);
   const hasKnownTarget = /\b(task|todo|to-do|calendar|event|appointment|people|person|profile|memory|conversation|notebook)\b/i.test(recent);
   if (saveLike && !hasKnownTarget) {
@@ -665,10 +690,9 @@ async function buildPeopleMemoryAction(messages, supabaseRest) {
   const explicitRequest = wantsPeopleMemoryAction(latest);
   const suggestedFromEncounter = !explicitRequest && looksLikePeopleEncounterNote(latest);
   if (!explicitRequest && !suggestedFromEncounter) return null;
-  const prior = previousUserMessage(messages);
-  const note = explicitRequest && isContextReferenceMemoryRequest(latest) && prior
-    ? prior
-    : stripMemoryCommand(latest);
+  const note = explicitRequest
+    ? referencedMemoryNote(messages, latest)
+    : cleanMemoryNoteText(latest);
   if (!note || note.length < 4) return null;
   const draft = await buildRelationshipDraft(supabaseRest, note);
   const hasProfile = Array.isArray(draft.people) && draft.people.length;
