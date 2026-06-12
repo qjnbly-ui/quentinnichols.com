@@ -89,7 +89,7 @@ def parse_js_string_array(block: str):
 
 
 def extract_earth_school_stages() -> str:
-    js_path = Path("blog/private/earth-school/earth-school.js")
+    js_path = Path("blog/post/earth-school/earth-school.js")
     if not js_path.exists():
         return ""
 
@@ -143,7 +143,7 @@ def scrape_local_site():
         soup = BeautifulSoup(html, "html.parser")
         url = file_path_to_url(path)
         content = extract_page_content(soup, url)
-        if content and url.endswith("/blog/private/earth-school/"):
+        if content and url.endswith("/blog/post/earth-school/"):
             extra = extract_earth_school_stages()
             if extra:
                 content["body"] = f"{content['body']}\n\n{extra}"

@@ -1,6 +1,6 @@
 # Earth School | The Earth Experience Guide
 Date: No date found
-URL: https://www.quentinnichols.com/blog/private/earth-school/
+URL: https://www.quentinnichols.com/blog/post/earth-school/
 
 Earth School
 
