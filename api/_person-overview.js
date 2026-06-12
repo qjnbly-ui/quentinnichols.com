@@ -30,12 +30,133 @@ function cleanMemoryLine(card) {
 const MODEL = process.env.RELATIONSHIP_OVERVIEW_MODEL || process.env.RELATIONSHIP_NOTE_MODEL || "openai/gpt-oss-120b";
 const REASONING_EFFORT = process.env.RELATIONSHIP_REASONING_EFFORT || "medium";
 
+function titleCase(value) {
+  return cleanText(value, 160)
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}`)
+    .join(" ");
+}
+
+function levenshtein(a, b) {
+  const left = String(a || "").toLowerCase();
+  const right = String(b || "").toLowerCase();
+  if (left === right) return 0;
+  if (!left) return right.length;
+  if (!right) return left.length;
+  const row = Array.from({ length: right.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= left.length; i += 1) {
+    let previous = row[0];
+    row[0] = i;
+    for (let j = 1; j <= right.length; j += 1) {
+      const old = row[j];
+      row[j] = left[i - 1] === right[j - 1]
+        ? previous
+        : Math.min(previous + 1, row[j] + 1, row[j - 1] + 1);
+      previous = old;
+    }
+  }
+  return row[right.length];
+}
+
+function profileNameVariants(person) {
+  const name = cleanText(person?.name, 160);
+  const preferred = cleanText(person?.preferred_name, 160);
+  const parts = name.split(/\s+/).filter(Boolean);
+  return [...new Set([name, preferred, parts[0], parts.slice(0, 2).join(" ")].filter((value) => value && value.length >= 3))];
+}
+
+function textMentionsProfile(text, person) {
+  const haystack = String(text || "");
+  const lowerHaystack = haystack.toLowerCase();
+  const variants = profileNameVariants(person);
+  if (variants.some((variant) => new RegExp(`\\b${variant.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(haystack))) {
+    return true;
+  }
+
+  const firstName = cleanText(person?.name, 160).split(/\s+/)[0] || "";
+  if (!firstName) return false;
+  const possibleNames = haystack.match(/\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,})?\b/g) || [];
+  return possibleNames.some((candidate) => {
+    const firstCandidate = candidate.split(/\s+/)[0] || "";
+    return levenshtein(firstCandidate, firstName) <= 2 && lowerHaystack.includes((person?.name || "").split(/\s+/).slice(-1)[0]?.toLowerCase() || "");
+  });
+}
+
+function gradeText(value) {
+  const grade = String(value || "").match(/\b(\d+)(?:st|nd|rd|th)?\s+grade\b/i);
+  return grade ? `${grade[1]}th grade` : cleanText(value, 80);
+}
+
+function extractProfileFacts(person, interactions, memoryCards) {
+  const name = cleanText(person?.name, 160) || "This person";
+  const facts = [];
+  const seen = new Set();
+  const addFact = (fact) => {
+    const cleanFact = cleanText(fact, 260).replace(/\s+/g, " ");
+    const key = cleanFact.toLowerCase();
+    if (!cleanFact || seen.has(key)) return;
+    seen.add(key);
+    facts.push(cleanFact);
+  };
+
+  memoryCards.forEach((card) => {
+    const label = cleanText(card.label, 80).toLowerCase();
+    const value = cleanText(card.value, 300);
+    if (!value || !textMentionsProfile(value, person)) return;
+    if (label.includes("school") && /\bgraduated\b/i.test(value)) {
+      addFact(`${name} recently graduated ${gradeText(value)}.`);
+    } else if (label.includes("family") && /\bcousin\b/i.test(value)) {
+      addFact(`${name} is your cousin.`);
+    } else if (label.includes("family") && /\bsister\b/i.test(value)) {
+      addFact(`${name} is your sister.`);
+    } else {
+      addFact(value.endsWith(".") ? value : `${value}.`);
+    }
+  });
+
+  interactions.forEach((interaction) => {
+    const text = cleanText(`${interaction.ai_summary || ""} ${interaction.notes || ""}`, 5000);
+    if (!textMentionsProfile(text, person)) return;
+    const escapedName = profileNameVariants(person).map((variant) => variant.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    const relationPatterns = [
+      { pattern: new RegExp(`\\bmy\\s+cousin\\s+(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "cousin" },
+      { pattern: new RegExp(`\\bmy\\s+(younger\\s+)?sister\\s+(?:is\\s+)?(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "sister" },
+      { pattern: new RegExp(`\\bmy\\s+(older\\s+)?brother\\s+(?:is\\s+)?(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "brother" },
+    ];
+    relationPatterns.forEach(({ pattern, relation }) => {
+      const match = text.match(pattern);
+      if (!match) return;
+      const matchedName = match[2] || match[1] || "";
+      if (textMentionsProfile(matchedName, person)) addFact(`${name} is your ${relation}.`);
+    });
+
+    const looseSibling = text.match(/\b(?:my\s+)?(younger|older)?\s*(sister|brother)\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi) || [];
+    looseSibling.forEach((phrase) => {
+      if (!textMentionsProfile(phrase, person)) return;
+      const relation = /\bbrother\b/i.test(phrase) ? "brother" : "sister";
+      const age = phrase.match(/\b(younger|older)\b/i)?.[1]?.toLowerCase();
+      addFact(`${name} is your ${age ? `${age} ` : ""}${relation}.`);
+    });
+
+    const graduation = text.match(new RegExp(`\\b(?:${escapedName})\\s+(?:just\\s+)?graduated\\s+([^.!?]+)`, "i"))
+      || text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:just\s+)?graduated\s+([^.!?]+)/i);
+    if (graduation && textMentionsProfile(graduation[0], person)) {
+      addFact(`${name} recently graduated ${gradeText(graduation[2] || graduation[1])}.`);
+    }
+  });
+
+  return facts.slice(0, 8);
+}
+
 function buildProfileOverview(person, interactions, memoryCards) {
   const name = cleanText(person?.name, 160) || "This person";
   const preferred = cleanText(person?.preferred_name, 160);
   const tags = Array.isArray(person?.tags) ? person.tags.map((tag) => cleanText(tag, 48)).filter(Boolean) : [];
+  const profileFacts = extractProfileFacts(person, interactions, memoryCards);
   const topMemories = memoryCards
     .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
+    .filter((card) => textMentionsProfile(`${card.label || ""} ${card.value || ""}`, person))
     .map(cleanMemoryLine)
     .filter(Boolean)
     .slice(0, 8);
@@ -43,6 +164,7 @@ function buildProfileOverview(person, interactions, memoryCards) {
     Array.isArray(interaction.topics) ? interaction.topics : []
   )).map((topic) => cleanText(topic, 48)).filter(Boolean))].slice(0, 8);
   const recentNotes = interactions
+    .filter((interaction) => textMentionsProfile(`${interaction.ai_summary || ""} ${interaction.notes || ""}`, person))
     .slice(0, 5)
     .map((interaction) => firstSentence(interaction.ai_summary || interaction.notes, 220))
     .filter(Boolean);
@@ -52,7 +174,11 @@ function buildProfileOverview(person, interactions, memoryCards) {
   if (tags.length) identityBits.push(`tagged ${tags.join(", ")}`);
 
   const sentences = [];
-  sentences.push(identityBits.length ? `${name} ${identityBits.join(" and ")}.` : `${name} is a profile in your people notebook.`);
+  if (profileFacts.length) {
+    sentences.push(profileFacts.join(" "));
+  } else {
+    sentences.push(identityBits.length ? `${name} ${identityBits.join(" and ")}.` : `${name} is a profile in your people notebook.`);
+  }
   if (topMemories.length) {
     sentences.push(`Key memory: ${topMemories.join("; ")}.`);
   }
@@ -67,26 +193,32 @@ function buildProfileOverview(person, interactions, memoryCards) {
 }
 
 function profileContextForAi(person, interactions, memoryCards) {
+  const profileFacts = extractProfileFacts(person, interactions, memoryCards);
   return {
     person: {
       name: person?.name || "",
       preferredName: person?.preferred_name || "",
       tags: Array.isArray(person?.tags) ? person.tags : [],
     },
+    profileFacts,
     memoryCards: memoryCards
       .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
+      .filter((card) => textMentionsProfile(`${card.label || ""} ${card.value || ""}`, person))
       .slice(0, 30)
       .map((card) => ({
         label: card.label || "",
         value: card.value || "",
         confidence: card.confidence || null,
       })),
-    conversations: interactions.slice(0, 20).map((interaction) => ({
-      occurredAt: interaction.occurred_at || "",
-      topics: Array.isArray(interaction.topics) ? interaction.topics : [],
-      summary: interaction.ai_summary || "",
-      notes: interaction.notes || "",
-    })),
+    conversations: interactions
+      .filter((interaction) => textMentionsProfile(`${interaction.ai_summary || ""} ${interaction.notes || ""}`, person))
+      .slice(0, 20)
+      .map((interaction) => ({
+        occurredAt: interaction.occurred_at || "",
+        topics: Array.isArray(interaction.topics) ? interaction.topics : [],
+        summary: interaction.ai_summary || "",
+        notes: interaction.notes || "",
+      })),
   };
 }
 
@@ -111,7 +243,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, fallbac
         {
           role: "system",
           content:
-            "Rewrite a private people-notebook profile overview for Quentin. Use only the provided stored data. Write 2-4 natural sentences in second person where needed. Do not mention database fields, tags as tags, confidence scores, or the process. Do not invent facts. If the data is thin, still write a concise useful overview.",
+            "Rewrite a private people-notebook profile overview for the named profile person, not for Quentin. Quentin is the owner of the notes, so relationships should be phrased as 'your cousin', 'your sister', etc. Use profileFacts as hard ground truth. Ignore unrelated people unless they explain the named profile person's relationship to Quentin. Write 1-3 natural sentences. Do not mention database fields, tags as tags, confidence scores, or the process. Do not invent facts.",
         },
         {
           role: "user",

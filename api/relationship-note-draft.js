@@ -350,7 +350,8 @@ function extractMemoryCards(note) {
   if (cousinContext) familyContext.push(`${titleCase(cousinContext[1])} is my cousin`);
   const mom = note.match(/\bmy\s+(?:mom|mother)\s+is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
   if (mom) familyContext.push(`${titleCase(mom[1])} is my mom`);
-  const sister = note.match(/\bmy\s+(?:younger\s+)?sister\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+  const sister = note.match(/\bmy\s+(?:younger\s+|older\s+)?sister\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i)
+    || note.match(/\b(?:younger\s+|older\s+)?sister\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
   if (sister) familyContext.push(`${titleCase(sister[1])} is my${/\byounger sister\b/i.test(note) ? " younger" : ""} sister`);
   const cameIntoLives = note.match(/\bbefore\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+came into our lives\b/i);
   if (cameIntoLives) familyContext.push(`${titleCase(cameIntoLives[1])} came into our lives`);
