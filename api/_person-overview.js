@@ -224,7 +224,11 @@ function profileContextForAi(person, interactions, memoryCards) {
 
 async function buildAiProfileOverview(person, interactions, memoryCards, fallbackOverview) {
   const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
-  if (!apiKey) return fallbackOverview;
+  if (!apiKey) {
+    const error = new Error("AI overview refresh is not configured.");
+    error.statusCode = 503;
+    throw error;
+  }
 
   const context = profileContextForAi(person, interactions, memoryCards);
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -256,12 +260,23 @@ async function buildAiProfileOverview(person, interactions, memoryCards, fallbac
     }),
   });
 
-  if (!response.ok) return fallbackOverview;
+  if (!response.ok) {
+    const error = new Error(response.status === 429
+      ? "AI overview refresh is rate limited. Wait a moment and try again."
+      : "AI overview refresh failed. Try again shortly.");
+    error.statusCode = response.status === 429 ? 429 : 502;
+    throw error;
+  }
   const payload = await response.json().catch(() => ({}));
   const overview = cleanText(payload?.choices?.[0]?.message?.content || "", 2000)
     .replace(/^["']|["']$/g, "")
     .replace(/\s+/g, " ");
-  return overview || fallbackOverview;
+  if (!overview) {
+    const error = new Error("AI overview refresh returned an empty overview.");
+    error.statusCode = 502;
+    throw error;
+  }
+  return overview;
 }
 
 async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
@@ -284,9 +299,14 @@ async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
     ),
   ]);
   const fallbackOverview = buildProfileOverview(people[0], interactions, memoryCards);
-  const overview = options.useAi
-    ? await buildAiProfileOverview(people[0], interactions, memoryCards, fallbackOverview)
-    : fallbackOverview;
+  let overview = fallbackOverview;
+  if (options.useAi) {
+    try {
+      overview = await buildAiProfileOverview(people[0], interactions, memoryCards, fallbackOverview);
+    } catch (error) {
+      if (options.requireAi) throw error;
+    }
+  }
   if (!overview) return "";
   const response = await supabaseRest(`people?id=eq.${encodedPersonId}`, {
     method: "PATCH",

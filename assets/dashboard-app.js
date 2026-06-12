@@ -93,29 +93,8 @@
     return `<span class="qapp-pill">${escapeHtml(label)}</span>`;
   }
 
-  function firstSentence(value, maxLength = 220) {
-    const text = String(value || "").trim().replace(/\s+/g, " ");
-    if (!text) return "";
-    const sentence = text.split(/[.!?]/).find(Boolean) || text;
-    const cleanSentence = sentence.trim();
-    return cleanSentence.length > maxLength ? `${cleanSentence.slice(0, maxLength).trim()}...` : cleanSentence;
-  }
-
   function isRawNoteMemory(card) {
     return String(card?.label || "").trim().toLowerCase() === "raw note";
-  }
-
-  function buildProfileOverview({ manualOverview, existingOverview, note, draftSummary, forceUpdate = false }) {
-    const manual = String(manualOverview || "").trim();
-    if (manual) return manual.slice(0, 500);
-
-    const existing = String(existingOverview || "").trim();
-    const summary = firstSentence(draftSummary || note, 220);
-    if (!summary) return existing;
-
-    const existingLooksRaw = existing.length > 260 || existing.includes(String(note || "").slice(0, 80));
-    if (!existing || existingLooksRaw || forceUpdate) return summary;
-    return existing;
   }
 
   function formatDate(value, fallback = "Recent") {
@@ -1546,12 +1525,6 @@
       submitButton.textContent = "Saving...";
       try {
         const createPerson = async (personName) => {
-          const overview = buildProfileOverview({
-            manualOverview: formData.get("overview"),
-            note,
-            draftSummary: relationshipDraft?.summary,
-            forceUpdate: true,
-          });
           const created = await apiJson("/api/people", {
             method: "POST",
             body: {
@@ -1560,34 +1533,11 @@
               email: String(formData.get("email") || "").trim(),
               phone: String(formData.get("phone") || "").trim(),
               photoUrl: String(formData.get("photoUrl") || "").trim(),
-              overview,
+              overview: String(formData.get("overview") || "").trim(),
               firstMetLocation,
             },
           });
           return normalizePerson({ ...created.person, interactions: [], memoryCards: [], reminders: [] });
-        };
-
-        const updatePersonOverview = async (person) => {
-          const overview = buildProfileOverview({
-            manualOverview: formData.get("overview"),
-            existingOverview: person.overview || person.summary,
-            note,
-            draftSummary: relationshipDraft?.summary,
-          });
-          if (!overview || overview === (person.overview || "")) return;
-          await apiJson("/api/people", {
-            method: "PATCH",
-            body: {
-              id: person.id,
-              name: person.name,
-              email: person.email || "",
-              phone: person.phone || "",
-              photoUrl: person.photo_url || person.photoUrl || "",
-              firstMetLocation: person.first_met_location || person.firstMetLocation || "",
-              tags: person.tags || [],
-              overview,
-            },
-          });
         };
 
         const peopleToSave = draftPersonIds
@@ -1616,7 +1566,7 @@
           ? topics
           : Array.isArray(draftInteraction.topics) && draftInteraction.topics.length ? draftInteraction.topics : ["captured"];
 
-        await Promise.all(peopleToSave.map((person) => apiJson("/api/person-interactions", {
+        const saveResults = await Promise.all(peopleToSave.map((person) => apiJson("/api/person-interactions", {
           method: "POST",
           body: {
             personId: person.id,
@@ -1629,6 +1579,9 @@
             reminders: selectedReminders,
           },
         })));
+        const overviewErrors = saveResults
+          .map((result, index) => result?.overviewError ? `${peopleToSave[index]?.name || "Profile"}: ${result.overviewError}` : "")
+          .filter(Boolean);
 
         form.reset();
         relationshipCaptureNote = "";
@@ -1639,6 +1592,12 @@
         selectedPersonId = peopleToSave[0]?.id || "";
         peopleMode = "profile";
         render();
+        if (overviewErrors.length) {
+          await qappAlert(
+            `Conversation saved, but the AI overview did not update.\n\n${overviewErrors.join("\n")}`,
+            "Overview refresh"
+          );
+        }
       } catch (error) {
         notebookStatus = "error";
         notebookError = error?.message || "Unable to save conversation.";

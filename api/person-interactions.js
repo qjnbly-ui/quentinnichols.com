@@ -188,13 +188,20 @@ module.exports = async function handler(req, res) {
       insertRows(supabaseRest, "person_memory_cards", memoryCards),
       insertRows(supabaseRest, "person_follow_up_reminders", reminders),
     ]);
-    const overview = await rebuildPersonOverview(supabaseRest, personId);
+    let overview = "";
+    let overviewError = "";
+    try {
+      overview = await rebuildPersonOverview(supabaseRest, personId, { useAi: true, requireAi: true });
+    } catch (error) {
+      overviewError = error?.message || "AI overview refresh failed.";
+    }
 
     json(res, 201, {
       interaction,
       memoryCards: createdMemoryCards,
       reminders: createdReminders,
       overview,
+      overviewError,
     });
   } catch (error) {
     await handleApiError(res, error);
