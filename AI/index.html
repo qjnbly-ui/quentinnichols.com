@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
   <title>Quentin Nichols AI</title>
   <meta name="description" content="A private, local-first chat experience grounded in Quentin Nichols' writing and work.">
-  <link rel="stylesheet" href="/style.css?v=20260611-ai-links">
+  <link rel="stylesheet" href="/style.css?v=20260611-ai-modal">
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ESFM9WKBF9"></script>
   <script>
@@ -107,6 +107,49 @@
     function setAudioStatus(text) {
       if (!audioStatus) return;
       audioStatus.textContent = String(text || "");
+    }
+
+    function aiConfirm({ title = "Confirm", message = "", confirmLabel = "OK", cancelLabel = "Cancel" } = {}) {
+      return new Promise((resolve) => {
+        const overlay = document.createElement("div");
+        overlay.className = "qapp-modal-overlay";
+        overlay.innerHTML = `
+          <section class="qapp-modal" role="dialog" aria-modal="true" aria-labelledby="aiModalTitle">
+            <div class="qapp-modal-header">
+              <h2 id="aiModalTitle"></h2>
+              <p></p>
+            </div>
+            <div class="qapp-modal-actions">
+              <button class="qapp-modal-cancel" type="button"></button>
+              <button class="qapp-modal-confirm" type="button"></button>
+            </div>
+          </section>
+        `;
+        overlay.querySelector("h2").textContent = title;
+        overlay.querySelector("p").textContent = message;
+        overlay.querySelector(".qapp-modal-cancel").textContent = cancelLabel;
+        overlay.querySelector(".qapp-modal-confirm").textContent = confirmLabel;
+
+        function close(result) {
+          document.removeEventListener("keydown", onKeydown);
+          overlay.remove();
+          resolve(result);
+        }
+
+        function onKeydown(event) {
+          if (event.key === "Escape") close(false);
+          if (event.key === "Enter") close(true);
+        }
+
+        overlay.querySelector(".qapp-modal-cancel").addEventListener("click", () => close(false));
+        overlay.querySelector(".qapp-modal-confirm").addEventListener("click", () => close(true));
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) close(false);
+        });
+        document.addEventListener("keydown", onKeydown);
+        document.body.appendChild(overlay);
+        setTimeout(() => overlay.querySelector(".qapp-modal-confirm")?.focus(), 0);
+      });
     }
 
     function setVoiceRecordingUi(isRecording) {
@@ -973,8 +1016,13 @@
       }
     });
 
-    clearBtn.addEventListener("click", () => {
-      if (!confirm("Clear this chat from your device?")) return;
+    clearBtn.addEventListener("click", async () => {
+      const confirmed = await aiConfirm({
+        title: "Clear Chat",
+        message: "Clear this chat from your device?",
+        confirmLabel: "Clear",
+      });
+      if (!confirmed) return;
       messages.length = 0;
       saveMessages(messages);
       render(messages);

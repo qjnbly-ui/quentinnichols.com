@@ -331,8 +331,10 @@ function addHoursIso(isoDate, hours) {
 }
 
 function parseClockTime(text) {
-  const matches = String(text || "").matchAll(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi);
+  const matches = String(text || "").matchAll(/\b(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/gi);
   for (const match of matches) {
+    const full = match[0] || "";
+    if (!match[2] && !match[3] && !/^at\s+/i.test(full)) continue;
     let hours = Number(match[1]);
     const minutes = Number(match[2] || 0);
     const meridiem = String(match[3] || "").toLowerCase();
@@ -352,18 +354,102 @@ function titleCaseEvent(value) {
 }
 
 function cleanCalendarTitle(text) {
-  return titleCaseEvent(
-    String(text || "")
-      .replace(/\b(add|create|put|schedule|calendar|event|appointment|reminder|to|my|on|at|this|next)\b/gi, " ")
-      .replace(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi, " ")
-      .replace(/\b\d{1,2}(?::\d{2})?\s*(am|pm)?\b/gi, " ")
-      .replace(/\s+/g, " ")
-  );
+  const textValue = String(text || "");
+  if (/\bhaircut\b/i.test(textValue)) return "Schedule Haircut";
+
+  const colonMatch = textValue.match(/\b(?:add|create|put)\s+(?:this\s+)?(?:to|on)\s+(?:my\s+)?calendar\s*:\s*(.+)$/i)
+    || textValue.match(/\b(?:add|create|put)\s+(?:this\s+)?(?:calendar\s+)?(?:event|appointment|reminder)\s*:\s*(.+)$/i);
+  const source = colonMatch?.[1] || textValue;
+  const cleaned = source
+    .replace(/\b(add|create|put|please|schedule|calendar|appointment|reminder|to|my|on|at|this|next)\b/gi, " ")
+    .replace(/\bevent\b/gi, " ")
+    .replace(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/gi, " ")
+    .replace(/\b\d{1,2}(?::\d{2})?\s*(am|pm)?\b/gi, " ")
+    .replace(/^[\s:;,.!?-]+|[\s:;,.!?-]+$/g, "")
+    .replace(/\s+/g, " ");
+  return titleCaseEvent(cleaned || "Event");
+}
+
+function weekdayIndex(name) {
+  return {
+    sunday: 0,
+    monday: 1,
+    tuesday: 2,
+    wednesday: 3,
+    thursday: 4,
+    friday: 5,
+    saturday: 6,
+  }[String(name || "").toLowerCase()];
+}
+
+function previousWeekdayParts(weekdayName, baseDate = new Date()) {
+  const target = weekdayIndex(weekdayName);
+  if (target === undefined) return null;
+  const parts = getZonedDateParts(baseDate);
+  if (!parts) return null;
+  let daysBack = (parts.weekday - target + 7) % 7;
+  if (daysBack === 0) daysBack = 7;
+  return addDaysToParts(parts, -daysBack);
+}
+
+function partsToUtcMs(parts) {
+  return Date.UTC(parts.year, parts.month - 1, parts.day, 12);
+}
+
+function buildHaircutCalendarAction(text) {
+  if (!/\bhaircut\b/i.test(text) || !/\bcalendar\b/i.test(text)) return null;
+  const intervalMatch = text.match(/\b(?:every|interval(?:\s+of)?|repeat(?:s|ing)?(?:\s+every)?)\s*(\d{1,2})\s*[- ]?\s*weeks?\b/i)
+    || text.match(/\b(\d{1,2})\s*[- ]?\s*week\s+interval\b/i);
+  const intervalWeeks = Number(intervalMatch?.[1] || 5);
+  const targetWeekday = text.match(/\bon\s+a?\s*(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i)?.[1]
+    || text.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i)?.[1]
+    || "wednesday";
+  const baseWeekday = text.match(/\blast\s+(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i)?.[1] || "friday";
+  const baseDate = previousWeekdayParts(baseWeekday);
+  if (!baseDate || !Number.isFinite(intervalWeeks) || intervalWeeks < 1) return null;
+
+  let dateParts = addDaysToParts(baseDate, intervalWeeks * 7);
+  const targetIndex = weekdayIndex(targetWeekday);
+  if (targetIndex !== undefined) {
+    dateParts = addDaysToParts(dateParts, targetIndex - dateParts.weekday);
+  }
+  const today = getZonedDateParts();
+  while (today && partsToUtcMs(dateParts) < partsToUtcMs(today)) {
+    dateParts = addDaysToParts(dateParts, intervalWeeks * 7);
+  }
+
+  const startsAt = zonedDateTimeToIso(dateParts, { hours: 9, minutes: 0 });
+  return {
+    type: "create_calendar_event",
+    status: "draft",
+    label: "Add calendar event",
+    payload: {
+      title: "Schedule Haircut",
+      description: `Reminder to schedule a haircut. Suggested repeat interval: every ${intervalWeeks} weeks on ${titleCaseEvent(targetWeekday)}.`,
+      startsAt,
+      endsAt: addHoursIso(startsAt, 1),
+      allDay: true,
+      status: "confirmed",
+      source: "ai_assistant",
+      metadata: {
+        created_by: "ai_assistant",
+        original_text: text,
+        user_timezone: USER_TIME_ZONE,
+        recurrence: {
+          frequency: "weekly",
+          interval: intervalWeeks,
+          weekday: String(targetWeekday).toLowerCase(),
+        },
+      },
+    },
+  };
 }
 
 function buildCalendarAction(messages) {
   const latest = latestUserMessage(messages);
   const recent = recentUserText(messages);
+  const haircutAction = buildHaircutCalendarAction(latest);
+  if (haircutAction) return haircutAction;
   const wantsCalendar =
     /\b(add|create|put|schedule)\b/i.test(recent) && /\b(calendar|event|appointment|reminder)\b/i.test(recent);
   const hasDateSignal = /\b(today|tomorrow|tonight|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i.test(latest);

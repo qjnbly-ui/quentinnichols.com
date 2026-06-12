@@ -3445,6 +3445,11 @@ body.nav-menu-open {
 
 /* ===== AI Chat Page ===== */
 .ai-page {
+  --qapp-border: rgba(245, 242, 234, 0.13);
+  --qapp-border-strong: rgba(245, 242, 234, 0.24);
+  --qapp-muted: rgba(245, 242, 234, 0.68);
+  --qapp-text: #f5f2ea;
+  --qapp-gold: #c8ad6a;
   background: #0b0a08;
   background-image:
     radial-gradient(circle at 12% 18%, rgba(255, 216, 155, 0.18), transparent 45%),
