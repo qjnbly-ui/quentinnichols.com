@@ -197,6 +197,7 @@ async function applyPeopleMemoryAction({ user, supabaseRest, action }) {
     .map((reminder) => ({
       title: cleanText(reminder?.title, 180),
       details: cleanText(reminder?.details, 1000) || null,
+      remind_at: cleanIsoDate(reminder?.remindAt || reminder?.remind_at) || null,
       priority: cleanText(reminder?.priority, 20) || "normal",
       metadata: { source: "ai_action" },
     }))

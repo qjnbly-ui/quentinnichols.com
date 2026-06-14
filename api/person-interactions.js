@@ -18,6 +18,13 @@ function cleanObjectList(value, maxItems = 12) {
   return value.slice(0, maxItems);
 }
 
+function cleanIsoDate(value) {
+  const text = cleanText(value, 80);
+  if (!text) return "";
+  const date = new Date(text);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : "";
+}
+
 function looksLikeUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
@@ -178,7 +185,7 @@ module.exports = async function handler(req, res) {
         interaction_id: interaction?.id || null,
         title: cleanText(reminder.title, 180),
         details: cleanText(reminder.details, 1000) || null,
-        remind_at: cleanText(reminder.remindAt || reminder.remind_at, 80) || null,
+        remind_at: cleanIsoDate(reminder.remindAt || reminder.remind_at) || null,
         status: "open",
         priority: cleanText(reminder.priority, 20) || "normal",
         metadata: reminder.metadata && typeof reminder.metadata === "object" ? reminder.metadata : {},

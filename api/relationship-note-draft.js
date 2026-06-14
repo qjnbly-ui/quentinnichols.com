@@ -2,6 +2,7 @@ const { getAuthedSupabase, handleApiError, json, readJsonBody } = require("./_su
 
 const MODEL = process.env.RELATIONSHIP_NOTE_MODEL || "openai/gpt-oss-120b";
 const REASONING_EFFORT = process.env.RELATIONSHIP_REASONING_EFFORT || "medium";
+const REMINDER_TIME_ZONE = process.env.RELATIONSHIP_TIME_ZONE || "America/Los_Angeles";
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 const PET_TYPE_PATTERN = "border collie|golden retriever|dog|cat|pet|horse";
 const STOPWORDS = new Set([
@@ -29,6 +30,7 @@ const STOPWORDS = new Set([
   "known",
   "thankfully",
   "visited",
+  "visiting",
   "talked",
   "discussed",
   "mentioned",
@@ -41,6 +43,14 @@ const STOPWORDS = new Set([
   "her",
   "him",
   "his",
+  "so",
+  "friday",
+  "saturday",
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
 ]);
 const RELATION_WORDS = new Set([
   "dad",
@@ -124,10 +134,11 @@ const DRAFT_RESPONSE_FORMAT = {
           items: {
             type: "object",
             additionalProperties: false,
-            required: ["title", "details", "confidence"],
+            required: ["title", "details", "remindAt", "confidence"],
             properties: {
               title: { type: "string" },
               details: { type: "string" },
+              remindAt: { type: "string" },
               confidence: { type: "number" },
             },
           },
@@ -152,6 +163,96 @@ function titleCase(value) {
     .filter(Boolean)
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}`)
     .join(" ");
+}
+
+function addDays(date, days) {
+  const next = new Date(date);
+  next.setUTCDate(next.getUTCDate() + days);
+  return next;
+}
+
+function timeZoneParts(date, timeZone = REMINDER_TIME_ZONE) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "long",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(date).reduce((result, part) => {
+    result[part.type] = part.value;
+    return result;
+  }, {});
+  return {
+    weekday: String(parts.weekday || "").toLowerCase(),
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    hour: Number(parts.hour),
+    minute: Number(parts.minute),
+    second: Number(parts.second),
+  };
+}
+
+function timeZoneOffsetMs(date, timeZone = REMINDER_TIME_ZONE) {
+  const parts = timeZoneParts(date, timeZone);
+  const utcValue = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second || 0);
+  return utcValue - date.getTime();
+}
+
+function zonedDateTimeToUtc({ year, month, day, hour = 9, minute = 0 }, timeZone = REMINDER_TIME_ZONE) {
+  let utcGuess = new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0));
+  let offset = timeZoneOffsetMs(utcGuess, timeZone);
+  utcGuess = new Date(utcGuess.getTime() - offset);
+  offset = timeZoneOffsetMs(utcGuess, timeZone);
+  return new Date(Date.UTC(year, month - 1, day, hour, minute, 0, 0) - offset);
+}
+
+function nextWeekdayDate(weekday, baseDate = new Date()) {
+  const index = WEEKDAYS.indexOf(String(weekday || "").toLowerCase());
+  if (index < 0) return null;
+  const baseParts = timeZoneParts(baseDate);
+  const baseWeekday = WEEKDAYS.indexOf(baseParts.weekday);
+  const diff = (index - baseWeekday + 7) % 7 || 7;
+  return addDays(zonedDateTimeToUtc({ ...baseParts, hour: 12, minute: 0 }), diff);
+}
+
+function setReminderTime(date, note = "") {
+  const parts = timeZoneParts(date);
+  const lowerNote = String(note || "").toLowerCase();
+  let hour = 9;
+  let minute = 0;
+  if (/\bafternoon\b/.test(lowerNote)) hour = 14;
+  if (/\bevening\b/.test(lowerNote)) hour = 18;
+  if (/\bnight\b/.test(lowerNote)) hour = 20;
+  if (/\bmorning\b/.test(lowerNote)) hour = 9;
+  const timeMatch = lowerNote.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b/);
+  if (timeMatch) {
+    hour = Number(timeMatch[1]);
+    minute = Number(timeMatch[2] || 0);
+    if (timeMatch[3] === "pm" && hour < 12) hour += 12;
+    if (timeMatch[3] === "am" && hour === 12) hour = 0;
+  }
+  return zonedDateTimeToUtc({ ...parts, hour, minute });
+}
+
+function parseReminderDateTime(text, baseDate = new Date()) {
+  const value = cleanText(text, 500).toLowerCase();
+  if (!value) return "";
+  let date = null;
+  if (/\btomorrow\b/.test(value)) {
+    date = addDays(baseDate, 1);
+  } else if (/\btoday\b/.test(value)) {
+    date = new Date(baseDate);
+  } else {
+    const relativeWeekday = value.match(new RegExp(`\\b(?:this|next)?\\s*(${WEEKDAYS.join("|")})\\b`, "i"));
+    if (relativeWeekday) date = nextWeekdayDate(relativeWeekday[1], baseDate);
+  }
+  if (!date) return "";
+  return setReminderTime(date, value).toISOString();
 }
 
 function isUsableCapturedName(name) {
@@ -251,6 +352,11 @@ function extractTopics(note) {
     "job",
     "promotion",
     "surgery",
+    "dental work",
+    "teeth extraction",
+    "bridge removal",
+    "crowns",
+    "metal implants",
     "exam",
     "trip",
     "school",
@@ -261,7 +367,11 @@ function extractTopics(note) {
     "appointment",
   ];
   const lowerNote = note.toLowerCase();
-  return uniqueList(phrases.filter((phrase) => lowerNote.includes(phrase)), 8);
+  const topics = phrases.filter((phrase) => lowerNote.includes(phrase));
+  if (/\b(teeth?|tooth|dental|bridge|crowns?|implants?)\b/i.test(note)) topics.push("dental work");
+  if (/\bteeth?\s+(?:to\s+be\s+)?(?:pulled|extracted)\b/i.test(note)) topics.push("teeth extraction");
+  if (/\bbridge\s+(?:to\s+be\s+)?removed\b/i.test(note)) topics.push("bridge removal");
+  return uniqueList(topics, 8);
 }
 
 function extractDateHint(note) {
@@ -347,6 +457,7 @@ function isDirectInteractionName(note, name) {
 
 function extractMemoryCards(note) {
   const cards = [];
+  const primaryName = note.match(/\b(?:met|saw|visited with|talked to|spoke with|visiting with)\s+(?:my\s+)?(?:great\s+)?(?:aunt|uncle|grandma|grandpa|grandmother|grandfather|cousin|sister|brother)?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i)?.[1] || "";
   const knownAs = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\.\s+Known as\s+([A-Z][a-z]+)\b/i)
     || note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:is\s+)?(?:known as|goes by)\s+([A-Z][a-z]+)\b/i);
   if (knownAs) {
@@ -356,6 +467,16 @@ function extractMemoryCards(note) {
   const cousinContext = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+cousin\b/)
     || note.match(/\bmy\s+cousin\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:just|recently|graduated|is|was|has|had|will|and)\b|[.,!?]|$)/);
   if (cousinContext && isUsableCapturedName(cousinContext[1])) familyContext.push(`${titleCase(cousinContext[1])} is my cousin`);
+  const extendedFamilyBeforeName = note.match(/\bmy\s+(great\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+  const extendedFamilyAfterName = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+(great\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather)\b/i);
+  const extendedFamily = extendedFamilyBeforeName
+    ? { name: extendedFamilyBeforeName[3], modifier: extendedFamilyBeforeName[1] || "", relation: extendedFamilyBeforeName[2] }
+    : extendedFamilyAfterName ? { name: extendedFamilyAfterName[1], modifier: extendedFamilyAfterName[2] || "", relation: extendedFamilyAfterName[3] } : null;
+  if (extendedFamily) {
+    if (isUsableCapturedName(extendedFamily.name)) {
+      familyContext.push(`${titleCase(extendedFamily.name)} is my ${extendedFamily.modifier.toLowerCase()}${extendedFamily.relation.toLowerCase()}`.replace(/\s+/g, " "));
+    }
+  }
   const mom = note.match(/\bmy\s+(?:mom|mother)\s+is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
   if (mom && isUsableCapturedName(mom[1])) familyContext.push(`${titleCase(mom[1])} is my mom`);
   const sister = note.match(/\bmy\s+(?:younger\s+|older\s+)?sister\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i)
@@ -415,6 +536,27 @@ function extractMemoryCards(note) {
   const worried = note.match(/\b(?:worried|concerned)\s+about\s+([^.!?]+)/i);
   if (worried) {
     cards.push({ label: "Concern", value: cleanText(worried[1], 180), confidence: 0.68 });
+  }
+  const dentalSignals = [
+    /\bteeth?\s+(?:to\s+be\s+)?(?:pulled|extracted)\b/i.test(note) ? cleanText(note.match(/\b(?:(?:one|two|three|four|five|six|seven|eight|nine|ten|\d+)\s+)?teeth?\s+(?:to\s+be\s+)?(?:pulled|extracted)\b/i)?.[0] || "teeth extraction", 120) : "",
+    /\bbridge\s+(?:to\s+be\s+)?removed\b/i.test(note) ? "bridge removed" : "",
+    /\bmetal\s+implants?\b/i.test(note) ? "likely metal implants" : "",
+    /\bcrowns?\b/i.test(note) ? "crowns discussed" : "",
+  ].filter(Boolean);
+  if (dentalSignals.length) {
+    cards.push({
+      label: "Dental Work",
+      value: `${primaryName ? `${titleCase(primaryName)}: ` : ""}${uniqueList(dentalSignals, 5).join("; ")}`,
+      confidence: 0.88,
+    });
+  }
+  const stayingWithFriend = note.match(/\b(?:going|staying)\s+(?:there\s+)?to\s+(?:her|his|their)\s+friend\s+([A-Z][a-z]+)[’']?s?(?:\s+and\s+staying\s+(?:till|until)\s+([^.!?]+))?/i);
+  if (stayingWithFriend) {
+    cards.push({
+      label: "Visit Context",
+      value: cleanText(`Staying with friend ${titleCase(stayingWithFriend[1])}${stayingWithFriend[2] ? ` until ${stayingWithFriend[2]}` : ""}`, 180),
+      confidence: 0.72,
+    });
   }
   const goal = note.match(/\b(?:goal|trying|wants|hopes)\s+(?:to|is|for)?\s*([^.!?]+)/i);
   if (goal) {
@@ -538,6 +680,7 @@ function normalizedReminderKey(reminder) {
 function splitReminder(reminder) {
   const title = cleanText(reminder.title, 220);
   const details = cleanText(reminder.details, 260);
+  const remindAt = cleanText(reminder.remindAt || reminder.remind_at, 80);
   const confidence = Number.isFinite(Number(reminder.confidence)) ? Number(reminder.confidence) : 0.7;
   const cleanTitle = title.replace(/[’]/g, "'");
   const combined = cleanTitle.match(/\bask\s+how\s+([A-Z][a-z]+)\s+is\s+adjusting\s+and\s+check\s+whether\s+([A-Z][a-z]+)'s\s+appointment(?:\s+went\s+okay)?\b/i)
@@ -547,11 +690,13 @@ function splitReminder(reminder) {
       {
         title: `Ask how ${titleCase(combined[1])} is adjusting`,
         details,
+        remindAt,
         confidence: Math.max(confidence, 0.78),
       },
       {
         title: `Check whether ${titleCase(combined[2])}'s appointment went okay`,
         details,
+        remindAt,
         confidence: Math.max(confidence, 0.78),
       },
     ];
@@ -562,11 +707,13 @@ function splitReminder(reminder) {
     {
       title: `Ask about ${titleCase(looseCombined[1])}'s ${cleanText(looseCombined[2], 90).replace(/\s+is\s+adjusting$/i, " adjustment")}`,
       details,
+      remindAt,
       confidence: Math.max(confidence, 0.78),
     },
     {
       title: `Check whether ${titleCase(looseCombined[3])}'s ${cleanText(looseCombined[4], 90).replace(/\s+went\s+okay$/i, "went okay")}`,
       details,
+      remindAt,
       confidence: Math.max(confidence, 0.78),
     },
   ];
@@ -574,12 +721,17 @@ function splitReminder(reminder) {
 
 function cleanReminder(reminder) {
   const title = cleanText(reminder.title, 220)
+    .replace(/^You(?:'ll| will)?\s+have\s+to\s+remind\s+me\s+to\s+/i, "")
+    .replace(/^Remind\s+me\s+to\s+/i, "")
+    .replace(/^Ask\s+Her\b/i, "Ask her")
+    .replace(/^Ask\s+Him\b/i, "Ask him")
     .replace(/^Back About\b/i, "Check back about")
     .replace(/^Check Recovery\b/i, "Check recovery");
   if (!title) return null;
   return {
     title,
     details: cleanText(reminder.details, 260),
+    remindAt: cleanText(reminder.remindAt || reminder.remind_at, 80),
     confidence: Number.isFinite(Number(reminder.confidence)) ? Number(reminder.confidence) : 0.7,
   };
 }
@@ -603,7 +755,10 @@ function mergeReminders(primaryReminders, fallbackReminders) {
       const key = normalizedReminderKey(reminder);
       const existing = remindersByKey.get(key);
       if (!existing || reminderScore(reminder) > reminderScore(existing)) {
-        remindersByKey.set(key, reminder);
+        remindersByKey.set(key, {
+          ...reminder,
+          remindAt: reminder.remindAt || existing?.remindAt || "",
+        });
       }
     });
   return [...remindersByKey.values()].slice(0, 6);
@@ -715,6 +870,7 @@ function extractReminder(note, topics, dateHint) {
   const importantTopic = topics.find((topic) => ["exam", "surgery", "promotion", "roof", "graduation", "dinner", "appointment"].includes(topic));
   if (!hasFollowUpSignal && !importantTopic) return [];
   const reminders = [];
+  const primaryName = note.match(/\b(?:met|saw|visited with|talked to|spoke with|visiting with)\s+(?:my\s+)?(?:great\s+)?(?:aunt|uncle|grandma|grandpa|grandmother|grandfather|cousin|sister|brother)?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i)?.[1] || "";
 
   const personOutcomePattern = /\bask\s+how\s+([A-Z][a-z]+)(?:['’]s)?\s+([^.!?,]+?)\s+went\b/gi;
   for (const match of note.matchAll(personOutcomePattern)) {
@@ -722,6 +878,7 @@ function extractReminder(note, topics, dateHint) {
     reminders.push({
       title: `Ask about ${titleCase(match[1])}'s ${cleanText(match[2], 100)}`,
       details: localDateHint ? `Possible timing mentioned: ${localDateHint}` : dateHint ? `Possible timing mentioned: ${dateHint}` : "",
+      remindAt: parseReminderDateTime(localDateHint || dateHint || note),
       confidence: 0.82,
     });
   }
@@ -732,6 +889,7 @@ function extractReminder(note, topics, dateHint) {
     reminders.push({
       title: `Ask how ${titleCase(match[1])} is adjusting`,
       details: localDateHint ? `Possible timing mentioned: ${localDateHint}` : dateHint ? `Possible timing mentioned: ${dateHint}` : "",
+      remindAt: parseReminderDateTime(localDateHint || dateHint || note),
       confidence: 0.82,
     });
   }
@@ -742,6 +900,7 @@ function extractReminder(note, topics, dateHint) {
     reminders.push({
       title: `Check whether ${titleCase(match[1])}'s appointment went okay`,
       details: localDateHint ? `Possible timing mentioned: ${localDateHint}` : dateHint ? `Possible timing mentioned: ${dateHint}` : "",
+      remindAt: parseReminderDateTime(localDateHint || dateHint || note),
       confidence: 0.82,
     });
   }
@@ -751,6 +910,7 @@ function extractReminder(note, topics, dateHint) {
     reminders.push({
       title: `Check back about ${titleCase(match[1])}'s recovery`,
       details: note.match(new RegExp(`\\b${escapeRegExp(match[1])}\\b[^.!?]*?\\b(surgery|appointment)[^.!?]*`, "i"))?.[0] || "",
+      remindAt: parseReminderDateTime(dateHint || note),
       confidence: 0.84,
     });
   }
@@ -760,6 +920,7 @@ function extractReminder(note, topics, dateHint) {
     reminders.push({
       title: `Ask about ${petAppointment[1]}'s appointment`,
       details: cleanText(petAppointment[2], 220),
+      remindAt: parseReminderDateTime(dateHint || note),
       confidence: 0.84,
     });
   }
@@ -768,17 +929,22 @@ function extractReminder(note, topics, dateHint) {
   const reminderMatch = note.match(/\bremind\s+(?:him|her|them|me)?\s*(?:about|to)?\s*([^.!?]+)/i)
     || note.match(/\b(?:check|follow up(?: on)?|ask about)\s+([^.!?]+)/i);
   if (reminderMatch) {
-    const reminderText = cleanText(reminderMatch[1].replace(/^checking\s+/i, "check "), 160);
+    let reminderText = cleanText(reminderMatch[1].replace(/^checking\s+/i, "check "), 160)
+      .replace(/\bask\s+(?:her|him|them)\s+about\s+it\b/i, primaryName ? `ask ${titleCase(primaryName)} about dental work` : "ask about dental work");
+    if (primaryName && /\bask\s+(?:her|him)\b/i.test(reminderText)) {
+      reminderText = reminderText.replace(/\bask\s+(?:her|him)\b/i, `ask ${titleCase(primaryName)}`);
+    }
     return [{
       title: titleCase(reminderText),
       details: dateHint ? `Possible timing mentioned: ${dateHint}` : "",
+      remindAt: parseReminderDateTime(reminderText) || parseReminderDateTime(dateHint) || parseReminderDateTime(note),
       confidence: 0.74,
     }];
   }
   const title = hasFollowUpSignal
     ? cleanText(note.split(/[.!?]/).find((sentence) => /\b(ask|follow up|check|remind)\b/i.test(sentence)) || `Follow up about ${importantTopic || "conversation"}`, 160)
     : `Ask about ${importantTopic}`;
-  return [{ title, details: dateHint ? `Possible timing mentioned: ${dateHint}` : "", confidence: 0.62 }];
+  return [{ title, details: dateHint ? `Possible timing mentioned: ${dateHint}` : "", remindAt: parseReminderDateTime(dateHint) || parseReminderDateTime(note), confidence: 0.62 }];
 }
 
 function buildScriptDraft(note, people) {
@@ -852,7 +1018,7 @@ async function buildAiDraft(note, people, scriptDraft) {
         {
           role: "system",
           content:
-            "You organize Quentin Nichols' private relationship notes. Follow the response schema exactly. Do not invent facts. Prefer existing people when names clearly match. Pets, animals, projects, places, organizations, relationship phrases, and possessive phrases are memory cards or topics, not people profiles. Never create people named things like 'their kid', 'my dad', or 'Quentin Nichols dad'. For family notes, extract actual full names and relationship facts.",
+            "You organize Quentin Nichols' private relationship notes. Follow the response schema exactly. Do not invent facts. Prefer existing people when names clearly match. Pets, animals, projects, places, organizations, relationship phrases, and possessive phrases are memory cards or topics, not people profiles. Never create people named things like 'their kid', 'my dad', or 'Quentin Nichols dad'. For family notes, extract actual full names and relationship facts. For reminders, set remindAt to an ISO-8601 timestamp when the note gives usable timing; otherwise use an empty string.",
         },
         {
           role: "user",
@@ -866,7 +1032,7 @@ async function buildAiDraft(note, people, scriptDraft) {
               possiblePeople: [{ name: "new or ambiguous name", confidence: 0.0 }],
               interaction: { location: "", mood: "", topics: [], dateHint: "", notes: note },
               memoryCards: [{ label: "", value: "", confidence: 0.0 }],
-              reminders: [{ title: "", details: "", confidence: 0.0 }],
+              reminders: [{ title: "", details: "", remindAt: "ISO timestamp or empty string", confidence: 0.0 }],
               questions: [],
             },
           }),

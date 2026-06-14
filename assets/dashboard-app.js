@@ -304,7 +304,7 @@
         status: reminder.status || "open",
         priority: reminder.priority || "normal",
         remind_at: reminder.remind_at || "",
-        due: reminder.remind_at ? formatDate(reminder.remind_at, "Scheduled") : "Soon",
+        due: reminder.remind_at ? formatDateTime(reminder.remind_at, "Scheduled") : "Soon",
       })),
       interactions: interactions.map((interaction) => ({
         id: interaction.id || "",
@@ -367,9 +367,31 @@
     render();
   }
 
+  function flattenedFollowUps() {
+    return notebook.people
+      .flatMap((person) => person.reminders.map((reminder) => ({ ...reminder, person })))
+      .filter((item) => item.status === "open")
+      .sort((a, b) => {
+        const left = a.remind_at ? new Date(a.remind_at).getTime() : Number.POSITIVE_INFINITY;
+        const right = b.remind_at ? new Date(b.remind_at).getTime() : Number.POSITIVE_INFINITY;
+        return left - right || String(a.title).localeCompare(String(b.title));
+      });
+  }
+
+  function followUpStatus(reminder) {
+    if (!reminder.remind_at) return "Unscheduled";
+    const dueKey = toDateKey(reminder.remind_at);
+    const todayKey = toDateKey(new Date());
+    if (dueKey < todayKey) return "Overdue";
+    if (dueKey === todayKey) return "Today";
+    return "Upcoming";
+  }
+
   function renderToday() {
     const peopleCount = notebook.people.length;
-    const reminderCount = notebook.people.reduce((count, person) => count + person.reminders.length, 0);
+    const followUps = flattenedFollowUps();
+    const reminderCount = followUps.length;
+    const visibleFollowUps = followUps.slice(0, 6);
     return `
       <section class="qapp-grid qapp-grid--stats">
         <article class="qapp-panel">
@@ -391,11 +413,21 @@
       <section class="qapp-panel qapp-wide-panel">
         <div class="qapp-panel-title-row">
           <div>
-            <h3>Relationship Notebook</h3>
+            <h3>Scheduled Follow-Ups</h3>
           </div>
           ${statusPill(notebookStatus === "ready" ? "Supabase" : "Loading")}
         </div>
-        <p>Start with people and conversations. Profiles, interactions, memory cards, and follow-up reminders now save to Supabase.</p>
+        <div class="qapp-reminder-list">
+          ${visibleFollowUps.length ? visibleFollowUps.map((item) => `
+            <div class="qapp-reminder">
+              <strong>${escapeHtml(item.title)}</strong>
+              <span>${escapeHtml(`${followUpStatus(item)}: ${item.due}`)}${item.details ? ` - ${escapeHtml(item.details)}` : ""}</span>
+              <div class="qapp-item-actions">
+                <button data-today-action="open-person" data-person-id="${escapeHtml(item.person.id)}" type="button">Open Profile</button>
+              </div>
+            </div>
+          `).join("") : `<div class="qapp-reminder"><strong>No open follow-ups</strong><span>People reminders with date/time will show here.</span></div>`}
+        </div>
       </section>
     `;
   }
@@ -660,7 +692,7 @@
                 <input name="draftReminderIndexes" type="checkbox" value="${index}" checked>
                 <span>
                   <strong>${escapeHtml(reminder.title)}</strong>
-                  <small>${escapeHtml(reminder.details || "Reminder candidate")}</small>
+                  <small>${escapeHtml([reminder.remindAt ? formatDateTime(reminder.remindAt, "") : "", reminder.details || "Reminder candidate"].filter(Boolean).join(" - "))}</small>
                 </span>
               </label>
             `).join("") : `<p>No follow-ups suggested.</p>`}
@@ -792,8 +824,8 @@
                   <input name="reminderTitle" type="text" placeholder="Follow up about roof bids">
                 </label>
                 <label>
-                  <span>Reminder date</span>
-                  <input name="remindAt" type="date">
+                  <span>Reminder date/time</span>
+                  <input name="remindAt" type="datetime-local">
                 </label>
               </div>
             </div>
@@ -1178,6 +1210,7 @@
     view.classList.toggle("qapp-view--ai", currentRoute === "ai");
     if (currentRoute === "today") {
       view.innerHTML = renderToday();
+      bindTodayForms();
     } else if (currentRoute === "people") {
       view.innerHTML = renderPeople();
       bindPeopleForms();
@@ -1202,6 +1235,16 @@
         { title: "AI Triage", status: "Future", copy: "Summarize leads and suggest follow-up responses." },
       ]);
     }
+  }
+
+  function bindTodayForms() {
+    [...document.querySelectorAll('[data-today-action="open-person"]')].forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedPersonId = button.dataset.personId || "";
+        peopleMode = selectedPersonId ? "profile" : "list";
+        setRoute("people");
+      });
+    });
   }
 
   function bindCalendarForms() {
@@ -1682,7 +1725,7 @@
                 fields: [
                   { label: "Reminder", value: reminder.title || "" },
                   { label: "Details", value: reminder.details || "", type: "textarea", rows: 3 },
-                  { label: "Remind date/time", value: reminder.remind_at || "" },
+                  { label: "Remind date/time", value: toDateTimeLocal(reminder.remind_at || ""), type: "datetime-local" },
                 ],
                 confirmLabel: "Save Follow-Up",
               });
@@ -1691,7 +1734,7 @@
               if (!title) return;
               await apiJson("/api/relationship-items", {
                 method: "PATCH",
-                body: { type: "reminder", id: itemId, title, details, remindAt, status: reminder.status || "open", priority: reminder.priority || "normal" },
+                body: { type: "reminder", id: itemId, title, details, remindAt: fromDateTimeLocal(remindAt), status: reminder.status || "open", priority: reminder.priority || "normal" },
               });
             }
           }
@@ -1816,7 +1859,7 @@
         }))
         .filter((card) => card.label && card.value);
       const reminderTitle = String(formData.get("reminderTitle") || "").trim();
-      const remindAt = String(formData.get("remindAt") || "").trim();
+      const remindAt = fromDateTimeLocal(formData.get("remindAt"));
       const draftPersonIds = formData.getAll("draftPersonIds").map((value) => String(value || "").trim()).filter(Boolean);
       const draftNewPeople = formData.getAll("draftNewPeople").map((value) => String(value || "").trim()).filter(Boolean);
       const draftMemoryIndexes = new Set(formData.getAll("draftMemoryIndexes").map((value) => Number(value)));
@@ -1838,6 +1881,7 @@
             .map((reminder) => ({
               title: String(reminder.title || "").trim(),
               details: String(reminder.details || "").trim(),
+              remindAt: String(reminder.remindAt || reminder.remind_at || "").trim(),
               priority: "normal",
             }))
             .filter((reminder) => reminder.title)

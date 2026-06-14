@@ -113,13 +113,21 @@ function extractProfileFacts(person, interactions, memoryCards) {
   memoryCards.forEach((card) => {
     const label = cleanText(card.label, 80).toLowerCase();
     const value = cleanText(card.value, 300);
-    if (!value || !textMentionsProfile(value, person)) return;
+    if (!value) return;
     if (label.includes("school") && /\bgraduated\b/i.test(value)) {
       addFact(`${name} recently graduated ${gradeText(value)}.`);
+    } else if (label.includes("family") && /\bgreat aunt\b/i.test(value)) {
+      addFact(`${name} is your great aunt.`);
+    } else if (label.includes("family") && /\baunt\b/i.test(value)) {
+      addFact(`${name} is your aunt.`);
     } else if (label.includes("family") && /\bcousin\b/i.test(value)) {
       addFact(`${name} is your cousin.`);
     } else if (label.includes("family") && /\bsister\b/i.test(value)) {
       addFact(`${name} is your sister.`);
+    } else if (label.includes("dental") || /\b(teeth|tooth|bridge|crowns?|implants?)\b/i.test(value)) {
+      addFact(`${name} has dental work involving ${value.replace(new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*`, "i"), "")}.`);
+    } else if (label.includes("visit")) {
+      addFact(`${name} ${value.replace(/^staying\b/i, "is staying")}.`);
     } else {
       addFact(value.endsWith(".") ? value : `${value}.`);
     }
@@ -162,7 +170,7 @@ function extractProfileFacts(person, interactions, memoryCards) {
 function memoryCardFromFact(fact, person) {
   const name = cleanText(person?.name, 160) || "This person";
   const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const relation = fact.match(new RegExp(`^${escapedName} is your ((?:younger|older)\\s+)?(sister|brother|cousin)\\.$`, "i"));
+  const relation = fact.match(new RegExp(`^${escapedName} is your ((?:younger|older|great)\\s+)?(sister|brother|cousin|aunt|uncle|grandma|grandpa|grandmother|grandfather)\\.$`, "i"));
   if (relation) {
     return {
       category: "family",
@@ -235,7 +243,6 @@ function buildProfileOverview(person, interactions, memoryCards) {
   const profileFacts = extractProfileFacts(person, interactions, memoryCards);
   const topMemories = memoryCards
     .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
-    .filter((card) => textMentionsProfile(`${card.label || ""} ${card.value || ""}`, person))
     .map(cleanMemoryLine)
     .filter(Boolean)
     .slice(0, 8);
@@ -243,7 +250,6 @@ function buildProfileOverview(person, interactions, memoryCards) {
     Array.isArray(interaction.topics) ? interaction.topics : []
   )).map((topic) => cleanText(topic, 48)).filter(Boolean))].slice(0, 8);
   const recentNotes = interactions
-    .filter((interaction) => textMentionsProfile(`${interaction.ai_summary || ""} ${interaction.notes || ""}`, person))
     .slice(0, 5)
     .map((interaction) => firstSentence(interaction.ai_summary || interaction.notes, 220))
     .filter(Boolean);
@@ -258,13 +264,13 @@ function buildProfileOverview(person, interactions, memoryCards) {
   } else {
     sentences.push(identityBits.length ? `${name} ${identityBits.join(" and ")}.` : `${name} is a profile in your people notebook.`);
   }
-  if (topMemories.length) {
+  if (!profileFacts.length && topMemories.length) {
     sentences.push(`Key memory: ${topMemories.join("; ")}.`);
   }
   if (topicList.length) {
     sentences.push(`Your notes around this profile touch on ${topicList.join(", ")}.`);
   }
-  if (recentNotes.length) {
+  if (!profileFacts.length && recentNotes.length) {
     sentences.push(`Recent context: ${recentNotes.join(" ")}`);
   }
 
@@ -282,7 +288,6 @@ function profileContextForAi(person, interactions, memoryCards) {
     profileFacts,
     memoryCards: memoryCards
       .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
-      .filter((card) => textMentionsProfile(`${card.label || ""} ${card.value || ""}`, person))
       .slice(0, 30)
       .map((card) => ({
         label: card.label || "",
@@ -290,7 +295,6 @@ function profileContextForAi(person, interactions, memoryCards) {
         confidence: card.confidence || null,
       })),
     conversations: interactions
-      .filter((interaction) => textMentionsProfile(`${interaction.ai_summary || ""} ${interaction.notes || ""}`, person))
       .slice(0, 20)
       .map((interaction) => ({
         occurredAt: interaction.occurred_at || "",

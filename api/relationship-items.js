@@ -9,6 +9,13 @@ function cleanText(value, maxLength = 1000) {
   return String(value || "").trim().slice(0, maxLength);
 }
 
+function cleanIsoDate(value) {
+  const text = cleanText(value, 80);
+  if (!text) return "";
+  const date = new Date(text);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : "";
+}
+
 function looksLikeUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
@@ -25,7 +32,7 @@ function buildUpdate(type, body) {
   return {
     title: cleanText(body.title, 180),
     details: cleanText(body.details, 1000) || null,
-    remind_at: cleanText(body.remindAt || body.remind_at, 80) || null,
+    remind_at: cleanIsoDate(body.remindAt || body.remind_at) || null,
     status: cleanText(body.status, 20) || "open",
     priority: cleanText(body.priority, 20) || "normal",
   };
