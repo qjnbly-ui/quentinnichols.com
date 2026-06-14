@@ -1,5 +1,6 @@
 const { getAuthedSupabase, handleApiError, json, readJsonBody } = require("./_supabase-request");
 const { rebuildPersonOverview } = require("./_person-overview");
+const { syncFollowUpTask } = require("./_follow-up-task");
 
 function cleanText(value, maxLength = 1000) {
   return String(value || "").trim().slice(0, maxLength);
@@ -195,6 +196,9 @@ module.exports = async function handler(req, res) {
       insertRows(supabaseRest, "person_memory_cards", memoryCards),
       insertRows(supabaseRest, "person_follow_up_reminders", reminders),
     ]);
+    const linkedTasks = (await Promise.all(createdReminders.map((reminder) => (
+      reminder.remind_at ? syncFollowUpTask(supabaseRest, user.id, reminder) : null
+    )))).filter(Boolean);
     let overview = "";
     let overviewError = "";
     try {
@@ -211,6 +215,7 @@ module.exports = async function handler(req, res) {
       interaction,
       memoryCards: createdMemoryCards,
       reminders: createdReminders,
+      linkedTasks,
       overview,
       overviewError,
     });

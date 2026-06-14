@@ -1,4 +1,5 @@
 const { getAuthedSupabase, handleApiError, json, readJsonBody } = require("./_supabase-request");
+const { archiveFollowUpForDeletedTask, syncFollowUpFromTask } = require("./_follow-up-task");
 
 function cleanText(value, maxLength = 1000) {
   return String(value || "").trim().slice(0, maxLength);
@@ -89,6 +90,14 @@ module.exports = async function handler(req, res) {
         return;
       }
 
+      const existingResponse = await supabaseRest(`tasks?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);
+      const existingPayload = await existingResponse.json().catch(() => []);
+      if (!existingResponse.ok || !existingPayload[0]) {
+        json(res, existingResponse.ok ? 404 : existingResponse.status, { error: "Unable to find task." });
+        return;
+      }
+      await archiveFollowUpForDeletedTask(supabaseRest, existingPayload[0]);
+
       const response = await supabaseRest(`tasks?id=eq.${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
@@ -124,8 +133,9 @@ module.exports = async function handler(req, res) {
         json(res, response.status, { error: payload?.message || "Unable to update task." });
         return;
       }
+      const linkedReminder = payload[0] ? await syncFollowUpFromTask(supabaseRest, payload[0]) : null;
 
-      json(res, 200, { task: payload[0] || null });
+      json(res, 200, { task: payload[0] || null, linkedReminder });
       return;
     }
 

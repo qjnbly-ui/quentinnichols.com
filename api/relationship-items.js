@@ -1,4 +1,5 @@
 const { getAuthedSupabase, handleApiError, json, readJsonBody } = require("./_supabase-request");
+const { deleteLinkedFollowUpTask, syncFollowUpTask } = require("./_follow-up-task");
 
 const TABLES = {
   memory: "person_memory_cards",
@@ -45,7 +46,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { supabaseRest } = await getAuthedSupabase(req);
+    const { user, supabaseRest } = await getAuthedSupabase(req);
     const body = await readJsonBody(req);
     const type = cleanText(body.type, 40);
     const table = TABLES[type];
@@ -56,7 +57,18 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    const existingResponse = await supabaseRest(`${table}?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);
+    const existingPayload = await existingResponse.json().catch(() => []);
+    if (!existingResponse.ok || !existingPayload[0]) {
+      json(res, existingResponse.ok ? 404 : existingResponse.status, { error: "Unable to find item." });
+      return;
+    }
+    const existingItem = existingPayload[0];
+
     if (req.method === "DELETE") {
+      if (type === "reminder") {
+        await deleteLinkedFollowUpTask(supabaseRest, existingItem);
+      }
       const response = await supabaseRest(`${table}?id=eq.${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
@@ -85,8 +97,12 @@ module.exports = async function handler(req, res) {
       json(res, response.status, { error: payload?.message || "Unable to update item." });
       return;
     }
+    let linkedTask = null;
+    if (type === "reminder" && payload[0]) {
+      linkedTask = await syncFollowUpTask(supabaseRest, user.id, payload[0]);
+    }
 
-    json(res, 200, { item: payload[0] || null });
+    json(res, 200, { item: payload[0] || null, linkedTask });
   } catch (error) {
     await handleApiError(res, error);
   }

@@ -1,5 +1,6 @@
 const { getAuthedSupabase, handleApiError, json, readJsonBody } = require("./_supabase-request");
 const { rebuildPersonOverview } = require("./_person-overview");
+const { syncFollowUpTask } = require("./_follow-up-task");
 
 function cleanText(value, maxLength = 1000) {
   return String(value || "").trim().slice(0, maxLength);
@@ -233,6 +234,9 @@ async function applyPeopleMemoryAction({ user, supabaseRest, action }) {
         status: "open",
       }))),
     ]);
+    const linkedTasks = (await Promise.all(createdReminders.map((reminder) => (
+      reminder.remind_at ? syncFollowUpTask(supabaseRest, user.id, reminder, { person }) : null
+    )))).filter(Boolean);
 
     let overview = "";
     let overviewError = "";
@@ -252,6 +256,7 @@ async function applyPeopleMemoryAction({ user, supabaseRest, action }) {
       interaction: interactionRows[0] || null,
       memoryCards: createdMemoryCards,
       reminders: createdReminders,
+      linkedTasks,
       overview,
       overviewError,
     });
