@@ -92,6 +92,9 @@
     if (currentRoute === "calendar" && calendarStatus === "idle") {
       loadCalendarData();
     }
+    if (currentRoute === "calendar" && tasksStatus === "idle") {
+      loadTasksData();
+    }
     if (currentRoute === "tasks" && tasksStatus === "idle") {
       loadTasksData();
     }
@@ -513,7 +516,74 @@
     `;
   }
 
+  function reminderAgeState(reminder) {
+    if (!reminder.remind_at) return "unscheduled";
+    const due = new Date(reminder.remind_at);
+    if (!Number.isFinite(due.getTime())) return "unscheduled";
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const dueStart = new Date(due);
+    dueStart.setHours(0, 0, 0, 0);
+    const dayDiff = Math.floor((todayStart - dueStart) / 86400000);
+    if (dayDiff > 7) return "stale";
+    if (dayDiff > 0) return "overdue";
+    if (dayDiff === 0) return "today";
+    return "upcoming";
+  }
+
+  function durableMemoryCards(person) {
+    const temporaryLabels = new Set(["upcoming event", "visit context", "appointment", "reminder"]);
+    return person.memoryCards.filter((card) => !temporaryLabels.has(String(card.label || "").trim().toLowerCase()));
+  }
+
+  function renderConversationPrep(person) {
+    const latestInteraction = person.interactions[0];
+    const activeReminders = person.reminders
+      .filter((reminder) => reminder.status === "open")
+      .filter((reminder) => reminderAgeState(reminder) !== "stale")
+      .slice(0, 3);
+    const staleReminders = person.reminders
+      .filter((reminder) => reminder.status === "open" && reminderAgeState(reminder) === "stale")
+      .slice(0, 2);
+    const durableMemories = durableMemoryCards(person).slice(0, 3);
+
+    return `
+      <div class="qapp-subsection-title">
+        <h4>Before You Talk</h4>
+        <span>${activeReminders.length + staleReminders.length}</span>
+      </div>
+      <div class="qapp-memory-list">
+        <div class="qapp-memory-card">
+          <span>Last Conversation</span>
+          <strong>${escapeHtml(latestInteraction ? latestInteraction.notes : "No conversation saved yet.")}</strong>
+          ${latestInteraction ? `<small>${escapeHtml(`${latestInteraction.date} - ${latestInteraction.location}`)}</small>` : ""}
+        </div>
+        ${activeReminders.length ? activeReminders.map((reminder) => `
+          <div class="qapp-memory-card">
+            <span>${escapeHtml(reminderAgeState(reminder) === "overdue" ? "Follow up now" : "Ask about")}</span>
+            <strong>${escapeHtml(reminder.title)}</strong>
+            <small>${escapeHtml(reminder.due)}${reminder.details ? ` - ${escapeHtml(reminder.details)}` : ""}</small>
+          </div>
+        `).join("") : `<div class="qapp-memory-card"><span>Open Follow-Ups</span><strong>No current follow-up queued.</strong></div>`}
+        ${staleReminders.length ? staleReminders.map((reminder) => `
+          <div class="qapp-memory-card">
+            <span>Possibly outdated</span>
+            <strong>${escapeHtml(reminder.title)}</strong>
+            <small>${escapeHtml(`Was due ${reminder.due}. Ask how it went, then close or update it.`)}</small>
+          </div>
+        `).join("") : ""}
+        ${durableMemories.length ? `
+          <div class="qapp-memory-card">
+            <span>Steady Context</span>
+            <strong>${durableMemories.map((card) => `${card.label}: ${card.value}`).map(escapeHtml).join("<br>")}</strong>
+          </div>
+        ` : ""}
+      </div>
+    `;
+  }
+
   function renderPersonProfile(person) {
+    const durableMemories = durableMemoryCards(person);
     return `
       <section class="qapp-profile-head">
         <button class="qapp-text-button" data-action="back-to-people" type="button">Back to people</button>
@@ -538,12 +608,13 @@
             <button class="qapp-soft-button" data-action="edit-person" data-person-id="${escapeHtml(person.id)}" type="button">Edit Profile</button>
             <button class="qapp-danger-button" data-action="delete-person" data-person-id="${escapeHtml(person.id)}" type="button">Delete Profile</button>
           </div>
+          ${renderConversationPrep(person)}
           <div class="qapp-subsection-title">
-            <h4>Memory Cards</h4>
-            <span>${person.memoryCards.length}</span>
+            <h4>Durable Memory Cards</h4>
+            <span>${durableMemories.length}</span>
           </div>
           <div class="qapp-memory-list">
-            ${person.memoryCards.length ? person.memoryCards.map((card) => `
+            ${durableMemories.length ? durableMemories.map((card) => `
               <div class="qapp-memory-card">
                 <span>${escapeHtml(card.label)}</span>
                 <strong>${escapeHtml(card.value)}</strong>
@@ -552,7 +623,7 @@
                   <button data-action="delete-memory" data-item-id="${escapeHtml(card.id)}" type="button">Delete</button>
                 </div>` : ""}
               </div>
-            `).join("") : `<div class="qapp-memory-card"><span>Memory Cards</span><strong>No facts saved yet.</strong></div>`}
+            `).join("") : `<div class="qapp-memory-card"><span>Durable Memory</span><strong>No long-term facts saved yet.</strong></div>`}
           </div>
           <div class="qapp-subsection-title">
             <h4>Conversation Log</h4>
@@ -842,6 +913,19 @@
       .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
   }
 
+  function tasksForDate(dateKey) {
+    return tasks
+      .filter((task) => !taskIsDone(task) && taskDueKey(task) === dateKey)
+      .sort((a, b) => new Date(a.due_at) - new Date(b.due_at));
+  }
+
+  function formatTaskTime(task) {
+    if (!task.due_at) return "Task";
+    const date = new Date(task.due_at);
+    if (!Number.isFinite(date.getTime())) return "Task";
+    return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  }
+
   function renderCalendarEventForm() {
     const editingEvent = editingCalendarEventId
       ? calendarEvents.find((event) => event.id === editingCalendarEventId)
@@ -929,6 +1013,7 @@
     const gridStart = new Date(firstOfMonth);
     gridStart.setDate(firstOfMonth.getDate() - firstOfMonth.getDay());
     const selectedEvents = eventsForDate(selectedCalendarDate);
+    const selectedTasks = tasksForDate(selectedCalendarDate);
     const upcomingEvents = calendarEvents
       .filter((event) => event.status !== "cancelled" && new Date(event.starts_at) >= new Date(new Date().setHours(0, 0, 0, 0)))
       .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
@@ -938,12 +1023,18 @@
       date.setDate(gridStart.getDate() + index);
       const dateKey = toDateKey(date);
       const dayEvents = eventsForDate(dateKey);
+      const dayTasks = tasksForDate(dateKey);
+      const dayItems = [
+        ...dayEvents.slice(0, 2).map((event) => ({ type: "event", label: event.title })),
+        ...dayTasks.slice(0, Math.max(0, 3 - Math.min(dayEvents.length, 2))).map((task) => ({ type: "task", label: task.title })),
+      ];
+      const overflowCount = Math.max(0, dayEvents.length + dayTasks.length - dayItems.length);
       const inMonth = date.getMonth() === calendarCursor.getMonth();
       return `
         <button class="qapp-calendar-day ${inMonth ? "" : "is-muted"} ${dateKey === todayKey ? "is-today" : ""} ${dateKey === selectedCalendarDate ? "is-selected" : ""}" data-calendar-action="select-day" data-date="${dateKey}" type="button">
           <span>${date.getDate()}</span>
-          ${dayEvents.slice(0, 3).map((event) => `<small>${escapeHtml(event.title)}</small>`).join("")}
-          ${dayEvents.length > 3 ? `<em>+${dayEvents.length - 3}</em>` : ""}
+          ${dayItems.map((item) => `<small>${item.type === "task" ? "Task: " : ""}${escapeHtml(item.label)}</small>`).join("")}
+          ${overflowCount ? `<em>+${overflowCount}</em>` : ""}
         </button>
       `;
     }).join("");
@@ -974,7 +1065,7 @@
           <aside class="qapp-panel qapp-calendar-agenda">
             <div class="qapp-panel-title-row">
               <h3>${escapeHtml(formatDateKey(selectedCalendarDate, "Selected day"))}</h3>
-              ${statusPill(`${selectedEvents.length}`)}
+              ${statusPill(`${selectedEvents.length + selectedTasks.length}`)}
             </div>
             <div class="qapp-calendar-event-list">
               ${selectedEvents.length ? selectedEvents.map((event) => `
@@ -988,7 +1079,22 @@
                     <button data-calendar-action="delete-event" data-event-id="${escapeHtml(event.id)}" type="button">Delete</button>
                   </div>
                 </article>
-              `).join("") : `<article class="qapp-calendar-event"><strong>No events</strong><p>Add an event or choose another day.</p></article>`}
+              `).join("") : ""}
+              ${selectedTasks.length ? selectedTasks.map((task) => `
+                <article class="qapp-calendar-event">
+                  <span>${escapeHtml(formatTaskTime(task))}</span>
+                  <button class="qapp-calendar-event-title" data-calendar-action="open-task" data-task-id="${escapeHtml(task.id)}" type="button">${escapeHtml(task.title)}</button>
+                  ${task.description ? `<p>${escapeHtml(task.description)}</p>` : ""}
+                  <div class="qapp-tag-row">
+                    ${statusPill("Task")}
+                    ${task.source === "people_follow_up" ? statusPill("People") : ""}
+                  </div>
+                  <div class="qapp-item-actions">
+                    <button data-calendar-action="open-task" data-task-id="${escapeHtml(task.id)}" type="button">Open Task</button>
+                  </div>
+                </article>
+              `).join("") : ""}
+              ${!selectedEvents.length && !selectedTasks.length ? `<article class="qapp-calendar-event"><strong>No events or tasks</strong><p>Add an event, create a task, or choose another day.</p></article>` : ""}
             </div>
             <div class="qapp-subsection-title">
               <h4>Upcoming</h4>
@@ -1299,6 +1405,12 @@
           editingCalendarEventId = eventId;
           calendarMode = "form";
           render();
+          return;
+        }
+        if (action === "open-task") {
+          editingTaskId = button.dataset.taskId || "";
+          tasksMode = editingTaskId ? "form" : "list";
+          setRoute("tasks");
           return;
         }
         if (action === "back-month") {

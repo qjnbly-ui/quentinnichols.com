@@ -27,6 +27,11 @@ function cleanMemoryLine(card) {
   return `${label}: ${value}`;
 }
 
+function isTemporaryMemoryCard(card) {
+  const label = cleanText(card?.label, 80).toLowerCase();
+  return ["upcoming event", "visit context", "appointment", "reminder", "dental work"].includes(label);
+}
+
 const MODEL = process.env.RELATIONSHIP_OVERVIEW_MODEL || process.env.RELATIONSHIP_NOTE_MODEL || "openai/gpt-oss-120b";
 const REASONING_EFFORT = process.env.RELATIONSHIP_REASONING_EFFORT || "medium";
 
@@ -114,6 +119,7 @@ function extractProfileFacts(person, interactions, memoryCards) {
     const label = cleanText(card.label, 80).toLowerCase();
     const value = cleanText(card.value, 300);
     if (!value) return;
+    if (isTemporaryMemoryCard(card)) return;
     if (label.includes("school") && /\bgraduated\b/i.test(value)) {
       addFact(`${name} recently graduated ${gradeText(value)}.`);
     } else if (label.includes("family") && /\bgreat aunt\b/i.test(value)) {
@@ -124,10 +130,6 @@ function extractProfileFacts(person, interactions, memoryCards) {
       addFact(`${name} is your cousin.`);
     } else if (label.includes("family") && /\bsister\b/i.test(value)) {
       addFact(`${name} is your sister.`);
-    } else if (label.includes("dental") || /\b(teeth|tooth|bridge|crowns?|implants?)\b/i.test(value)) {
-      addFact(`${name} has dental work involving ${value.replace(new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}:\\s*`, "i"), "")}.`);
-    } else if (label.includes("visit")) {
-      addFact(`${name} ${value.replace(/^staying\b/i, "is staying")}.`);
     } else {
       addFact(value.endsWith(".") ? value : `${value}.`);
     }
@@ -243,6 +245,7 @@ function buildProfileOverview(person, interactions, memoryCards) {
   const profileFacts = extractProfileFacts(person, interactions, memoryCards);
   const topMemories = memoryCards
     .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
+    .filter((card) => !isTemporaryMemoryCard(card))
     .map(cleanMemoryLine)
     .filter(Boolean)
     .slice(0, 8);
@@ -330,7 +333,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, fallbac
         {
           role: "system",
           content:
-            "Rewrite a private people-notebook profile overview for the named profile person, not for Quentin. Quentin is the owner of the notes, so relationships should be phrased as 'your cousin', 'your sister', etc. Use profileFacts as hard ground truth. Ignore unrelated people unless they explain the named profile person's relationship to Quentin. Write 1-3 natural sentences. Do not mention database fields, tags as tags, confidence scores, or the process. Do not invent facts.",
+            "Rewrite a private people-notebook profile overview for the named profile person, not for Quentin. Quentin is the owner of the notes, so relationships should be phrased as 'your cousin', 'your sister', etc. Use profileFacts as hard ground truth. Treat dated appointments, visit logistics, and temporary medical/dental updates as recent context, not permanent identity facts. Ignore unrelated people unless they explain the named profile person's relationship to Quentin. Write 1-3 natural sentences. Do not mention database fields, tags as tags, confidence scores, or the process. Do not invent facts.",
         },
         {
           role: "user",

@@ -250,6 +250,140 @@
       return container;
     }
 
+    function prepareAiLink(link, href) {
+      const routeMatch = String(href || "").match(/^\/app\/?#([a-z-]+)$/i);
+      if (routeMatch && window.parent && window.parent !== window) {
+        link.addEventListener("click", (event) => {
+          event.preventDefault();
+          window.parent.postMessage({ type: "qapp:set-route", route: routeMatch[1] }, window.location.origin);
+        });
+        return;
+      }
+      if (/^\/app\/?#/i.test(String(href || ""))) link.target = "_top";
+      if (/^https?:\/\//i.test(String(href || ""))) {
+        link.rel = "noopener";
+        link.target = "_blank";
+      }
+    }
+
+    function appendInlineMarkdown(container, text) {
+      const tokenPattern = /(\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)|\*\*([^*]+)\*\*|\*([^*]+)\*|`([^`]+)`|\bhttps?:\/\/[^\s]+)/g;
+      let lastIndex = 0;
+      let match;
+
+      while ((match = tokenPattern.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          container.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+        }
+
+        if (match[2] && match[3]) {
+          const link = document.createElement("a");
+          link.href = match[3];
+          link.textContent = match[2];
+          prepareAiLink(link, match[3]);
+          container.appendChild(link);
+        } else if (match[4]) {
+          const strong = document.createElement("strong");
+          strong.textContent = match[4];
+          container.appendChild(strong);
+        } else if (match[5]) {
+          const em = document.createElement("em");
+          em.textContent = match[5];
+          container.appendChild(em);
+        } else if (match[6]) {
+          const code = document.createElement("code");
+          code.textContent = match[6];
+          container.appendChild(code);
+        } else {
+          const href = match[0];
+          const link = document.createElement("a");
+          link.href = href;
+          link.textContent = "link";
+          prepareAiLink(link, href);
+          container.appendChild(link);
+        }
+
+        lastIndex = match.index + match[0].length;
+      }
+
+      if (lastIndex < text.length) {
+        container.appendChild(document.createTextNode(text.slice(lastIndex)));
+      }
+    }
+
+    function renderAssistantMarkdown(text) {
+      const container = document.createElement("div");
+      container.className = "ai-bubble-text ai-markdown";
+      const normalizedText = String(text || "").replace(/\s+(\d+\.\s+)/g, "\n$1");
+      const lines = normalizedText.split(/\r?\n/);
+      let paragraph = [];
+      let list = null;
+
+      function closeParagraph() {
+        if (!paragraph.length) return;
+        const p = document.createElement("p");
+        appendInlineMarkdown(p, paragraph.join(" "));
+        container.appendChild(p);
+        paragraph = [];
+      }
+
+      function closeList() {
+        if (!list) return;
+        container.appendChild(list);
+        list = null;
+      }
+
+      lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          closeParagraph();
+          closeList();
+          return;
+        }
+
+        const heading = trimmed.match(/^(#{1,4})\s+(.+)$/);
+        if (heading) {
+          closeParagraph();
+          closeList();
+          const level = Math.min(4, Math.max(2, heading[1].length + 1));
+          const el = document.createElement(`h${level}`);
+          appendInlineMarkdown(el, heading[2]);
+          container.appendChild(el);
+          return;
+        }
+
+        const numbered = trimmed.match(/^\d+\.\s+(.+)$/);
+        const bulleted = trimmed.match(/^[-*]\s+(.+)$/);
+        if (numbered || bulleted) {
+          closeParagraph();
+          const tagName = numbered ? "ol" : "ul";
+          if (!list || list.tagName.toLowerCase() !== tagName) {
+            closeList();
+            list = document.createElement(tagName);
+          }
+          const li = document.createElement("li");
+          appendInlineMarkdown(li, numbered?.[1] || bulleted?.[1] || "");
+          list.appendChild(li);
+          return;
+        }
+
+        if (list) {
+          const lastItem = list.lastElementChild;
+          if (lastItem) {
+            lastItem.appendChild(document.createTextNode(" "));
+            appendInlineMarkdown(lastItem, trimmed);
+            return;
+          }
+        }
+
+        paragraph.push(trimmed);
+      });
+
+      closeParagraph();
+      closeList();
+      return container;
+    }
+
     function cleanForSpeech(text) {
       const withoutMarkdownLinks = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/[^\s)]+)\)/g, "$1");
       const withoutUrls = withoutMarkdownLinks.replace(/\bhttps?:\/\/[^\s]+/g, "");
@@ -668,14 +802,14 @@
       messages.forEach((msg, index) => {
         const row = document.createElement("div");
         row.className = `ai-bubble ai-bubble--${msg.role}`;
-        const textEl = document.createElement("p");
-        textEl.className = "ai-bubble-text";
         if (msg.role === "assistant" && msg.text && msg.text !== "Thinking...") {
-          textEl.appendChild(createLinkedText(msg.text));
+          row.appendChild(renderAssistantMarkdown(msg.text));
         } else {
+          const textEl = document.createElement("p");
+          textEl.className = "ai-bubble-text";
           textEl.textContent = msg.text;
+          row.appendChild(textEl);
         }
-        row.appendChild(textEl);
 
         if (msg.role === "assistant") {
           getMessageActions(msg).forEach((action, actionIndex) => {
