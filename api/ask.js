@@ -657,6 +657,14 @@ function wantsPeopleMemoryAction(text) {
   return false;
 }
 
+function wantsCreativeOutput(text) {
+  const value = String(text || "").trim();
+  if (!value) return false;
+  const creativeVerb = /\b(create|write|generate|draft|compose|make|produce|build|give me|turn (?:this|that|it) into)\b/i.test(value);
+  const creativeTarget = /\b(song|lyrics?|chorus|verse|bridge|hook|prompt|poem|story|script|caption|post|essay|letter|email|message|bio|summary|outline|idea|ideas|rap|melody|music|article|copy)\b/i.test(value);
+  return creativeVerb && creativeTarget;
+}
+
 function looksLikePeopleEncounterNote(text) {
   const value = String(text || "").trim();
   if (value.length < 40) return false;
@@ -763,7 +771,7 @@ function actionClarificationReply(messages) {
 
   const saveLike = /\b(add|create|make|save|record|remember|note|remind)\b/i.test(latest);
   const hasKnownTarget = /\b(task|todo|to-do|calendar|event|appointment|people|person|profile|memory|conversation|notebook)\b/i.test(recent);
-  if (saveLike && !hasKnownTarget) {
+  if (saveLike && !hasKnownTarget && !wantsCreativeOutput(latest)) {
     return "Should I turn that into a task reminder, a calendar event, or a people conversation entry?";
   }
 
