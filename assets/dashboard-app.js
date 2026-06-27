@@ -238,6 +238,61 @@
     return Number.isFinite(date.getTime()) ? date.toISOString() : "";
   }
 
+  function cleanDateInput(value) {
+    const text = String(value || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return "";
+    const date = dateFromKey(text);
+    return date ? text : "";
+  }
+
+  function formatBirthday(value) {
+    const date = dateFromKey(value);
+    if (!date) return "Not saved";
+    return date.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+  }
+
+  function possessiveName(name) {
+    const cleanName = String(name || "").trim();
+    if (!cleanName) return "Birthday";
+    return /s$/i.test(cleanName) ? `${cleanName}'` : `${cleanName}'s`;
+  }
+
+  function birthdayEventsForRange(startDate, endDate) {
+    const start = dateFromKey(toDateKey(startDate));
+    const end = dateFromKey(toDateKey(endDate));
+    if (!start || !end) return [];
+    const events = [];
+    notebook.people.forEach((person) => {
+      const birthday = cleanDateInput(person.birthday || person.metadata?.birthday);
+      if (!birthday) return;
+      const [, month, day] = birthday.split("-").map(Number);
+      for (let year = start.getFullYear(); year <= end.getFullYear(); year += 1) {
+        const eventDate = new Date(year, month - 1, day);
+        if (eventDate < start || eventDate > end) continue;
+        const dateKey = toDateKey(eventDate);
+        events.push({
+          id: `birthday-${person.id}-${dateKey}`,
+          title: `${possessiveName(person.name)} birthday`,
+          description: "Birthday from People Notebook.",
+          starts_at: `${dateKey}T12:00:00`,
+          ends_at: null,
+          all_day: true,
+          status: "confirmed",
+          source: "people_birthday",
+          person_id: person.id,
+          metadata: { person_id: person.id, birthday },
+        });
+      }
+    });
+    return events;
+  }
+
+  function visibleCalendarEvents() {
+    const start = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() - 1, 1);
+    const end = new Date(calendarCursor.getFullYear(), calendarCursor.getMonth() + 2, 0, 23, 59, 59);
+    return [...calendarEvents, ...birthdayEventsForRange(start, end)];
+  }
+
   async function apiJson(url, options = {}) {
     const response = await fetch(url, {
       credentials: "include",
@@ -428,6 +483,8 @@
       ...person,
       summary: person.overview || person.summary || "No overview yet.",
       tags: Array.isArray(person.tags) ? person.tags : [],
+      metadata: person.metadata && typeof person.metadata === "object" ? person.metadata : {},
+      birthday: cleanDateInput(person.birthday || person.metadata?.birthday),
       memoryCards: memoryCards
         .filter((card) => !isRawNoteMemory(card))
         .map((card) => ({
@@ -747,6 +804,7 @@
             <span><strong>Email</strong>${escapeHtml(person.email || "Not saved")}</span>
             <span><strong>Phone</strong>${escapeHtml(person.phone || "Not saved")}</span>
             <span><strong>First Met</strong>${escapeHtml(person.first_met_location || person.firstMetLocation || "Not saved")}</span>
+            <span><strong>Birthday</strong>${escapeHtml(formatBirthday(person.birthday))}</span>
           </div>
           <div class="qapp-action-row">
             <button class="qapp-inline-button" data-action="add-note-for-person" data-person-id="${escapeHtml(person.id)}" type="button">Add Conversation</button>
@@ -975,6 +1033,10 @@
                   <input name="firstMetLocation" type="text" value="${escapeHtml(selectedPerson?.first_met_location || selectedPerson?.firstMetLocation || "")}" placeholder="Meeting, event, or location">
                 </label>
                 <label>
+                  <span>Birthday</span>
+                  <input name="birthday" type="date" value="${escapeHtml(selectedPerson?.birthday || "")}">
+                </label>
+                <label>
                   <span>Photo URL</span>
                   <input name="photoUrl" type="url" value="${escapeHtml(selectedPerson?.photo_url || selectedPerson?.photoUrl || "")}" placeholder="Optional">
                 </label>
@@ -1063,7 +1125,7 @@
   }
 
   function eventsForDate(dateKey) {
-    return calendarEvents
+    return visibleCalendarEvents()
       .filter((event) => toDateKey(event.starts_at) === dateKey && event.status !== "cancelled")
       .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
   }
@@ -1169,7 +1231,8 @@
     gridStart.setDate(firstOfMonth.getDate() - firstOfMonth.getDay());
     const selectedEvents = eventsForDate(selectedCalendarDate);
     const selectedTasks = tasksForDate(selectedCalendarDate);
-    const upcomingEvents = calendarEvents
+    const allVisibleEvents = visibleCalendarEvents();
+    const upcomingEvents = allVisibleEvents
       .filter((event) => event.status !== "cancelled" && new Date(event.starts_at) >= new Date(new Date().setHours(0, 0, 0, 0)))
       .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at))
       .slice(0, 5);
@@ -1199,7 +1262,7 @@
         <div class="qapp-calendar-toolbar">
           <div>
             <h3>${escapeHtml(monthLabel(calendarCursor))}</h3>
-            <p>${calendarEvents.length} event${calendarEvents.length === 1 ? "" : "s"} loaded</p>
+            <p>${allVisibleEvents.length} event${allVisibleEvents.length === 1 ? "" : "s"} loaded</p>
           </div>
           <div class="qapp-action-row">
             <button class="qapp-soft-button" data-calendar-action="prev-month" type="button">Prev</button>
@@ -1226,13 +1289,13 @@
               ${selectedEvents.length ? selectedEvents.map((event) => `
                 <article class="qapp-calendar-event">
                   <span>${escapeHtml(formatEventTime(event))}</span>
-                  <button class="qapp-calendar-event-title" data-calendar-action="edit-event" data-event-id="${escapeHtml(event.id)}" type="button">${escapeHtml(event.title)}</button>
+                  <button class="qapp-calendar-event-title" data-calendar-action="${event.source === "people_birthday" ? "open-person" : "edit-event"}" data-event-id="${escapeHtml(event.id)}" data-person-id="${escapeHtml(event.person_id || event.metadata?.person_id || "")}" type="button">${escapeHtml(event.title)}</button>
                   ${event.location ? `<p>${escapeHtml(event.location)}</p>` : ""}
                   ${event.description ? `<p>${escapeHtml(event.description)}</p>` : ""}
-                  <div class="qapp-item-actions">
+                  ${event.source === "people_birthday" ? `<div class="qapp-tag-row">${statusPill("Birthday")}${statusPill("People")}</div>` : `<div class="qapp-item-actions">
                     <button data-calendar-action="edit-event" data-event-id="${escapeHtml(event.id)}" type="button">Edit</button>
                     <button data-calendar-action="delete-event" data-event-id="${escapeHtml(event.id)}" type="button">Delete</button>
-                  </div>
+                  </div>`}
                 </article>
               `).join("") : ""}
               ${selectedTasks.length ? selectedTasks.map((task) => `
@@ -1257,7 +1320,7 @@
             </div>
             <div class="qapp-calendar-event-list">
               ${upcomingEvents.length ? upcomingEvents.map((event) => `
-                <button class="qapp-calendar-upcoming" data-calendar-action="edit-event" data-event-id="${escapeHtml(event.id)}" type="button">
+                <button class="qapp-calendar-upcoming" data-calendar-action="${event.source === "people_birthday" ? "open-person" : "edit-event"}" data-event-id="${escapeHtml(event.id)}" data-person-id="${escapeHtml(event.person_id || event.metadata?.person_id || "")}" type="button">
                   <strong>${escapeHtml(event.title)}</strong>
                   <span>${escapeHtml(formatDate(event.starts_at))} · ${escapeHtml(formatEventTime(event))}</span>
                 </button>
@@ -1560,6 +1623,14 @@
           editingCalendarEventId = eventId;
           calendarMode = "form";
           render();
+          return;
+        }
+        if (action === "open-person") {
+          const personId = button.dataset.personId || "";
+          if (!personId) return;
+          selectedPersonId = personId;
+          peopleMode = "profile";
+          setRoute("people");
           return;
         }
         if (action === "open-task") {
@@ -1934,13 +2005,14 @@
             { label: "Email", value: activePerson.email || "" },
             { label: "Phone", value: activePerson.phone || "" },
             { label: "Where you met", value: activePerson.first_met_location || "" },
+            { label: "Birthday", value: activePerson.birthday || "", type: "date" },
             { label: "Tags, comma separated", value: (activePerson.tags || []).join(", ") },
             { label: "Overview", value: activePerson.overview || activePerson.summary || "", type: "textarea", rows: 4 },
           ],
           confirmLabel: "Save Profile",
         });
         if (!values) return;
-        const [name, email, phone, firstMetLocation, tagText, overview] = values;
+        const [name, email, phone, firstMetLocation, birthday, tagText, overview] = values;
         if (!name) return;
         const tags = String(tagText || "")
           .split(",")
@@ -1958,6 +2030,10 @@
               tags,
               overview,
               photoUrl: activePerson.photo_url || activePerson.photoUrl || "",
+              metadata: {
+                ...(activePerson.metadata || {}),
+                birthday: cleanDateInput(birthday),
+              },
             },
           });
           await loadNotebookData();
@@ -2221,6 +2297,7 @@
         .filter((card) => card.label && card.value);
       const reminderTitle = String(formData.get("reminderTitle") || "").trim();
       const remindAt = fromDateTimeLocal(formData.get("remindAt"));
+      const birthday = cleanDateInput(formData.get("birthday"));
       const draftPersonIds = formData.getAll("draftPersonIds").map((value) => String(value || "").trim()).filter(Boolean);
       const draftNewPeopleIndexes = new Set(formData.getAll("draftNewPeopleIndexes").map((value) => Number(value)));
       const draftNewPeople = Array.isArray(relationshipDraft?.possiblePeople)
@@ -2273,6 +2350,7 @@
               photoUrl: String(formData.get("photoUrl") || "").trim(),
               overview: String(formData.get("overview") || "").trim(),
               firstMetLocation,
+              metadata: { birthday },
             },
           });
           return normalizePerson({ ...created.person, interactions: [], memoryCards: [], reminders: [] });

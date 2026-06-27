@@ -22,6 +22,28 @@ function cleanRecordId(value) {
   return "";
 }
 
+function cleanBirthday(value) {
+  const text = cleanText(value, 20);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return "";
+  const date = new Date(`${text}T12:00:00`);
+  if (!Number.isFinite(date.getTime())) return "";
+  const [year, month, day] = text.split("-").map(Number);
+  if (date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) return "";
+  return text;
+}
+
+function cleanMetadata(value) {
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+}
+
+async function loadPersonMetadata(supabaseRest, personId) {
+  if (!cleanRecordId(personId)) return {};
+  const response = await supabaseRest(`people?select=metadata&id=eq.${encodeURIComponent(personId)}&limit=1`);
+  const payload = await response.json().catch(() => []);
+  if (!response.ok) return {};
+  return cleanMetadata(payload[0]?.metadata);
+}
+
 async function loadOwnedPersonIds(supabaseRest, { id, name, ownerId }) {
   const recordId = cleanRecordId(id);
   if (recordId) return [recordId];
@@ -117,6 +139,15 @@ module.exports = async function handler(req, res) {
       return;
     }
 
+    const existingMetadata = req.method === "PATCH" ? await loadPersonMetadata(supabaseRest, id) : {};
+    const metadata = {
+      ...existingMetadata,
+      ...cleanMetadata(body.metadata),
+    };
+    const birthday = cleanBirthday(body.birthday || body.birthdate || metadata.birthday);
+    if (birthday) metadata.birthday = birthday;
+    if ((body.birthday === "" || body.birthdate === "" || metadata.birthday === "") && !birthday) delete metadata.birthday;
+
     const record = {
       name,
       preferred_name: cleanText(body.preferredName || body.preferred_name, 160) || null,
@@ -127,7 +158,7 @@ module.exports = async function handler(req, res) {
       first_met_at: cleanText(body.firstMetAt || body.first_met_at, 80) || null,
       first_met_location: cleanText(body.firstMetLocation || body.first_met_location, 240) || null,
       overview: cleanText(body.overview, 2000) || null,
-      metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {},
+      metadata,
     };
 
     if (req.method === "PATCH") {

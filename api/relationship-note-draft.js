@@ -88,6 +88,20 @@ const PLACE_NAME_WORDS = new Set([
   "trinity",
   "valley",
 ]);
+const POSSESSIVE_CONTEXT_WORDS = [
+  "appointment",
+  "birthday",
+  "game",
+  "games",
+  "graduation",
+  "house",
+  "party",
+  "place",
+  "practice",
+  "softball",
+  "tournament",
+  "wedding",
+];
 
 const DRAFT_RESPONSE_FORMAT = {
   type: "json_schema",
@@ -304,8 +318,11 @@ function possessiveNameVariant(name, note = "") {
   if (parts.length < 2) return cleanName;
   const tail = parts[parts.length - 1];
   if (!tail.endsWith("s")) return cleanName;
+  if (tail.length <= 2 || /(?:ss|us|is)$/i.test(tail)) return cleanName;
   const singular = [...parts.slice(0, -1), tail.slice(0, -1)].join(" ");
-  return new RegExp(`\\b${escapeRegExp(cleanName)}\\s+(?:game|house|place|party|birthday|wedding|graduation|appointment)\\b`, "i").test(note)
+  const possessiveContext = POSSESSIVE_CONTEXT_WORDS.join("|");
+  return new RegExp(`\\b${escapeRegExp(cleanName)}(?:['’]s)?(?:\\s+[a-z]+){0,3}\\s+(?:${possessiveContext})\\b`, "i").test(note)
+    || new RegExp(`\\b${escapeRegExp(cleanName)}['’]s\\b`, "i").test(note)
     ? singular
     : cleanName;
 }
@@ -328,7 +345,7 @@ function noteIncludesName(note, name) {
 
 function familySurnames(note) {
   const surnames = [];
-  const pattern = /\b(?:my\s+)?(?:great\s+)?(?:aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father|cousin|sister|brother)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b/g;
+  const pattern = /\b(?:my\s+)?(?:great\s+)?(?:aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father|cousin|sister|brother)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b/gi;
   for (const match of note.matchAll(pattern)) {
     surnames.push(titleCase(match[2]));
   }
@@ -395,13 +412,13 @@ function findKnownPeople(note, people) {
 function sharedFamilySurnameCandidates(note) {
   const candidates = [];
   const familyNames = [];
-  const fullFamilyPattern = /\b(?:my\s+)?(?:great\s+)?(?:aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b/g;
+  const fullFamilyPattern = /\b(?:my\s+)?(?:great\s+)?(?:aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b/gi;
   for (const match of note.matchAll(fullFamilyPattern)) {
     familyNames.push({ first: titleCase(match[1]), last: titleCase(match[2]) });
   }
   if (!familyNames.length) return candidates;
   const familyLastNames = [...new Set(familyNames.map((name) => name.last).filter(Boolean))];
-  const partialFamilyPattern = /\b(?:my\s+)?(?:great\s+)?(aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father)\s+([A-Z][a-z]+)\b/g;
+  const partialFamilyPattern = /\b(?:my\s+)?(?:great\s+)?(aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father)\s+([A-Z][a-z]+)\b/gi;
   for (const match of note.matchAll(partialFamilyPattern)) {
     const first = titleCase(match[2]);
     if (familyNames.some((name) => name.first.toLowerCase() === first.toLowerCase())) continue;
@@ -1283,7 +1300,9 @@ async function buildRelationshipDraft(supabaseRest, note, options = {}) {
 
   const people = normalizePeople(peoplePayload);
   const scriptDraft = buildScriptDraft(note, people);
-  return options.useAi === false ? scriptDraft : await buildAiDraft(note, people, scriptDraft);
+  return options.useAi === false
+    ? sanitizeDraft(scriptDraft, scriptDraft, note, people)
+    : await buildAiDraft(note, people, scriptDraft);
 }
 
 async function handler(req, res) {
