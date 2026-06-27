@@ -34,6 +34,7 @@ function isTemporaryMemoryCard(card) {
 
 const MODEL = process.env.RELATIONSHIP_OVERVIEW_MODEL || process.env.RELATIONSHIP_NOTE_MODEL || "openai/gpt-oss-120b";
 const REASONING_EFFORT = process.env.RELATIONSHIP_REASONING_EFFORT || "medium";
+const OVERVIEW_MAX_TOKENS = Number(process.env.RELATIONSHIP_OVERVIEW_MAX_TOKENS || 520);
 
 function titleCase(value) {
   return cleanText(value, 160)
@@ -280,35 +281,79 @@ function buildProfileOverview(person, interactions, memoryCards) {
   return cleanText(sentences.join(" ").replace(/\s+/g, " "), 2000);
 }
 
-function profileContextForAi(person, interactions, memoryCards) {
+function compactNote(value, maxLength = 1800) {
+  return cleanText(value, maxLength).replace(/\n{3,}/g, "\n\n");
+}
+
+function validateAiOverview(overview) {
+  const lower = cleanText(overview, 2200).toLowerCase();
+  const forbiddenPhrases = [
+    "your notes touch on",
+    "your notes around this profile",
+    "this profile",
+    "memory cards",
+    "database",
+    "tags",
+  ];
+  if (forbiddenPhrases.some((phrase) => lower.includes(phrase))) {
+    const error = new Error("AI overview refresh returned a low-quality summary. Try again.");
+    error.statusCode = 502;
+    throw error;
+  }
+}
+
+function profileContextForAi(person, interactions, memoryCards, reminders) {
   const profileFacts = extractProfileFacts(person, interactions, memoryCards);
   return {
     person: {
       name: person?.name || "",
       preferredName: person?.preferred_name || "",
+      email: person?.email || "",
+      phone: person?.phone || "",
+      firstMetAt: person?.first_met_at || "",
+      firstMetLocation: person?.first_met_location || "",
       tags: Array.isArray(person?.tags) ? person.tags : [],
+      existingOverview: person?.overview || "",
+      metadata: person?.metadata && typeof person.metadata === "object" ? person.metadata : {},
     },
     profileFacts,
     memoryCards: memoryCards
       .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
-      .slice(0, 30)
+      .slice(0, 80)
       .map((card) => ({
+        category: card.category || "",
         label: card.label || "",
         value: card.value || "",
         confidence: card.confidence || null,
+        updatedAt: card.updated_at || "",
+        metadata: card.metadata && typeof card.metadata === "object" ? card.metadata : {},
       })),
     conversations: interactions
-      .slice(0, 20)
+      .slice(0, 40)
       .map((interaction) => ({
         occurredAt: interaction.occurred_at || "",
+        location: interaction.location || "",
+        mood: interaction.mood || "",
         topics: Array.isArray(interaction.topics) ? interaction.topics : [],
         summary: interaction.ai_summary || "",
-        notes: interaction.notes || "",
+        notes: compactNote(interaction.notes || ""),
+        source: interaction.source || "",
+        metadata: interaction.metadata && typeof interaction.metadata === "object" ? interaction.metadata : {},
+      })),
+    reminders: reminders
+      .slice(0, 20)
+      .map((reminder) => ({
+        title: reminder.title || "",
+        details: reminder.details || "",
+        remindAt: reminder.remind_at || "",
+        status: reminder.status || "",
+        priority: reminder.priority || "",
+        metadata: reminder.metadata && typeof reminder.metadata === "object" ? reminder.metadata : {},
       })),
   };
 }
 
-async function buildAiProfileOverview(person, interactions, memoryCards, fallbackOverview) {
+async function buildAiProfileOverview(person, interactions, memoryCards, reminders, fallbackOverview) {
   const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) {
     const error = new Error("AI overview refresh is not configured.");
@@ -316,7 +361,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, fallbac
     throw error;
   }
 
-  const context = profileContextForAi(person, interactions, memoryCards);
+  const context = profileContextForAi(person, interactions, memoryCards, reminders);
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -326,14 +371,14 @@ async function buildAiProfileOverview(person, interactions, memoryCards, fallbac
     body: JSON.stringify({
       model: MODEL,
       temperature: 0.25,
-      max_tokens: 260,
+      max_tokens: OVERVIEW_MAX_TOKENS,
       reasoning_effort: REASONING_EFFORT,
       reasoning_format: "hidden",
       messages: [
         {
           role: "system",
           content:
-            "Rewrite a private people-notebook profile overview for the named profile person, not for Quentin. Quentin is the owner of the notes, so relationships should be phrased as 'your cousin', 'your sister', etc. Use profileFacts as hard ground truth. Treat dated appointments, visit logistics, and temporary medical/dental updates as recent context, not permanent identity facts. Ignore unrelated people unless they explain the named profile person's relationship to Quentin. Write 1-3 natural sentences. Do not mention database fields, tags as tags, confidence scores, or the process. Do not invent facts.",
+            "You write private People Notebook overviews for Quentin. Use all provided context for this single profile, including conversations that do not repeat the person's name. Produce a natural, useful profile summary, not a topic list. Start with who this person is in relation to Quentin or how he knows them when the context supports it. Then synthesize stable traits, life context, values, preferences, routines, and relationship dynamics that would help Quentin understand and care for this person. Treat reminders, dated logistics, temporary health/dental updates, and one-time plans as recent context, not permanent identity, unless repeated. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Do not invent facts. Write 2-4 concise sentences.",
         },
         {
           role: "user",
@@ -362,26 +407,32 @@ async function buildAiProfileOverview(person, interactions, memoryCards, fallbac
     error.statusCode = 502;
     throw error;
   }
+  validateAiOverview(overview);
   return overview;
 }
 
 async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
   const encodedPersonId = encodeURIComponent(personId);
-  const [people, interactions, loadedMemoryCards] = await Promise.all([
+  const [people, interactions, loadedMemoryCards, reminders] = await Promise.all([
     loadRows(
       supabaseRest,
-      `people?select=id,owner_id,name,preferred_name,tags&limit=1&id=eq.${encodedPersonId}`,
+      `people?select=id,owner_id,name,preferred_name,email,phone,first_met_at,first_met_location,tags,overview,metadata&limit=1&id=eq.${encodedPersonId}`,
       "Unable to load person."
     ),
     loadRows(
       supabaseRest,
-      `person_interactions?select=id,notes,topics,ai_summary,occurred_at&person_id=eq.${encodedPersonId}&order=occurred_at.desc&limit=40`,
+      `person_interactions?select=id,notes,location,mood,topics,ai_summary,source,metadata,occurred_at&person_id=eq.${encodedPersonId}&order=occurred_at.desc&limit=40`,
       "Unable to load interactions."
     ),
     loadRows(
       supabaseRest,
-      `person_memory_cards?select=id,label,value,confidence,updated_at&person_id=eq.${encodedPersonId}&order=updated_at.desc&limit=80`,
+      `person_memory_cards?select=id,category,label,value,confidence,metadata,updated_at&person_id=eq.${encodedPersonId}&order=updated_at.desc&limit=80`,
       "Unable to load memory cards."
+    ),
+    loadRows(
+      supabaseRest,
+      `person_follow_up_reminders?select=id,title,details,remind_at,status,priority,metadata,created_at&person_id=eq.${encodedPersonId}&order=created_at.desc&limit=30`,
+      "Unable to load reminders."
     ),
   ]);
   if (!people[0]) {
@@ -399,7 +450,7 @@ async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
   let overviewError = "";
   if (options.useAi) {
     try {
-      overview = await buildAiProfileOverview(people[0], interactions, memoryCards, fallbackOverview);
+      overview = await buildAiProfileOverview(people[0], interactions, memoryCards, reminders, fallbackOverview);
     } catch (error) {
       overviewError = error?.message || "AI overview refresh failed.";
       if (options.requireAi) throw error;
@@ -423,7 +474,13 @@ async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
     throw error;
   }
   if (options.returnDetails) {
-    return { overview, overviewError, usedFallback: Boolean(overviewError), person: payload[0] };
+    return {
+      overview,
+      overviewError,
+      overviewSource: options.useAi && !overviewError ? "ai" : "fallback",
+      usedFallback: Boolean(overviewError),
+      person: payload[0],
+    };
   }
   return overview;
 }

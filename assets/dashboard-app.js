@@ -1757,7 +1757,7 @@
         refreshOverviewButton.disabled = true;
         refreshOverviewButton.textContent = "Refreshing...";
         try {
-          const result = await apiJson(`/api/person-overview?person_id=${encodeURIComponent(activePerson.id)}`, {
+          await apiJson(`/api/person-overview?person_id=${encodeURIComponent(activePerson.id)}`, {
             method: "POST",
             body: { personId: activePerson.id, id: activePerson.id },
           });
@@ -1765,12 +1765,6 @@
           selectedPersonId = activePerson.id;
           peopleMode = "profile";
           render();
-          if (result?.overviewError) {
-            await qappAlert(
-              `Saved a local overview, but the AI rewrite did not complete.\n\n${result.overviewError}`,
-              "Overview refreshed"
-            );
-          }
         } catch (error) {
           await qappAlert(error?.message || "Unable to refresh overview.", "Profile error");
           refreshOverviewButton.disabled = false;

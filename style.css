@@ -5242,6 +5242,10 @@ body.nav-menu-open {
   max-width: 100%;
 }
 
+.qapp-last-conversation[open] summary strong {
+  display: none;
+}
+
 .qapp-last-conversation[open] summary small {
   font-size: 0;
 }

@@ -204,7 +204,7 @@ module.exports = async function handler(req, res) {
     try {
       overview = await rebuildPersonOverview(supabaseRest, personId, {
         useAi: true,
-        requireAi: false,
+        requireAi: true,
         backfillMemoryCards: true,
       });
     } catch (error) {

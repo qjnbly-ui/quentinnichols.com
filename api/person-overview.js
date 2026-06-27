@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
 
     const result = await rebuildPersonOverview(supabaseRest, personId, {
       useAi: true,
-      requireAi: false,
+      requireAi: true,
       backfillMemoryCards: true,
       returnDetails: true,
     });
