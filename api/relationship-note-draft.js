@@ -34,6 +34,7 @@ const STOPWORDS = new Set([
   "talked",
   "discussed",
   "mentioned",
+  "must",
   "said",
   "met",
   "saw",
@@ -51,11 +52,16 @@ const STOPWORDS = new Set([
   "tuesday",
   "wednesday",
   "thursday",
+  "while",
 ]);
 const RELATION_WORDS = new Set([
   "dad",
   "daughter",
   "father",
+  "grandfather",
+  "grandma",
+  "grandmother",
+  "grandpa",
   "husband",
   "kid",
   "mom",
@@ -64,6 +70,22 @@ const RELATION_WORDS = new Set([
   "son",
   "spouse",
   "wife",
+]);
+const PLACE_NAME_WORDS = new Set([
+  "beach",
+  "camp",
+  "colorado",
+  "creek",
+  "lake",
+  "medford",
+  "mount",
+  "mountain",
+  "park",
+  "river",
+  "rockies",
+  "springs",
+  "trinity",
+  "valley",
 ]);
 
 const DRAFT_RESPONSE_FORMAT = {
@@ -266,18 +288,50 @@ function escapeRegExp(value) {
   return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function firstName(value) {
+  return cleanText(value, 160).split(/\s+/).filter(Boolean)[0] || "";
+}
+
+function lastName(value) {
+  const parts = cleanText(value, 160).split(/\s+/).filter(Boolean);
+  return parts.length > 1 ? parts[parts.length - 1] : "";
+}
+
+function possessiveNameVariant(name, note = "") {
+  const cleanName = titleCase(name);
+  const parts = cleanName.split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return cleanName;
+  const tail = parts[parts.length - 1];
+  if (!tail.endsWith("s")) return cleanName;
+  const singular = [...parts.slice(0, -1), tail.slice(0, -1)].join(" ");
+  return new RegExp(`\\b${escapeRegExp(cleanName)}\\s+(?:game|house|place|party|birthday|wedding|graduation|appointment)\\b`, "i").test(note)
+    ? singular
+    : cleanName;
+}
+
 function noteIncludesName(note, name) {
   return new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(note);
 }
 
+function isLikelyPlaceName(name, note = "") {
+  const cleanName = titleCase(name);
+  const lowerName = cleanName.toLowerCase();
+  const parts = lowerName.split(/\s+/).filter(Boolean);
+  if (!parts.length) return false;
+  if (parts.some((part) => PLACE_NAME_WORDS.has(part))) return true;
+  return new RegExp(`\\b(?:at|to|in|from|near|around)\\s+${escapeRegExp(cleanName)}\\b`, "i").test(note)
+    && !new RegExp(`\\b(?:grandma|grandpa|aunt|uncle|cousin|sister|brother|mom|mother|dad|father)\\s+${escapeRegExp(cleanName)}\\b`, "i").test(note);
+}
+
 function isValidPersonName(name, note = "") {
-  const cleanName = cleanText(name, 120);
+  const cleanName = possessiveNameVariant(name, note);
   if (!cleanName || cleanName.includes("'")) return false;
   const parts = cleanName.split(/\s+/).filter(Boolean);
   if (!parts.length || parts.length > 3) return false;
   const lowerParts = parts.map((part) => part.toLowerCase());
   if (lowerParts.some((part) => STOPWORDS.has(part))) return false;
   if (lowerParts.every((part) => RELATION_WORDS.has(part))) return false;
+  if (isLikelyPlaceName(cleanName, note)) return false;
   if (/^(my|their|our|his|her)\b/i.test(cleanName)) return false;
   if (/\b(?:dad|father|mom|mother|kid|child)\b/i.test(cleanName) && !noteIncludesName(note, cleanName)) return false;
   if (cleanName.toLowerCase() === "quentin nichols") return false;
@@ -315,32 +369,64 @@ function findKnownPeople(note, people) {
     .filter(Boolean);
 }
 
+function sharedFamilySurnameCandidates(note) {
+  const candidates = [];
+  const familyNames = [];
+  const fullFamilyPattern = /\b(?:my\s+)?(?:great\s+)?(?:aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b/g;
+  for (const match of note.matchAll(fullFamilyPattern)) {
+    familyNames.push({ first: titleCase(match[1]), last: titleCase(match[2]) });
+  }
+  if (!familyNames.length) return candidates;
+  const familyLastNames = [...new Set(familyNames.map((name) => name.last).filter(Boolean))];
+  const partialFamilyPattern = /\b(?:my\s+)?(?:great\s+)?(aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father)\s+([A-Z][a-z]+)\b/g;
+  for (const match of note.matchAll(partialFamilyPattern)) {
+    const first = titleCase(match[2]);
+    if (familyNames.some((name) => name.first.toLowerCase() === first.toLowerCase())) continue;
+    familyLastNames.forEach((surname) => {
+      candidates.push({ name: `${first} ${surname}`, confidence: 0.62 });
+    });
+  }
+  return candidates;
+}
+
 function findPossibleNames(note, knownPeople) {
   const knownNames = new Set(knownPeople.flatMap((person) => person.aliases.map((alias) => alias.toLowerCase())));
   const petNames = new Set(extractPetNames(note).map((name) => name.toLowerCase()));
   const placeNames = new Set(extractPlaceNames(note).map((name) => name.toLowerCase()));
   const aliasNames = new Set(extractAliasNames(note).map((name) => name.toLowerCase()));
-  const explicitMatches = [];
+  const candidates = new Map();
+  const addCandidate = (name, confidence) => {
+    const cleanName = possessiveNameVariant(name, note);
+    const key = cleanName.toLowerCase();
+    if (!key) return;
+    const existing = candidates.get(key);
+    if (!existing || confidence > existing.confidence) {
+      candidates.set(key, { name: cleanName, confidence });
+    }
+  };
   const explicitPatterns = [
     /\b(?:met|saw|visited with|talked to|spoke with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:at|after|today|yesterday|and|about|because)\b|[.,!?]|$)/gi,
     /\bwith\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:at|after|today|yesterday|and|about|because)\b|[.,!?]|$)/gi,
-    /\b(?:mom|mother|dad|father|sister|brother|wife|husband|spouse|daughter|son)\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=[.,!?]|$|\s+(?:known|came|is|was|has|and)\b)/gi,
+    /\b(?:mom|mother|dad|father|grandma|grandmother|grandpa|grandfather|sister|brother|wife|husband|spouse|daughter|son|cousin)\s+(?:is\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=[.,!?]|$|\s+(?:known|came|is|was|has|and|game|games|softball|baseball|football|basketball)\b)/gi,
     /\b(?:before|after)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+(?:came|joined|entered)\b/gi,
   ];
   explicitPatterns.forEach((pattern) => {
     for (const match of note.matchAll(pattern)) {
-      explicitMatches.push(match[1]);
+      addCandidate(match[1], 0.9);
     }
   });
 
-  const matches = explicitMatches.length ? explicitMatches : note.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
-  return uniqueList(matches, 8)
-    .filter((name) => !knownNames.has(name.toLowerCase()))
-    .filter((name) => !petNames.has(name.toLowerCase()))
-    .filter((name) => !placeNames.has(name.toLowerCase()))
-    .filter((name) => !aliasNames.has(name.toLowerCase()))
-    .filter((name) => isValidPersonName(name, note))
-    .map((name) => ({ name: titleCase(name), confidence: explicitMatches.length ? 0.9 : 0.45 }));
+  (note.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || []).forEach((match) => addCandidate(match, 0.45));
+  sharedFamilySurnameCandidates(note).forEach((candidate) => addCandidate(candidate.name, candidate.confidence));
+
+  return [...candidates.values()]
+    .filter((person) => !knownNames.has(person.name.toLowerCase()))
+    .filter((person) => !petNames.has(person.name.toLowerCase()))
+    .filter((person) => !placeNames.has(person.name.toLowerCase()))
+    .filter((person) => !aliasNames.has(person.name.toLowerCase()))
+    .filter((person) => isValidPersonName(person.name, note))
+    .map((person) => ({ name: titleCase(possessiveNameVariant(person.name, note)), confidence: person.confidence }))
+    .slice(0, 8);
 }
 
 function extractTopics(note) {
@@ -439,8 +525,8 @@ function extractAliasNames(note) {
 function extractRelationshipOnlyNames(note) {
   const names = [];
   const patterns = [
-    /\b(?:his|her|their)\s+(?:daughter|son|kid|child|wife|husband|spouse|mom|mother|dad|father)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
-    /\b(?:daughter|son|kid|child|wife|husband|spouse)\s+([A-Z][a-z]+)(?=\s+(?:has|had|is|was|will|starts|plays|goes|needs|wants)\b|[.,!?]|$)/gi,
+    /\b(?:his|her|their)\s+(?:daughter|son|kid|child|wife|husband|spouse|mom|mother|dad|father|grandma|grandmother|grandpa|grandfather)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/gi,
+    /\b(?:daughter|son|kid|child|wife|husband|spouse|grandma|grandmother|grandpa|grandfather)\s+([A-Z][a-z]+)(?=\s+(?:has|had|is|was|will|starts|plays|goes|needs|wants)\b|[.,!?]|$)/gi,
   ];
   patterns.forEach((pattern) => {
     for (const match of note.matchAll(pattern)) {
@@ -464,17 +550,39 @@ function extractMemoryCards(note) {
     cards.push({ label: "Preferred Name", value: `${titleCase(knownAs[1])}: ${titleCase(knownAs[2])}`, confidence: 0.9 });
   }
   const familyContext = [];
-  const cousinContext = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+cousin\b/)
-    || note.match(/\bmy\s+cousin\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:just|recently|graduated|is|was|has|had|will|and)\b|[.,!?]|$)/);
-  if (cousinContext && isUsableCapturedName(cousinContext[1])) familyContext.push(`${titleCase(cousinContext[1])} is my cousin`);
-  const extendedFamilyBeforeName = note.match(/\bmy\s+(great\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
+  const cousinAfterName = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+(younger\s+|older\s+)?cousin\b/);
+  const cousinBeforeName = note.match(/\bmy\s+(younger\s+|older\s+)?cousin\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(?=\s+(?:just|recently|graduated|is|was|has|had|will|and|game|games|softball|baseball|football|basketball)\b|[.,!?]|$)/);
+  const cousinContext = cousinAfterName
+    ? { name: cousinAfterName[1], modifier: cousinAfterName[2] || "" }
+    : cousinBeforeName ? { name: cousinBeforeName[2], modifier: cousinBeforeName[1] || "" } : null;
+  if (cousinContext) {
+    if (isUsableCapturedName(cousinContext.name)) {
+      const cousinModifier = cleanText(cousinContext.modifier, 40).toLowerCase();
+      familyContext.push(`${titleCase(possessiveNameVariant(cousinContext.name, note))} is my ${cousinModifier ? `${cousinModifier} ` : ""}cousin`.replace(/\s+/g, " ").trim());
+    }
+  }
+  const seenFamilyContext = new Set(familyContext.map((fact) => fact.toLowerCase()));
+  const addFamilyContext = (name, modifier, relation) => {
+    if (/^(?:is|was|going|will|has|had)\b/i.test(cleanText(name, 80))) return;
+    if (!isUsableCapturedName(name)) return;
+    const fact = `${titleCase(possessiveNameVariant(name, note))} is my ${cleanText(`${modifier || ""}${relation || ""}`, 80).toLowerCase()}`.replace(/\s+/g, " ").trim();
+    const key = fact.toLowerCase();
+    if (!seenFamilyContext.has(key)) {
+      seenFamilyContext.add(key);
+      familyContext.push(fact);
+    }
+  };
+  for (const match of note.matchAll(/\b(?:my\s+)?(great\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/g)) {
+    addFamilyContext(match[3], match[1] || "", match[2]);
+  }
+  const extendedFamilyBeforeName = note.match(/\b(?:my\s+)?(great\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
   const extendedFamilyAfterName = note.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+(great\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather)\b/i);
   const extendedFamily = extendedFamilyBeforeName
     ? { name: extendedFamilyBeforeName[3], modifier: extendedFamilyBeforeName[1] || "", relation: extendedFamilyBeforeName[2] }
     : extendedFamilyAfterName ? { name: extendedFamilyAfterName[1], modifier: extendedFamilyAfterName[2] || "", relation: extendedFamilyAfterName[3] } : null;
   if (extendedFamily) {
     if (isUsableCapturedName(extendedFamily.name)) {
-      familyContext.push(`${titleCase(extendedFamily.name)} is my ${extendedFamily.modifier.toLowerCase()}${extendedFamily.relation.toLowerCase()}`.replace(/\s+/g, " "));
+      addFamilyContext(extendedFamily.name, extendedFamily.modifier, extendedFamily.relation);
     }
   }
   const mom = note.match(/\bmy\s+(?:mom|mother)\s+is\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)/i);
@@ -565,7 +673,78 @@ function extractMemoryCards(note) {
   return cards.slice(0, 6);
 }
 
-function normalizeCard(card) {
+function relationshipFactTarget(value) {
+  const text = cleanText(value, 1000);
+  const match = text.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+(?:(?:great|younger|older)\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather|cousin|sister|brother|mom|mother|dad|father)\b/i);
+  if (!match) return "";
+  return titleCase(match[1]);
+}
+
+function cardTargetsPerson(card, person) {
+  const label = cleanText(card?.label, 120).toLowerCase();
+  const value = cleanText(card?.value, 1000);
+  if (label !== "family context") return true;
+  const targets = value
+    .split(/\s*;\s*/)
+    .map(relationshipFactTarget)
+    .filter(Boolean);
+  if (!targets.length) return true;
+  const names = [person?.name, firstName(person?.name), person?.matchedAlias]
+    .map((name) => cleanText(name, 160).toLowerCase())
+    .filter(Boolean);
+  return targets.some((target) => names.includes(target.toLowerCase()));
+}
+
+function filterCardsForPerson(cards, person) {
+  return cards
+    .map((card) => {
+      const label = cleanText(card?.label, 120);
+      const value = cleanText(card?.value, 1000);
+      if (label.toLowerCase() !== "family context") return card;
+      const matchingFacts = value
+        .split(/\s*;\s*/)
+        .map((fact) => fact.trim())
+        .filter(Boolean)
+        .filter((fact) => cardTargetsPerson({ label, value: fact }, person));
+      if (!matchingFacts.length) return null;
+      return { ...card, value: matchingFacts.join("; ") };
+    })
+    .filter(Boolean)
+    .filter((card) => cardTargetsPerson(card, person));
+}
+
+function reminderTargetsPerson(reminder, person) {
+  const text = `${reminder?.title || ""} ${reminder?.details || ""}`;
+  const personNames = [person?.name, firstName(person?.name), person?.matchedAlias]
+    .map((name) => cleanText(name, 160).toLowerCase())
+    .filter(Boolean);
+  if (!personNames.length) return true;
+  if (personNames.some((name) => new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(text))) return true;
+  const properNames = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
+  const ignored = new Set(["Soon", "Possible", "Timing", "Grandma", "Grandpa", "Aunt", "Uncle"]);
+  const nonGenericNames = properNames.filter((name) => !ignored.has(name));
+  return nonGenericNames.length === 0;
+}
+
+function filterRemindersForPerson(reminders, person) {
+  return reminders.filter((reminder) => reminderTargetsPerson(reminder, person));
+}
+
+function normalizeFamilyContextValue(value, note = "") {
+  return cleanText(value, 1000)
+    .split(/\s*;\s*/)
+    .map((fact) => {
+      const cleanFact = cleanText(fact, 260);
+      const match = cleanFact.match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+((?:(?:great|younger|older)\s+)?(?:aunt|uncle|grandma|grandpa|grandmother|grandfather|cousin|sister|brother|mom|mother|dad|father))\b/i);
+      if (!match) return cleanFact;
+      return `${titleCase(possessiveNameVariant(match[1], note))} is my ${cleanText(match[2], 120).toLowerCase()}`;
+    })
+    .filter(Boolean)
+    .filter((fact, index, facts) => facts.findIndex((item) => item.toLowerCase() === fact.toLowerCase()) === index)
+    .join("; ");
+}
+
+function normalizeCard(card, note = "") {
   const label = cleanText(card.label, 120);
   let value = cleanText(card.value, 1000);
   if (!label || !value) return null;
@@ -590,6 +769,11 @@ function normalizeCard(card) {
   }
   if (["event", "events"].includes(lowerLabel)) {
     normalizedLabel = "Upcoming Event";
+  }
+  if (lowerLabel === "family context") {
+    normalizedLabel = "Family Context";
+    value = normalizeFamilyContextValue(value, note);
+    if (!value) return null;
   }
 
   return {
@@ -625,6 +809,9 @@ function normalizedCardKey(card) {
   if (label.includes("event") || value.includes("art market")) {
     return `event:${compactValue}`;
   }
+  if (label === "family context") {
+    return `family:${value.split(/\s*;\s*/).map((fact) => fact.replace(/[^a-z0-9]+/g, " ").trim()).filter(Boolean).sort().join("|")}`;
+  }
   return `${label}:${compactValue}`;
 }
 
@@ -641,10 +828,10 @@ function cardScore(card) {
   return score;
 }
 
-function mergeCards(primaryCards, fallbackCards) {
+function mergeCards(primaryCards, fallbackCards, note = "") {
   const cardsByKey = new Map();
   [...primaryCards, ...fallbackCards]
-    .map(normalizeCard)
+    .map((card) => normalizeCard(card, note))
     .filter(Boolean)
     .forEach((card) => {
       const key = normalizedCardKey(card);
@@ -808,7 +995,7 @@ function normalizePossiblePeople(draftPossiblePeople, scriptPossiblePeople, know
   const possibleByName = new Map();
 
   [...scriptPossiblePeople, ...(Array.isArray(draftPossiblePeople) ? draftPossiblePeople : [])].forEach((person) => {
-    const name = titleCase(person?.name || "");
+    const name = titleCase(possessiveNameVariant(person?.name || "", note));
     if (!isValidPersonName(name, note)) return;
     if (knownNames.has(name.toLowerCase())) return;
     const existing = possibleByName.get(name.toLowerCase());
@@ -823,18 +1010,13 @@ function normalizePossiblePeople(draftPossiblePeople, scriptPossiblePeople, know
 
 function sanitizeDraft(draft, scriptDraft, note, knownPeople = []) {
   const petNames = new Set(extractPetNames(note).map((name) => name.toLowerCase()));
-  const relationshipOnlyNames = new Set(extractRelationshipOnlyNames(note).map((name) => name.toLowerCase()));
   const people = normalizeDraftPeople(draft.people, scriptDraft.people, knownPeople, note);
   const possiblePeople = normalizePossiblePeople(draft.possiblePeople, scriptDraft.possiblePeople, knownPeople, note);
   const cleanPossiblePeople = possiblePeople
-    .filter((person) => !petNames.has(String(person.name || "").toLowerCase()))
-    .filter((person) => {
-      const lowerName = String(person.name || "").toLowerCase();
-      return !relationshipOnlyNames.has(lowerName) || isDirectInteractionName(note, person.name);
-    });
+    .filter((person) => !petNames.has(String(person.name || "").toLowerCase()));
   const hasExistingPeople = people.length;
   const personNames = new Set([...people, ...cleanPossiblePeople].map((person) => String(person.name || "").toLowerCase()));
-  const memoryCards = mergeCards(scriptDraft.memoryCards, Array.isArray(draft.memoryCards) ? draft.memoryCards : [])
+  const memoryCards = mergeCards(scriptDraft.memoryCards, Array.isArray(draft.memoryCards) ? draft.memoryCards : [], note)
     .filter((card) => {
       const label = String(card.label || "").toLowerCase();
       const value = String(card.value || "").toLowerCase();
@@ -845,13 +1027,18 @@ function sanitizeDraft(draft, scriptDraft, note, knownPeople = []) {
     ? Array.isArray(draft.questions) ? draft.questions : []
     : cleanPossiblePeople.length ? [`Create a new profile for ${cleanPossiblePeople.map((person) => person.name).join(", ")}?`] : [];
   const draftInteraction = draft.interaction && typeof draft.interaction === "object" ? draft.interaction : {};
+  const reminders = mergeReminders(scriptDraft.reminders, Array.isArray(draft.reminders) ? draft.reminders : []);
   return {
     ...scriptDraft,
     ...draft,
-    people,
+    people: people.map((person) => ({
+      ...person,
+      memoryCards: filterCardsForPerson(memoryCards, person),
+      reminders: filterRemindersForPerson(reminders, person),
+    })),
     possiblePeople: cleanPossiblePeople,
     memoryCards,
-    reminders: mergeReminders(scriptDraft.reminders, Array.isArray(draft.reminders) ? draft.reminders : []),
+    reminders,
     questions: questions.filter((question) => ![...petNames].some((name) => question.toLowerCase().includes(name)))
       .filter((question) => !/\b(their|my|our|his|her)\s+(kid|child|dad|father|mom|mother)\b/i.test(question))
       .filter((question) => !/quentin nichols/i.test(question)),
@@ -963,6 +1150,8 @@ function buildScriptDraft(note, people) {
       matchedAlias: person.matchedAlias,
       confidence: person.confidence,
       selected: true,
+      memoryCards: filterCardsForPerson(memoryCards, person),
+      reminders: filterRemindersForPerson(reminders, person),
     })),
     possiblePeople,
     interaction: {

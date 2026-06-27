@@ -30,6 +30,43 @@ function looksLikeUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
 
+function firstName(value) {
+  return cleanText(value, 160).split(/\s+/).filter(Boolean)[0] || "";
+}
+
+function relationshipFactTarget(value) {
+  const match = cleanText(value, 1000).match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+(?:(?:great|younger|older)\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather|cousin|sister|brother|mom|mother|dad|father)\b/i);
+  return match ? match[1] : "";
+}
+
+function cardBelongsToPerson(card, person) {
+  const label = cleanText(card?.label, 120).toLowerCase();
+  if (label !== "family context") return true;
+  const targets = cleanText(card?.value, 1000)
+    .split(/\s*;\s*/)
+    .map(relationshipFactTarget)
+    .filter(Boolean)
+    .map((name) => name.toLowerCase());
+  if (!targets.length) return true;
+  const personNames = [person?.name, firstName(person?.name)]
+    .map((name) => cleanText(name, 160).toLowerCase())
+    .filter(Boolean);
+  return targets.some((target) => personNames.includes(target));
+}
+
+function reminderBelongsToPerson(reminder, person) {
+  const text = `${reminder?.title || ""} ${reminder?.details || ""}`;
+  const personNames = [person?.name, firstName(person?.name)]
+    .map((name) => cleanText(name, 160).toLowerCase())
+    .filter(Boolean);
+  if (!personNames.length) return true;
+  if (personNames.some((name) => new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(text))) return true;
+  const properNames = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
+  const ignored = new Set(["Soon", "Possible", "Timing", "Grandma", "Grandpa", "Aunt", "Uncle"]);
+  const nonGenericNames = properNames.filter((name) => !ignored.has(name));
+  return nonGenericNames.length === 0;
+}
+
 async function insertRows(supabaseRest, table, rows) {
   if (!rows.length) return [];
   const response = await supabaseRest(`${table}?select=*`, {
@@ -106,6 +143,15 @@ module.exports = async function handler(req, res) {
       json(res, 400, { error: "Conversation notes are required." });
       return;
     }
+    const personRows = looksLikeUuid(personId)
+      ? await (async () => {
+          const response = await supabaseRest(`people?select=id,name&id=eq.${encodeURIComponent(personId)}&limit=1`);
+          const payload = await response.json().catch(() => []);
+          if (!response.ok) return [];
+          return Array.isArray(payload) ? payload : [];
+        })()
+      : [];
+    const profilePerson = personRows[0] || null;
 
     if (req.method === "PATCH") {
       if (!looksLikeUuid(id)) {
@@ -161,6 +207,7 @@ module.exports = async function handler(req, res) {
         return card;
       })
       .filter((card) => card && typeof card === "object" && cleanText(card.label, 120) && cleanText(card.value, 1000))
+      .filter((card) => cardBelongsToPerson(card, profilePerson))
       .map((card) => ({
         owner_id: user.id,
         person_id: personId,
@@ -180,6 +227,7 @@ module.exports = async function handler(req, res) {
         return reminder;
       })
       .filter((reminder) => reminder && typeof reminder === "object" && cleanText(reminder.title, 180))
+      .filter((reminder) => reminderBelongsToPerson(reminder, profilePerson))
       .map((reminder) => ({
         owner_id: user.id,
         person_id: personId,

@@ -287,6 +287,20 @@ function compactNote(value, maxLength = 1800) {
   return cleanText(value, maxLength).replace(/\n{3,}/g, "\n\n");
 }
 
+function overviewFact(label, value, source = {}) {
+  const cleanLabel = cleanText(label, 120);
+  const cleanValue = cleanText(value, 700);
+  if (!cleanLabel || !cleanValue) return null;
+  return {
+    label: cleanLabel,
+    value: cleanValue,
+    sourceType: source.sourceType || "",
+    sourceId: source.sourceId || "",
+    sourceDate: source.sourceDate || "",
+    temporalGuidance: source.temporalGuidance || "",
+  };
+}
+
 function ageMeta(value, now = new Date()) {
   const date = value ? new Date(value) : null;
   if (!date || !Number.isFinite(date.getTime())) {
@@ -329,7 +343,7 @@ function temporalGuidance(text, dateValue, now = new Date()) {
   return `Dated context from ${age.recency}.`;
 }
 
-function validateAiOverview(overview) {
+function validateAiOverview(overview, context = {}) {
   const lower = cleanText(overview, 2200).toLowerCase();
   const forbiddenPhrases = [
     "your notes touch on",
@@ -338,9 +352,84 @@ function validateAiOverview(overview) {
     "memory cards",
     "database",
     "tags",
+    "warm-hearted",
+    "family-centered",
+    "appears to",
+    "seems to",
+    "shows she values",
+    "shows he values",
+    "shows they value",
+    "shows she",
+    "shows he",
+    "shows they",
+    "values shared",
+    "values ",
+    "appreciates",
+    "enjoys ",
+    "likes joining",
+    "prefers calm",
+    "enjoyment of",
+    "appears",
+    "seems",
+    "likely",
   ];
   if (forbiddenPhrases.some((phrase) => lower.includes(phrase))) {
     const error = new Error("AI overview refresh returned a low-quality summary. Try again.");
+    error.statusCode = 502;
+    throw error;
+  }
+  const allowedText = [
+    context.person?.name || "",
+    context.person?.preferredName || "",
+    context.person?.firstMetLocation || "",
+    ...(Array.isArray(context.allowedOverviewFacts)
+      ? context.allowedOverviewFacts.flatMap((fact) => [fact.label, fact.value])
+      : []),
+  ].join(" ");
+  const allowedLower = allowedText.toLowerCase();
+  const ignoredNames = new Set([
+    "Quentin",
+    "People Notebook",
+    "He",
+    "She",
+    "They",
+    "This",
+    "That",
+    "The",
+    "A",
+    "An",
+    "On",
+    "In",
+    "As",
+    "During",
+    "Since",
+    "Today",
+    "Yesterday",
+    "Tomorrow",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ]);
+  const names = cleanText(overview, 2200).match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
+  const unsupportedName = names.find((name) => !ignoredNames.has(name) && !allowedLower.includes(name.toLowerCase()));
+  if (unsupportedName) {
+    const error = new Error(`AI overview mentioned unsupported detail: ${unsupportedName}. Try again.`);
     error.statusCode = 502;
     throw error;
   }
@@ -350,8 +439,34 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
   const profileFacts = extractProfileFacts(person, interactions, memoryCards);
   const now = new Date();
   const interactionDates = new Map(interactions.map((interaction) => [interaction.id, interaction.occurred_at || ""]));
+  const allowedOverviewFacts = [
+    ...profileFacts.map((fact) => overviewFact("Profile fact", fact, { sourceType: "derived_profile_fact" })),
+    ...memoryCards
+      .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
+      .slice(0, 80)
+      .map((card) => overviewFact(card.label || "Memory", card.value || "", {
+        sourceType: "memory_card",
+        sourceId: card.id || "",
+        sourceDate: interactionDates.get(card.source_interaction_id) || card.updated_at || "",
+        temporalGuidance: temporalGuidance(`${card.label || ""} ${card.value || ""}`, interactionDates.get(card.source_interaction_id) || card.updated_at, now),
+      })),
+    ...reminders
+      .filter((reminder) => reminder.status === "open")
+      .filter((reminder) => {
+        const dueAge = ageMeta(reminder.remind_at || reminder.created_at, now);
+        return dueAge.ageDays === null || dueAge.ageDays <= 7;
+      })
+      .slice(0, 12)
+      .map((reminder) => overviewFact("Open follow-up", [reminder.title, reminder.details].filter(Boolean).join(" - "), {
+        sourceType: "follow_up",
+        sourceId: reminder.id || "",
+        sourceDate: reminder.remind_at || reminder.created_at || "",
+        temporalGuidance: temporalGuidance(`${reminder.title || ""} ${reminder.details || ""}`, reminder.remind_at || reminder.created_at, now),
+      })),
+  ].filter(Boolean);
   return {
     generatedAt: now.toISOString(),
+    allowedOverviewFacts,
     temporalRules: [
       "Every conversation has occurredAt, ageDays, and recency. Use those fields to decide currentness.",
       "Do not convert old temporary notes into present-tense facts.",
@@ -435,7 +550,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
     },
     body: JSON.stringify({
       model: MODEL,
-      temperature: 0.25,
+      temperature: 0.05,
       max_tokens: OVERVIEW_MAX_TOKENS,
       reasoning_effort: REASONING_EFFORT,
       reasoning_format: "hidden",
@@ -443,7 +558,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
         {
           role: "system",
           content:
-            "You write private People Notebook overviews for Quentin. Use all provided context for this single profile, including conversations that do not repeat the person's name. Produce a natural, useful profile summary, not a topic list. Start with who this person is in relation to Quentin or how he knows them when the context supports it. Then synthesize stable traits, life context, values, preferences, routines, and relationship dynamics that would help Quentin understand and care for this person. You must reason carefully from generatedAt, occurredAt, ageDays, recency, dueAge, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless they are recent, repeated in newer conversations, or backed by an open non-stale reminder. For old temporary details, either omit them or phrase them historically with the concrete date. Prioritize stable relationships and repeated patterns over stale logistics. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Do not invent facts. Write 2-4 concise sentences.",
+            "You write private People Notebook overviews for Quentin using evidence only. Do not write a narrative, personality sketch, or motivational interpretation. Build the overview only from allowedOverviewFacts and explicit profile fields. Raw conversations are only for resolving dates, pronouns, and currentness; do not introduce new overview facts from raw notes unless the same fact appears in allowedOverviewFacts. Do not infer traits, values, emotions, preferences, motives, or relationship dynamics from activities unless that exact idea is stored as an allowed fact. Avoid adjectives such as warm, family-centered, caring, active, supportive, calm, thoughtful, or similar unless they are explicitly stored. Start with the strongest durable fact, usually the person's relationship to Quentin or stable role. Then include only stable or clearly dated facts. You must reason carefully from generatedAt, occurredAt, ageDays, recency, dueAge, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless they are recent, repeated in newer conversations, or backed by an open non-stale reminder. For old temporary details, either omit them or phrase them historically with the concrete date. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Do not invent facts. Write 1-3 concise evidence-grounded sentences.",
         },
         {
           role: "user",
@@ -472,7 +587,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
     error.statusCode = 502;
     throw error;
   }
-  validateAiOverview(overview);
+  validateAiOverview(overview, context);
   return overview;
 }
 

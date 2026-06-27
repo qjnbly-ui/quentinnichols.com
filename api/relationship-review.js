@@ -45,6 +45,43 @@ function normalizedReminderKey(reminder) {
   return cleanText(reminder.title, 180).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
+function firstName(value) {
+  return cleanText(value, 160).split(/\s+/).filter(Boolean)[0] || "";
+}
+
+function relationshipFactTarget(value) {
+  const match = cleanText(value, 1000).match(/^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+is\s+my\s+(?:(?:great|younger|older)\s+)?(aunt|uncle|grandma|grandpa|grandmother|grandfather|cousin|sister|brother|mom|mother|dad|father)\b/i);
+  return match ? match[1] : "";
+}
+
+function cardBelongsToPerson(card, person) {
+  const label = cleanText(card?.label, 120).toLowerCase();
+  if (label !== "family context") return true;
+  const targets = cleanText(card?.value, 1000)
+    .split(/\s*;\s*/)
+    .map(relationshipFactTarget)
+    .filter(Boolean)
+    .map((name) => name.toLowerCase());
+  if (!targets.length) return true;
+  const personNames = [person?.name, firstName(person?.name)]
+    .map((name) => cleanText(name, 160).toLowerCase())
+    .filter(Boolean);
+  return targets.some((target) => personNames.includes(target));
+}
+
+function reminderBelongsToPerson(reminder, person) {
+  const text = `${reminder?.title || ""} ${reminder?.details || ""}`;
+  const personNames = [person?.name, firstName(person?.name)]
+    .map((name) => cleanText(name, 160).toLowerCase())
+    .filter(Boolean);
+  if (!personNames.length) return true;
+  if (personNames.some((name) => new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(text))) return true;
+  const properNames = text.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
+  const ignored = new Set(["Soon", "Possible", "Timing", "Grandma", "Grandpa", "Aunt", "Uncle"]);
+  const nonGenericNames = properNames.filter((name) => !ignored.has(name));
+  return nonGenericNames.length === 0;
+}
+
 function mergeUniqueSuggestions(drafts, existingMemoryCards, existingReminders) {
   const existingMemoryKeys = new Set(existingMemoryCards.map(normalizedMemoryKey));
   const existingReminderKeys = new Set(existingReminders.map(normalizedReminderKey));
@@ -134,6 +171,8 @@ async function reviewConversations(supabaseRest, personId, interactionId) {
     drafts.push(await buildRelationshipDraft(supabaseRest, combinedNote));
   }
   const suggestions = mergeUniqueSuggestions(drafts, context.existingMemoryCards, context.existingReminders);
+  suggestions.memoryCards = suggestions.memoryCards.filter((card) => cardBelongsToPerson(card, context.person));
+  suggestions.reminders = suggestions.reminders.filter((reminder) => reminderBelongsToPerson(reminder, context.person));
   return {
     person: context.person,
     reviewedConversationCount: context.interactions.length,
@@ -199,6 +238,7 @@ async function applySuggestions({ user, supabaseRest, personId, interactionId, m
       metadata: { source: "conversation_review" },
     }))
     .filter((reminder) => reminder.title)
+    .filter((reminder) => reminderBelongsToPerson(reminder, people[0]))
     .filter((reminder) => !existingReminderKeys.has(normalizedReminderKey(reminder)));
 
   const [createdMemoryCards, createdReminders] = await Promise.all([

@@ -2291,25 +2291,36 @@
         const selectedTopics = topics.length
           ? topics
           : Array.isArray(draftInteraction.topics) && draftInteraction.topics.length ? draftInteraction.topics : ["captured"];
+        const draftPeopleById = new Map((relationshipDraft?.people || []).map((person) => [person.id, person]));
 
-        const saveResults = await Promise.all(peopleToSave.map((person) => apiJson("/api/person-interactions", {
-          method: "POST",
-          body: {
-            personId: person.id,
-            occurredAt: fromDateTimeLocal(formData.get("occurredAt")) || new Date().toISOString(),
-            location,
-            notes: note,
-            mood: String(formData.get("mood") || "").trim() || draftInteraction.mood || "",
-            topics: selectedTopics,
-            aiSummary: String(formData.get("aiSummary") || "").trim() || relationshipDraft?.summary || "",
-            memoryCards: selectedMemoryCards,
-            reminders: selectedReminders,
-            metadata: {
-              date_hint: draftInteraction.dateHint || "",
-              captured_from_app_at: new Date().toISOString(),
+        const saveResults = await Promise.all(peopleToSave.map((person) => {
+          const personDraftCards = Array.isArray(draftPeopleById.get(person.id)?.memoryCards)
+            ? draftPeopleById.get(person.id).memoryCards
+            : null;
+          const personDraftReminders = Array.isArray(draftPeopleById.get(person.id)?.reminders)
+            ? draftPeopleById.get(person.id).reminders
+            : null;
+          const memoryCardsForPerson = personDraftCards ? personDraftCards : selectedMemoryCards;
+          const remindersForPerson = personDraftReminders ? personDraftReminders : selectedReminders;
+          return apiJson("/api/person-interactions", {
+            method: "POST",
+            body: {
+              personId: person.id,
+              occurredAt: fromDateTimeLocal(formData.get("occurredAt")) || new Date().toISOString(),
+              location,
+              notes: note,
+              mood: String(formData.get("mood") || "").trim() || draftInteraction.mood || "",
+              topics: selectedTopics,
+              aiSummary: String(formData.get("aiSummary") || "").trim() || relationshipDraft?.summary || "",
+              memoryCards: memoryCardsForPerson,
+              reminders: remindersForPerson,
+              metadata: {
+                date_hint: draftInteraction.dateHint || "",
+                captured_from_app_at: new Date().toISOString(),
+              },
             },
-          },
-        })));
+          });
+        }));
         const overviewErrors = saveResults
           .map((result, index) => result?.overviewError ? `${peopleToSave[index]?.name || "Profile"}: ${result.overviewError}` : "")
           .filter(Boolean);
