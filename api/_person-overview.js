@@ -384,29 +384,46 @@ async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
       "Unable to load memory cards."
     ),
   ]);
+  if (!people[0]) {
+    const error = new Error("Person not found.");
+    error.statusCode = 404;
+    throw error;
+  }
+
   let memoryCards = loadedMemoryCards;
-  if (options.backfillMemoryCards && people[0]) {
+  if (options.backfillMemoryCards) {
     memoryCards = await backfillMemoryCardsFromFacts(supabaseRest, people[0], interactions, loadedMemoryCards);
   }
   const fallbackOverview = buildProfileOverview(people[0], interactions, memoryCards);
   let overview = fallbackOverview;
+  let overviewError = "";
   if (options.useAi) {
     try {
       overview = await buildAiProfileOverview(people[0], interactions, memoryCards, fallbackOverview);
     } catch (error) {
+      overviewError = error?.message || "AI overview refresh failed.";
       if (options.requireAi) throw error;
     }
   }
   if (!overview) return "";
-  const response = await supabaseRest(`people?id=eq.${encodedPersonId}`, {
+  const response = await supabaseRest(`people?id=eq.${encodedPersonId}&select=id,overview`, {
     method: "PATCH",
+    headers: { Prefer: "return=representation" },
     body: { overview },
   });
-  const payload = await response.json().catch(() => ({}));
+  const payload = await response.json().catch(() => []);
   if (!response.ok) {
     const error = new Error(payload?.message || "Unable to update profile overview.");
     error.statusCode = response.status;
     throw error;
+  }
+  if (!Array.isArray(payload) || !payload[0]) {
+    const error = new Error("Unable to update profile overview.");
+    error.statusCode = 404;
+    throw error;
+  }
+  if (options.returnDetails) {
+    return { overview, overviewError, usedFallback: Boolean(overviewError), person: payload[0] };
   }
   return overview;
 }

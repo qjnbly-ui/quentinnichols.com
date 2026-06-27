@@ -37,12 +37,13 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const overview = await rebuildPersonOverview(supabaseRest, personId, {
+    const result = await rebuildPersonOverview(supabaseRest, personId, {
       useAi: true,
-      requireAi: true,
+      requireAi: false,
       backfillMemoryCards: true,
+      returnDetails: true,
     });
-    json(res, 200, { overview });
+    json(res, 200, result);
   } catch (error) {
     await handleApiError(res, error);
   }

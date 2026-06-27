@@ -54,6 +54,59 @@
       .replace(/'/g, "&#39;");
   }
 
+  function cleanStructuredNoteText(value) {
+    const original = String(value || "").replace(/\r\n?/g, "\n").trim();
+    if (!original) return "";
+
+    const bulletMatches = original.match(/(?:^|\s)[*•]\s+/g) || [];
+    if (bulletMatches.length < 3) {
+      return original
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .join("\n");
+    }
+
+    const compact = original
+      .replace(/[•]/g, "*")
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n+/g, " ")
+      .trim();
+    const parts = compact.split(/\s+\*\s+/).map((part) => part.trim()).filter(Boolean);
+    if (parts.length < 3) return original;
+
+    const lines = [];
+    let heading = parts.shift().replace(/[:.]+$/, "").trim();
+
+    function pushHeading(text) {
+      const clean = String(text || "").replace(/[:.]+$/, "").trim();
+      if (!clean) return;
+      if (lines.length) lines.push("");
+      lines.push(clean);
+    }
+
+    function splitTrailingHeading(text) {
+      const clean = String(text || "").trim();
+      const match = clean.match(/^(.*?[.!?])\s+([A-Z][A-Za-z0-9/&' -]{2,42})$/);
+      if (!match) return { note: clean, nextHeading: "" };
+      const nextHeading = match[2].trim();
+      const words = nextHeading.split(/\s+/);
+      if (words.length > 6 || /^(I|You|She|He|They|This|That|Things|Wants|Likes|Loves|Reads|Works|Has|Is|Being)\b/.test(nextHeading)) {
+        return { note: clean, nextHeading: "" };
+      }
+      return { note: match[1].trim(), nextHeading };
+    }
+
+    pushHeading(heading || "Notes");
+    parts.forEach((part) => {
+      const { note, nextHeading } = splitTrailingHeading(part);
+      if (note) lines.push(`- ${note.replace(/\s+/g, " ")}`);
+      if (nextHeading) pushHeading(nextHeading);
+    });
+
+    return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+
   function openDrawer() {
     drawer.classList.add("is-open");
     drawer.setAttribute("aria-hidden", "false");
@@ -102,6 +155,12 @@
 
   function statusPill(label) {
     return `<span class="qapp-pill">${escapeHtml(label)}</span>`;
+  }
+
+  function previewText(value, maxLength = 180) {
+    const text = String(value || "").replace(/\s+/g, " ").trim();
+    if (text.length <= maxLength) return text;
+    return `${text.slice(0, maxLength).trim()}...`;
   }
 
   function isRawNoteMemory(card) {
@@ -538,6 +597,7 @@
 
   function renderConversationPrep(person) {
     const latestInteraction = person.interactions[0];
+    const latestNote = latestInteraction?.notes || "";
     const activeReminders = person.reminders
       .filter((reminder) => reminder.status === "open")
       .filter((reminder) => reminderAgeState(reminder) !== "stale")
@@ -553,9 +613,17 @@
         <span>${activeReminders.length + staleReminders.length}</span>
       </div>
       <div class="qapp-memory-list">
-        <div class="qapp-memory-card">
+        <div class="qapp-memory-card qapp-last-conversation-card">
           <span>Last Conversation</span>
-          <strong>${escapeHtml(latestInteraction ? latestInteraction.notes : "No conversation saved yet.")}</strong>
+          ${latestInteraction ? `
+            <details class="qapp-last-conversation">
+              <summary>
+                <strong>${escapeHtml(previewText(latestNote))}</strong>
+                <small>Expand</small>
+              </summary>
+              <p>${escapeHtml(latestNote)}</p>
+            </details>
+          ` : `<strong>No conversation saved yet.</strong>`}
           ${latestInteraction ? `<small>${escapeHtml(`${latestInteraction.date} - ${latestInteraction.location}`)}</small>` : ""}
         </div>
         ${activeReminders.length ? activeReminders.map((reminder) => `
@@ -1689,7 +1757,7 @@
         refreshOverviewButton.disabled = true;
         refreshOverviewButton.textContent = "Refreshing...";
         try {
-          await apiJson(`/api/person-overview?person_id=${encodeURIComponent(activePerson.id)}`, {
+          const result = await apiJson(`/api/person-overview?person_id=${encodeURIComponent(activePerson.id)}`, {
             method: "POST",
             body: { personId: activePerson.id, id: activePerson.id },
           });
@@ -1697,6 +1765,12 @@
           selectedPersonId = activePerson.id;
           peopleMode = "profile";
           render();
+          if (result?.overviewError) {
+            await qappAlert(
+              `Saved a local overview, but the AI rewrite did not complete.\n\n${result.overviewError}`,
+              "Overview refreshed"
+            );
+          }
         } catch (error) {
           await qappAlert(error?.message || "Unable to refresh overview.", "Profile error");
           refreshOverviewButton.disabled = false;
@@ -1795,7 +1869,8 @@
                 confirmLabel: "Save Conversation",
               });
               if (!values) return;
-              const [notes, location, topicText] = values;
+              const [rawNotes, location, topicText] = values;
+              const notes = cleanStructuredNoteText(rawNotes);
               if (!notes) return;
               const topics = String(topicText || "")
                 .split(",")
@@ -1865,9 +1940,10 @@
 
     if (reviewButton) {
       reviewButton.addEventListener("click", async () => {
-        const note = String(new FormData(form).get("note") || "").trim();
+        const note = cleanStructuredNoteText(new FormData(form).get("note"));
         if (!note) return;
         relationshipCaptureNote = note;
+        if (noteInput) noteInput.value = note;
         relationshipDraftStatus = "loading";
         relationshipDraftError = "";
         relationshipDraft = null;
@@ -1927,6 +2003,15 @@
     }
 
     nameInput?.addEventListener("input", renderSuggestions);
+    noteInput?.addEventListener("paste", () => {
+      window.setTimeout(() => {
+        const cleaned = cleanStructuredNoteText(noteInput.value);
+        if (cleaned && cleaned !== noteInput.value.trim()) {
+          noteInput.value = cleaned;
+          relationshipCaptureNote = cleaned;
+        }
+      }, 0);
+    });
     noteInput?.addEventListener("input", () => {
       relationshipCaptureNote = noteInput.value;
       relationshipDraft = null;
@@ -1946,8 +2031,9 @@
       event.preventDefault();
       const submitButton = form.querySelector('button[type="submit"]');
       const formData = new FormData(form);
-      const note = String(formData.get("note") || "").trim();
+      const note = cleanStructuredNoteText(formData.get("note"));
       if (!note) return;
+      if (noteInput) noteInput.value = note;
       const chosenPersonId = String(formData.get("personId") || "").trim();
       const typedName = String(formData.get("name") || "").trim();
       const firstNameMatch = note.match(/\b(?:met|talked to|saw)\s+([A-Z][a-z]+)/);

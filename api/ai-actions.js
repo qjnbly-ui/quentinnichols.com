@@ -243,7 +243,7 @@ async function applyPeopleMemoryAction({ user, supabaseRest, action }) {
     try {
       overview = await rebuildPersonOverview(supabaseRest, person.id, {
         useAi: true,
-        requireAi: true,
+        requireAi: false,
         backfillMemoryCards: true,
       });
     } catch (error) {
