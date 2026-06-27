@@ -34,6 +34,14 @@ function isTemporaryMemoryCard(card) {
     || /\b(currently|right now|today|tomorrow|this week|through saturday|staying with|expected to|upcoming|appointment|surgery|procedure|dental|teeth|crowns?|bridge|implants?|recovering)\b/i.test(value);
 }
 
+function overviewTags(tags) {
+  const ignored = new Set(["captured", "capture", "imported", "new", "profile"]);
+  return (Array.isArray(tags) ? tags : [])
+    .map((tag) => cleanText(tag, 48))
+    .filter(Boolean)
+    .filter((tag) => !ignored.has(tag.toLowerCase()));
+}
+
 const MODEL = process.env.RELATIONSHIP_OVERVIEW_MODEL || process.env.RELATIONSHIP_NOTE_MODEL || "openai/gpt-oss-120b";
 const REASONING_EFFORT = process.env.RELATIONSHIP_REASONING_EFFORT || "medium";
 const OVERVIEW_MAX_TOKENS = Number(process.env.RELATIONSHIP_OVERVIEW_MAX_TOKENS || 520);
@@ -129,6 +137,14 @@ function extractProfileFacts(person, interactions, memoryCards) {
       addFact(`${name} is your great aunt.`);
     } else if (label.includes("family") && /\baunt\b/i.test(value)) {
       addFact(`${name} is your aunt.`);
+    } else if (label.includes("family") && /\bgrandma|grandmother\b/i.test(value)) {
+      addFact(`${name} is your grandma.`);
+    } else if (label.includes("family") && /\bgrandpa|grandfather\b/i.test(value)) {
+      addFact(`${name} is your grandpa.`);
+    } else if (label.includes("family") && /\bmom|mother\b/i.test(value)) {
+      addFact(`${name} is your mom.`);
+    } else if (label.includes("family") && /\bdad|father\b/i.test(value)) {
+      addFact(`${name} is your dad.`);
     } else if (label.includes("family") && /\bcousin\b/i.test(value)) {
       addFact(`${name} is your cousin.`);
     } else if (label.includes("family") && /\bsister\b/i.test(value)) {
@@ -143,7 +159,11 @@ function extractProfileFacts(person, interactions, memoryCards) {
     if (!textMentionsProfile(text, person)) return;
     const escapedName = profileNameVariants(person).map((variant) => variant.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
     const relationPatterns = [
-      { pattern: new RegExp(`\\bmy\\s+cousin\\s+(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "cousin" },
+      { pattern: new RegExp(`\\bmy\\s+(?:grandma|grandmother)\\s+(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "grandma" },
+      { pattern: new RegExp(`\\bmy\\s+(?:grandpa|grandfather)\\s+(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "grandpa" },
+      { pattern: new RegExp(`\\bmy\\s+(?:mom|mother)\\s+(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "mom" },
+      { pattern: new RegExp(`\\bmy\\s+(?:dad|father)\\s+(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "dad" },
+      { pattern: new RegExp(`\\bmy\\s+(?:(?:younger|older)\\s+)?cousin\\s+(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "cousin" },
       { pattern: new RegExp(`\\bmy\\s+(younger\\s+)?sister\\s+(?:is\\s+)?(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "sister" },
       { pattern: new RegExp(`\\bmy\\s+(older\\s+)?brother\\s+(?:is\\s+)?(${escapedName}|[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)?)\\b`, "i"), relation: "brother" },
     ];
@@ -244,7 +264,7 @@ async function backfillMemoryCardsFromFacts(supabaseRest, person, interactions, 
 function buildProfileOverview(person, interactions, memoryCards) {
   const name = cleanText(person?.name, 160) || "This person";
   const preferred = cleanText(person?.preferred_name, 160);
-  const tags = Array.isArray(person?.tags) ? person.tags.map((tag) => cleanText(tag, 48)).filter(Boolean) : [];
+  const tags = overviewTags(person?.tags);
   const profileFacts = extractProfileFacts(person, interactions, memoryCards);
   const topMemories = memoryCards
     .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
@@ -281,6 +301,48 @@ function buildProfileOverview(person, interactions, memoryCards) {
   }
 
   return cleanText(sentences.join(" ").replace(/\s+/g, " "), 2000);
+}
+
+function buildNoDurableFactsOverview(person, interactions) {
+  const name = cleanText(person?.name, 160) || "This profile";
+  const count = Array.isArray(interactions) ? interactions.length : 0;
+  if (count) {
+    return `${name} has ${count} saved conversation${count === 1 ? "" : "s"}, but no durable overview facts have been saved yet.`;
+  }
+  return `${name} has no durable overview facts saved yet.`;
+}
+
+function factSentence(value) {
+  const sentence = cleanText(value, 500)
+    .replace(/\s+/g, " ")
+    .replace(/\bis my\b/gi, "is your")
+    .replace(/\bmy\b/gi, "your");
+  if (!sentence) return "";
+  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
+}
+
+function buildGroundedOverviewFromFacts(context) {
+  const facts = Array.isArray(context?.allowedOverviewFacts) ? context.allowedOverviewFacts : [];
+  const seen = new Set();
+  const uniqueSentence = (sentence) => {
+    const key = cleanText(sentence, 500).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    if (!key || seen.has(key)) return "";
+    seen.add(key);
+    return sentence;
+  };
+  const durableFacts = facts
+    .filter((fact) => fact.sourceType !== "follow_up")
+    .map((fact) => factSentence(fact.value))
+    .map(uniqueSentence)
+    .filter(Boolean);
+  const followUps = facts
+    .filter((fact) => fact.sourceType === "follow_up")
+    .map((fact) => factSentence(fact.value))
+    .map(uniqueSentence)
+    .filter(Boolean);
+  const sentences = [...durableFacts, ...followUps].slice(0, 3);
+  if (sentences.length) return cleanText(sentences.join(" "), 1200);
+  return "";
 }
 
 function compactNote(value, maxLength = 1800) {
@@ -480,7 +542,7 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
       phone: person?.phone || "",
       firstMetAt: person?.first_met_at || "",
       firstMetLocation: person?.first_met_location || "",
-      tags: Array.isArray(person?.tags) ? person.tags : [],
+      tags: overviewTags(person?.tags),
       existingOverview: person?.overview || "",
       metadata: person?.metadata && typeof person.metadata === "object" ? person.metadata : {},
     },
@@ -534,6 +596,11 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
 }
 
 async function buildAiProfileOverview(person, interactions, memoryCards, reminders, fallbackOverview) {
+  const context = profileContextForAi(person, interactions, memoryCards, reminders);
+  if (!context.allowedOverviewFacts.length) {
+    return buildNoDurableFactsOverview(person, interactions);
+  }
+
   const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) {
     const error = new Error("AI overview refresh is not configured.");
@@ -541,7 +608,6 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
     throw error;
   }
 
-  const context = profileContextForAi(person, interactions, memoryCards, reminders);
   const systemPrompt = "You write private People Notebook overviews for Quentin using evidence only. Do not write a narrative, personality sketch, or motivational interpretation. Build the overview only from allowedOverviewFacts and explicit profile fields. Raw conversations are only for resolving dates, pronouns, and currentness; do not introduce new overview facts from raw notes unless the same fact appears in allowedOverviewFacts. Do not infer traits, values, emotions, preferences, motives, or relationship dynamics from activities unless that exact idea is stored as an allowed fact. Avoid adjectives such as warm, family-centered, caring, active, supportive, calm, thoughtful, or similar unless they are explicitly stored. Start with the strongest durable fact, usually the person's relationship to Quentin or stable role. Then include only stable or clearly dated facts. You must reason carefully from generatedAt, occurredAt, ageDays, recency, dueAge, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless they are recent, repeated in newer conversations, or backed by an open non-stale reminder. For old temporary details, either omit them or phrase them historically with the concrete date. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Do not invent facts. Write 1-3 concise evidence-grounded sentences.";
   const requestOverview = async (messages) => {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -588,22 +654,30 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
       }),
     },
   ];
-  const overview = await requestOverview(baseMessages);
+  let overview = "";
   try {
+    overview = await requestOverview(baseMessages);
     validateAiOverview(overview, context);
     return overview;
   } catch (error) {
     if (error?.statusCode !== 502) throw error;
-    const retryOverview = await requestOverview([
+    let retryOverview = "";
+    try {
+      retryOverview = await requestOverview([
       ...baseMessages,
       { role: "assistant", content: overview },
       {
         role: "user",
         content: `That overview failed validation: ${error.message} Rewrite it using only allowedOverviewFacts and explicit profile fields. Do not add names, places, events, traits, or interpretations that are not present in allowedOverviewFacts.`,
       },
-    ]);
-    validateAiOverview(retryOverview, context);
-    return retryOverview;
+      ]);
+      validateAiOverview(retryOverview, context);
+      return retryOverview;
+    } catch {
+      const groundedOverview = buildGroundedOverviewFromFacts(context);
+      if (groundedOverview) return groundedOverview;
+      throw error;
+    }
   }
 }
 
