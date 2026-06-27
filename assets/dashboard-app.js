@@ -879,14 +879,14 @@
           </div>
           <div class="qapp-review-card">
             <h4>Create possible new profiles</h4>
-            ${possiblePeople.length ? possiblePeople.map((person) => `
-              <label class="qapp-check-row">
-                <input name="draftNewPeople" type="checkbox" value="${escapeHtml(person.name)}" ${Number(person.confidence) >= 0.75 ? "checked" : ""}>
-                <span>
-                  <strong>${escapeHtml(person.name)}</strong>
+            ${possiblePeople.length ? possiblePeople.map((person, index) => `
+              <div class="qapp-check-row">
+                <input name="draftNewPeopleIndexes" type="checkbox" value="${index}" ${Number(person.confidence) >= 0.75 ? "checked" : ""}>
+                <span class="qapp-inline-edit-fields">
+                  <input name="draftNewPeopleName${index}" type="text" value="${escapeHtml(person.name)}" aria-label="New profile name">
                   <small>${escapeHtml(confidencePercent(person.confidence) || "Possible new person")}</small>
                 </span>
-              </label>
+              </div>
             `).join("") : `<p>No new people detected.</p>`}
           </div>
           <div class="qapp-review-card">
@@ -897,25 +897,26 @@
           <div class="qapp-review-card">
             <h4>Memory Cards</h4>
             ${memoryCards.length ? memoryCards.map((card, index) => `
-              <label class="qapp-check-row">
+              <div class="qapp-check-row">
                 <input name="draftMemoryIndexes" type="checkbox" value="${index}" checked>
-                <span>
-                  <strong>${escapeHtml(card.label)}</strong>
-                  <small>${escapeHtml(card.value)}</small>
+                <span class="qapp-inline-edit-fields">
+                  <input name="draftMemoryLabel${index}" type="text" value="${escapeHtml(card.label)}" aria-label="Memory label">
+                  <textarea name="draftMemoryValue${index}" rows="2" aria-label="Memory value">${escapeHtml(card.value)}</textarea>
                 </span>
-              </label>
+              </div>
             `).join("") : `<p>No memory cards suggested.</p>`}
           </div>
           <div class="qapp-review-card">
             <h4>Follow-Ups</h4>
             ${reminders.length ? reminders.map((reminder, index) => `
-              <label class="qapp-check-row">
+              <div class="qapp-check-row">
                 <input name="draftReminderIndexes" type="checkbox" value="${index}" checked>
-                <span>
-                  <strong>${escapeHtml(reminder.title)}</strong>
-                  <small>${escapeHtml([reminder.remindAt ? formatDateTime(reminder.remindAt, "") : "", reminder.details || "Reminder candidate"].filter(Boolean).join(" - "))}</small>
+                <span class="qapp-inline-edit-fields">
+                  <input name="draftReminderTitle${index}" type="text" value="${escapeHtml(reminder.title)}" aria-label="Follow-up title">
+                  <textarea name="draftReminderDetails${index}" rows="2" aria-label="Follow-up details">${escapeHtml(reminder.details || "")}</textarea>
+                  <input name="draftReminderAt${index}" type="datetime-local" value="${escapeHtml(toDateTimeLocal(reminder.remindAt || reminder.remind_at || ""))}" aria-label="Follow-up date and time">
                 </span>
-              </label>
+              </div>
             `).join("") : `<p>No follow-ups suggested.</p>`}
           </div>
         </div>
@@ -2221,30 +2222,41 @@
       const reminderTitle = String(formData.get("reminderTitle") || "").trim();
       const remindAt = fromDateTimeLocal(formData.get("remindAt"));
       const draftPersonIds = formData.getAll("draftPersonIds").map((value) => String(value || "").trim()).filter(Boolean);
-      const draftNewPeople = formData.getAll("draftNewPeople").map((value) => String(value || "").trim()).filter(Boolean);
+      const draftNewPeopleIndexes = new Set(formData.getAll("draftNewPeopleIndexes").map((value) => Number(value)));
+      const draftNewPeople = Array.isArray(relationshipDraft?.possiblePeople)
+        ? relationshipDraft.possiblePeople
+            .map((_, index) => draftNewPeopleIndexes.has(index)
+              ? String(formData.get(`draftNewPeopleName${index}`) || "").trim()
+              : "")
+            .filter(Boolean)
+        : [];
       const draftMemoryIndexes = new Set(formData.getAll("draftMemoryIndexes").map((value) => Number(value)));
       const draftReminderIndexes = new Set(formData.getAll("draftReminderIndexes").map((value) => Number(value)));
       const draftInteraction = relationshipDraft?.interaction || {};
       const draftMemoryCards = Array.isArray(relationshipDraft?.memoryCards)
         ? relationshipDraft.memoryCards
-            .filter((_, index) => draftMemoryIndexes.has(index))
-            .map((card) => ({
-              label: String(card.label || "").trim(),
-              value: String(card.value || "").trim(),
+            .map((card, index) => ({
+              selected: draftMemoryIndexes.has(index),
+              label: String(formData.get(`draftMemoryLabel${index}`) || card.label || "").trim(),
+              value: String(formData.get(`draftMemoryValue${index}`) || card.value || "").trim(),
               confidence: Number.isFinite(Number(card.confidence)) ? Number(card.confidence) : 0.7,
             }))
+            .filter((card) => card.selected)
             .filter((card) => card.label && card.value)
+            .map(({ selected, ...card }) => card)
         : [];
       const draftReminders = Array.isArray(relationshipDraft?.reminders)
         ? relationshipDraft.reminders
-            .filter((_, index) => draftReminderIndexes.has(index))
-            .map((reminder) => ({
-              title: String(reminder.title || "").trim(),
-              details: String(reminder.details || "").trim(),
-              remindAt: String(reminder.remindAt || reminder.remind_at || "").trim(),
+            .map((reminder, index) => ({
+              selected: draftReminderIndexes.has(index),
+              title: String(formData.get(`draftReminderTitle${index}`) || reminder.title || "").trim(),
+              details: String(formData.get(`draftReminderDetails${index}`) || reminder.details || "").trim(),
+              remindAt: fromDateTimeLocal(formData.get(`draftReminderAt${index}`)) || String(reminder.remindAt || reminder.remind_at || "").trim(),
               priority: "normal",
             }))
+            .filter((reminder) => reminder.selected)
             .filter((reminder) => reminder.title)
+            .map(({ selected, ...reminder }) => reminder)
         : [];
 
       submitButton.disabled = true;

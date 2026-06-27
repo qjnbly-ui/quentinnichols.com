@@ -542,53 +542,69 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
   }
 
   const context = profileContextForAi(person, interactions, memoryCards, reminders);
-  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.05,
-      max_tokens: OVERVIEW_MAX_TOKENS,
-      reasoning_effort: REASONING_EFFORT,
-      reasoning_format: "hidden",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You write private People Notebook overviews for Quentin using evidence only. Do not write a narrative, personality sketch, or motivational interpretation. Build the overview only from allowedOverviewFacts and explicit profile fields. Raw conversations are only for resolving dates, pronouns, and currentness; do not introduce new overview facts from raw notes unless the same fact appears in allowedOverviewFacts. Do not infer traits, values, emotions, preferences, motives, or relationship dynamics from activities unless that exact idea is stored as an allowed fact. Avoid adjectives such as warm, family-centered, caring, active, supportive, calm, thoughtful, or similar unless they are explicitly stored. Start with the strongest durable fact, usually the person's relationship to Quentin or stable role. Then include only stable or clearly dated facts. You must reason carefully from generatedAt, occurredAt, ageDays, recency, dueAge, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless they are recent, repeated in newer conversations, or backed by an open non-stale reminder. For old temporary details, either omit them or phrase them historically with the concrete date. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Do not invent facts. Write 1-3 concise evidence-grounded sentences.",
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            context,
-            currentFallbackOverview: fallbackOverview,
-          }),
-        },
-      ],
-    }),
-  });
+  const systemPrompt = "You write private People Notebook overviews for Quentin using evidence only. Do not write a narrative, personality sketch, or motivational interpretation. Build the overview only from allowedOverviewFacts and explicit profile fields. Raw conversations are only for resolving dates, pronouns, and currentness; do not introduce new overview facts from raw notes unless the same fact appears in allowedOverviewFacts. Do not infer traits, values, emotions, preferences, motives, or relationship dynamics from activities unless that exact idea is stored as an allowed fact. Avoid adjectives such as warm, family-centered, caring, active, supportive, calm, thoughtful, or similar unless they are explicitly stored. Start with the strongest durable fact, usually the person's relationship to Quentin or stable role. Then include only stable or clearly dated facts. You must reason carefully from generatedAt, occurredAt, ageDays, recency, dueAge, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless they are recent, repeated in newer conversations, or backed by an open non-stale reminder. For old temporary details, either omit them or phrase them historically with the concrete date. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Do not invent facts. Write 1-3 concise evidence-grounded sentences.";
+  const requestOverview = async (messages) => {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.05,
+        max_tokens: OVERVIEW_MAX_TOKENS,
+        reasoning_effort: REASONING_EFFORT,
+        reasoning_format: "hidden",
+        messages,
+      }),
+    });
 
-  if (!response.ok) {
-    const error = new Error(response.status === 429
-      ? "AI overview refresh is rate limited. Wait a moment and try again."
-      : "AI overview refresh failed. Try again shortly.");
-    error.statusCode = response.status === 429 ? 429 : 502;
-    throw error;
+    if (!response.ok) {
+      const error = new Error(response.status === 429
+        ? "AI overview refresh is rate limited. Wait a moment and try again."
+        : "AI overview refresh failed. Try again shortly.");
+      error.statusCode = response.status === 429 ? 429 : 502;
+      throw error;
+    }
+    const payload = await response.json().catch(() => ({}));
+    const overview = cleanText(payload?.choices?.[0]?.message?.content || "", 2000)
+      .replace(/^["']|["']$/g, "")
+      .replace(/\s+/g, " ");
+    if (!overview) {
+      const error = new Error("AI overview refresh returned an empty overview.");
+      error.statusCode = 502;
+      throw error;
+    }
+    return overview;
+  };
+  const baseMessages = [
+    { role: "system", content: systemPrompt },
+    {
+      role: "user",
+      content: JSON.stringify({
+        context,
+        currentFallbackOverview: fallbackOverview,
+      }),
+    },
+  ];
+  const overview = await requestOverview(baseMessages);
+  try {
+    validateAiOverview(overview, context);
+    return overview;
+  } catch (error) {
+    if (error?.statusCode !== 502) throw error;
+    const retryOverview = await requestOverview([
+      ...baseMessages,
+      { role: "assistant", content: overview },
+      {
+        role: "user",
+        content: `That overview failed validation: ${error.message} Rewrite it using only allowedOverviewFacts and explicit profile fields. Do not add names, places, events, traits, or interpretations that are not present in allowedOverviewFacts.`,
+      },
+    ]);
+    validateAiOverview(retryOverview, context);
+    return retryOverview;
   }
-  const payload = await response.json().catch(() => ({}));
-  const overview = cleanText(payload?.choices?.[0]?.message?.content || "", 2000)
-    .replace(/^["']|["']$/g, "")
-    .replace(/\s+/g, " ");
-  if (!overview) {
-    const error = new Error("AI overview refresh returned an empty overview.");
-    error.statusCode = 502;
-    throw error;
-  }
-  validateAiOverview(overview, context);
-  return overview;
 }
 
 async function rebuildPersonOverview(supabaseRest, personId, options = {}) {

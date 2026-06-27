@@ -5404,6 +5404,36 @@ body.nav-menu-open {
   line-height: 1.35;
 }
 
+.qapp-inline-edit-fields {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.qapp-inline-edit-fields input,
+.qapp-inline-edit-fields textarea {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  color: var(--qapp-text);
+  font: inherit;
+  min-width: 0;
+  padding: 9px 10px;
+  width: 100%;
+}
+
+.qapp-inline-edit-fields textarea {
+  line-height: 1.35;
+  min-height: 66px;
+  resize: vertical;
+}
+
+.qapp-inline-edit-fields input:focus,
+.qapp-inline-edit-fields textarea:focus {
+  border-color: var(--qapp-gold);
+  outline: 2px solid rgba(200, 173, 106, 0.18);
+}
+
 .qapp-capture-form label span {
   color: var(--qapp-text);
   font-weight: 800;

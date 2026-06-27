@@ -38,6 +38,7 @@ const STOPWORDS = new Set([
   "said",
   "met",
   "saw",
+  "should",
   "he",
   "she",
   "it",
@@ -309,8 +310,29 @@ function possessiveNameVariant(name, note = "") {
     : cleanName;
 }
 
+function relationshipPrefixNameVariant(name) {
+  const parts = titleCase(name).split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return parts.join(" ");
+  const first = parts[0].toLowerCase();
+  if (!RELATION_WORDS.has(first)) return parts.join(" ");
+  return parts.slice(1).join(" ");
+}
+
+function normalizedPossiblePersonName(name, note = "") {
+  return relationshipPrefixNameVariant(possessiveNameVariant(name, note));
+}
+
 function noteIncludesName(note, name) {
   return new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(note);
+}
+
+function familySurnames(note) {
+  const surnames = [];
+  const pattern = /\b(?:my\s+)?(?:great\s+)?(?:aunt|uncle|grandma|grandmother|grandpa|grandfather|mom|mother|dad|father|cousin|sister|brother)\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)\b/g;
+  for (const match of note.matchAll(pattern)) {
+    surnames.push(titleCase(match[2]));
+  }
+  return new Set(surnames.map((surname) => surname.toLowerCase()));
 }
 
 function isLikelyPlaceName(name, note = "") {
@@ -324,7 +346,7 @@ function isLikelyPlaceName(name, note = "") {
 }
 
 function isValidPersonName(name, note = "") {
-  const cleanName = possessiveNameVariant(name, note);
+  const cleanName = normalizedPossiblePersonName(name, note);
   if (!cleanName || cleanName.includes("'")) return false;
   const parts = cleanName.split(/\s+/).filter(Boolean);
   if (!parts.length || parts.length > 3) return false;
@@ -332,6 +354,7 @@ function isValidPersonName(name, note = "") {
   if (lowerParts.some((part) => STOPWORDS.has(part))) return false;
   if (lowerParts.every((part) => RELATION_WORDS.has(part))) return false;
   if (isLikelyPlaceName(cleanName, note)) return false;
+  if (parts.length === 1 && familySurnames(note).has(parts[0].toLowerCase())) return false;
   if (/^(my|their|our|his|her)\b/i.test(cleanName)) return false;
   if (/\b(?:dad|father|mom|mother|kid|child)\b/i.test(cleanName) && !noteIncludesName(note, cleanName)) return false;
   if (cleanName.toLowerCase() === "quentin nichols") return false;
@@ -396,7 +419,7 @@ function findPossibleNames(note, knownPeople) {
   const aliasNames = new Set(extractAliasNames(note).map((name) => name.toLowerCase()));
   const candidates = new Map();
   const addCandidate = (name, confidence) => {
-    const cleanName = possessiveNameVariant(name, note);
+    const cleanName = normalizedPossiblePersonName(name, note);
     const key = cleanName.toLowerCase();
     if (!key) return;
     const existing = candidates.get(key);
@@ -425,7 +448,7 @@ function findPossibleNames(note, knownPeople) {
     .filter((person) => !placeNames.has(person.name.toLowerCase()))
     .filter((person) => !aliasNames.has(person.name.toLowerCase()))
     .filter((person) => isValidPersonName(person.name, note))
-    .map((person) => ({ name: titleCase(possessiveNameVariant(person.name, note)), confidence: person.confidence }))
+    .map((person) => ({ name: titleCase(normalizedPossiblePersonName(person.name, note)), confidence: person.confidence }))
     .slice(0, 8);
 }
 
@@ -995,7 +1018,7 @@ function normalizePossiblePeople(draftPossiblePeople, scriptPossiblePeople, know
   const possibleByName = new Map();
 
   [...scriptPossiblePeople, ...(Array.isArray(draftPossiblePeople) ? draftPossiblePeople : [])].forEach((person) => {
-    const name = titleCase(possessiveNameVariant(person?.name || "", note));
+    const name = titleCase(normalizedPossiblePersonName(person?.name || "", note));
     if (!isValidPersonName(name, note)) return;
     if (knownNames.has(name.toLowerCase())) return;
     const existing = possibleByName.get(name.toLowerCase());
@@ -1005,7 +1028,17 @@ function normalizePossiblePeople(draftPossiblePeople, scriptPossiblePeople, know
     }
   });
 
-  return [...possibleByName.values()].slice(0, 8);
+  const people = [...possibleByName.values()];
+  const explicitFullNames = people
+    .map((person) => person.name)
+    .filter((name) => name.split(/\s+/).length > 1 && noteIncludesName(note, name));
+  return people
+    .filter((person) => {
+      const parts = person.name.split(/\s+/).filter(Boolean);
+      if (parts.length !== 1) return true;
+      return !explicitFullNames.some((fullName) => firstName(fullName).toLowerCase() === parts[0].toLowerCase());
+    })
+    .slice(0, 8);
 }
 
 function sanitizeDraft(draft, scriptDraft, note, knownPeople = []) {
