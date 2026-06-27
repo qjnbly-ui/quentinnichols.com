@@ -12,6 +12,7 @@ const PROTECTED_PATHS = [
   "/api/relationship-items",
   "/api/relationship-note-draft",
   "/api/relationship-notebook",
+  "/api/relationship-review",
 ];
 
 function getAllowedEmails() {

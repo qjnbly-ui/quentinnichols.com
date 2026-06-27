@@ -333,6 +333,83 @@
     });
   }
 
+  function qappReviewSuggestionsModal(review) {
+    return new Promise((resolve) => {
+      const memoryCards = Array.isArray(review.memoryCards) ? review.memoryCards : [];
+      const reminders = Array.isArray(review.reminders) ? review.reminders : [];
+      const overlay = document.createElement("div");
+      overlay.className = "qapp-modal-overlay";
+      overlay.innerHTML = `
+        <section class="qapp-modal qapp-review-suggestions-modal" role="dialog" aria-modal="true" aria-labelledby="qappReviewSuggestionsTitle">
+          <div class="qapp-modal-header">
+            <h2 id="qappReviewSuggestionsTitle">Review Conversation Finds</h2>
+            <p>${escapeHtml(`Scanned ${review.reviewedConversationCount || 1} conversation${Number(review.reviewedConversationCount) === 1 ? "" : "s"}. Choose what should become durable memory or follow-up tasks.`)}</p>
+          </div>
+          <div class="qapp-review-grid">
+            <div class="qapp-review-card">
+              <h4>Durable Memories</h4>
+              ${memoryCards.length ? memoryCards.map((card, index) => `
+                <label class="qapp-check-row">
+                  <input data-review-memory-index="${index}" type="checkbox" checked>
+                  <span>
+                    <strong>${escapeHtml(card.label || "Memory")}</strong>
+                    <small>${escapeHtml(card.value || "")}</small>
+                  </span>
+                </label>
+              `).join("") : `<p>No new durable memory candidates found.</p>`}
+            </div>
+            <div class="qapp-review-card">
+              <h4>Follow-Ups / Tasks</h4>
+              ${reminders.length ? reminders.map((reminder, index) => `
+                <label class="qapp-check-row">
+                  <input data-review-reminder-index="${index}" type="checkbox" checked>
+                  <span>
+                    <strong>${escapeHtml(reminder.title || "Follow up")}</strong>
+                    <small>${escapeHtml([reminder.remindAt ? formatDateTime(reminder.remindAt, "") : "", reminder.details || ""].filter(Boolean).join(" - ") || "Follow-up candidate")}</small>
+                  </span>
+                </label>
+              `).join("") : `<p>No follow-up candidates found.</p>`}
+            </div>
+          </div>
+          <div class="qapp-modal-actions">
+            <button class="qapp-modal-cancel" type="button">Cancel</button>
+            <button class="qapp-modal-confirm" type="button">Save Selected</button>
+          </div>
+        </section>
+      `;
+
+      function close(result) {
+        document.removeEventListener("keydown", onKeydown);
+        overlay.remove();
+        resolve(result);
+      }
+
+      function readSelection() {
+        return {
+          memoryCards: [...overlay.querySelectorAll("[data-review-memory-index]:checked")]
+            .map((input) => memoryCards[Number(input.dataset.reviewMemoryIndex)])
+            .filter(Boolean),
+          reminders: [...overlay.querySelectorAll("[data-review-reminder-index]:checked")]
+            .map((input) => reminders[Number(input.dataset.reviewReminderIndex)])
+            .filter(Boolean),
+        };
+      }
+
+      function onKeydown(event) {
+        if (event.key === "Escape") close(null);
+      }
+
+      overlay.querySelector(".qapp-modal-cancel")?.addEventListener("click", () => close(null));
+      overlay.querySelector(".qapp-modal-confirm")?.addEventListener("click", () => close(readSelection()));
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) close(null);
+      });
+      document.addEventListener("keydown", onKeydown);
+      document.body.appendChild(overlay);
+      setTimeout(() => overlay.querySelector(".qapp-modal-confirm")?.focus(), 0);
+    });
+  }
+
   async function qappPrompt(label, value = "", options = {}) {
     const result = await qappModal({
       title: options.title || label,
@@ -376,6 +453,7 @@
         mood: interaction.mood || "",
         notes: interaction.notes || interaction.ai_summary || "",
         topics: Array.isArray(interaction.topics) ? interaction.topics : [],
+        metadata: interaction.metadata && typeof interaction.metadata === "object" ? interaction.metadata : {},
       })),
     };
   }
@@ -695,7 +773,10 @@
           </div>
           <div class="qapp-subsection-title">
             <h4>Conversation Log</h4>
-            <span>${person.interactions.length}</span>
+            <div class="qapp-subsection-actions">
+              <button data-action="review-all-conversations" data-person-id="${escapeHtml(person.id)}" type="button">Scan All</button>
+              <span>${person.interactions.length}</span>
+            </div>
           </div>
           <div class="qapp-interaction-log">
             ${person.interactions.length ? person.interactions.map((interaction) => `
@@ -704,6 +785,7 @@
                 <p>${escapeHtml(interaction.notes)}</p>
                 <div class="qapp-tag-row">${interaction.topics.map(statusPill).join("")}</div>
                 ${interaction.id ? `<div class="qapp-item-actions">
+                  <button data-action="review-interaction" data-item-id="${escapeHtml(interaction.id)}" type="button">Scan</button>
                   <button data-action="edit-interaction" data-item-id="${escapeHtml(interaction.id)}" type="button">Edit</button>
                   <button data-action="delete-interaction" data-item-id="${escapeHtml(interaction.id)}" type="button">Delete</button>
                 </div>` : ""}
@@ -911,6 +993,10 @@
                 <label>
                   <span>Location</span>
                   <input name="location" type="text" placeholder="Office, call, event, or location">
+                </label>
+                <label>
+                  <span>Conversation date/time</span>
+                  <input name="occurredAt" type="datetime-local" value="${escapeHtml(toDateTimeLocal(new Date().toISOString()))}">
                 </label>
                 <label>
                   <span>Tone</span>
@@ -1685,10 +1771,69 @@
     const reviewButton = document.querySelector('[data-action="review-relationship-note"]');
     const personRows = [...document.querySelectorAll('[data-action="open-person"]')];
     const refreshOverviewButton = document.querySelector('[data-action="refresh-overview"]');
+    const reviewAllConversationsButton = document.querySelector('[data-action="review-all-conversations"]');
     const editPersonButton = document.querySelector('[data-action="edit-person"]');
     const deletePersonButton = document.querySelector('[data-action="delete-person"]');
     const itemActionButtons = [...document.querySelectorAll("[data-item-id]")];
     const activePerson = selectedPersonId ? notebook.people.find((person) => person.id === selectedPersonId) : null;
+
+    async function reviewConversationCandidates(button, interactionId = "") {
+      if (!activePerson) return;
+      const originalText = button?.textContent || "";
+      if (button) {
+        button.disabled = true;
+        button.textContent = "Scanning...";
+      }
+      try {
+        const review = await apiJson("/api/relationship-review", {
+          method: "POST",
+          body: {
+            mode: "review",
+            personId: activePerson.id,
+            interactionId,
+          },
+        });
+        if (!review.memoryCards?.length && !review.reminders?.length) {
+          await qappAlert("No new durable memories or follow-ups were found.", "Conversation Scan");
+          return;
+        }
+        const selection = await qappReviewSuggestionsModal(review);
+        if (!selection) return;
+        if (!selection.memoryCards.length && !selection.reminders.length) {
+          await qappAlert("Nothing selected to save.", "Conversation Scan");
+          return;
+        }
+        const result = await apiJson("/api/relationship-review", {
+          method: "POST",
+          body: {
+            mode: "apply",
+            personId: activePerson.id,
+            interactionId,
+            memoryCards: selection.memoryCards,
+            reminders: selection.reminders,
+          },
+        });
+        await loadNotebookData();
+        selectedPersonId = activePerson.id;
+        peopleMode = "profile";
+        render();
+        const counts = [
+          `${result.memoryCards?.length || 0} memories`,
+          `${result.reminders?.length || 0} follow-ups`,
+          `${result.linkedTasks?.length || 0} tasks`,
+        ].join(", ");
+        if (result.overviewError) {
+          await qappAlert(`Saved ${counts}. Overview refresh did not complete.\n\n${result.overviewError}`, "Conversation Scan");
+        }
+      } catch (error) {
+        await qappAlert(error?.message || "Unable to scan conversation.", "Conversation Scan");
+      } finally {
+        if (button?.isConnected) {
+          button.disabled = false;
+          button.textContent = originalText || "Scan";
+        }
+      }
+    }
 
     if (reloadButton) {
       reloadButton.addEventListener("click", loadNotebookData);
@@ -1773,6 +1918,12 @@
       });
     }
 
+    if (reviewAllConversationsButton && activePerson) {
+      reviewAllConversationsButton.addEventListener("click", () => {
+        reviewConversationCandidates(reviewAllConversationsButton);
+      });
+    }
+
     if (editPersonButton && activePerson) {
       editPersonButton.addEventListener("click", async () => {
         const values = await qappModal({
@@ -1848,6 +1999,11 @@
         const reminder = activePerson.reminders.find((item) => item.id === itemId);
 
         try {
+          if (action === "review-interaction" && interaction) {
+            await reviewConversationCandidates(button, interaction.id);
+            return;
+          }
+
           if (type === "interaction") {
             if (isDelete) {
               if (!await qappConfirm("Delete this conversation entry?", "Delete conversation", { confirmLabel: "Delete", danger: true })) return;
@@ -1857,13 +2013,14 @@
                 title: "Edit conversation",
                 fields: [
                   { label: "Conversation notes", value: interaction.notes || "", type: "textarea", rows: 5 },
+                  { label: "Conversation date/time", value: toDateTimeLocal(interaction.occurred_at || ""), type: "datetime-local" },
                   { label: "Location", value: interaction.location || "" },
                   { label: "Topics, comma separated", value: (interaction.topics || []).join(", ") },
                 ],
                 confirmLabel: "Save Conversation",
               });
               if (!values) return;
-              const [rawNotes, location, topicText] = values;
+              const [rawNotes, occurredAt, location, topicText] = values;
               const notes = cleanStructuredNoteText(rawNotes);
               if (!notes) return;
               const topics = String(topicText || "")
@@ -1872,7 +2029,18 @@
                 .filter(Boolean);
               await apiJson("/api/person-interactions", {
                 method: "PATCH",
-                body: { id: itemId, notes, location, topics, mood: interaction.mood || "" },
+                body: {
+                  id: itemId,
+                  notes,
+                  occurredAt: fromDateTimeLocal(occurredAt),
+                  location,
+                  topics,
+                  mood: interaction.mood || "",
+                  metadata: {
+                    ...(interaction.metadata || {}),
+                    date_corrected_from_app: true,
+                  },
+                },
               });
             }
           } else if (type === "memory") {
@@ -2128,6 +2296,7 @@
           method: "POST",
           body: {
             personId: person.id,
+            occurredAt: fromDateTimeLocal(formData.get("occurredAt")) || new Date().toISOString(),
             location,
             notes: note,
             mood: String(formData.get("mood") || "").trim() || draftInteraction.mood || "",
@@ -2135,6 +2304,10 @@
             aiSummary: String(formData.get("aiSummary") || "").trim() || relationshipDraft?.summary || "",
             memoryCards: selectedMemoryCards,
             reminders: selectedReminders,
+            metadata: {
+              date_hint: draftInteraction.dateHint || "",
+              captured_from_app_at: new Date().toISOString(),
+            },
           },
         })));
         const overviewErrors = saveResults

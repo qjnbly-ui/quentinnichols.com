@@ -5176,6 +5176,31 @@ body.nav-menu-open {
   font-weight: 900;
 }
 
+.qapp-subsection-actions {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+}
+
+.qapp-subsection-actions button {
+  background: transparent;
+  border: 1px solid var(--qapp-border);
+  border-radius: 999px;
+  color: var(--qapp-muted);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 900;
+  min-height: 30px;
+  padding: 0 12px;
+}
+
+.qapp-subsection-actions button:hover,
+.qapp-subsection-actions button:focus-visible {
+  border-color: var(--qapp-border-strong);
+  color: var(--qapp-text);
+  outline: none;
+}
+
 .qapp-memory-list {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }

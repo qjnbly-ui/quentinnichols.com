@@ -29,7 +29,9 @@ function cleanMemoryLine(card) {
 
 function isTemporaryMemoryCard(card) {
   const label = cleanText(card?.label, 80).toLowerCase();
-  return ["upcoming event", "visit context", "appointment", "reminder", "dental work"].includes(label);
+  const value = cleanText(card?.value, 400).toLowerCase();
+  return ["upcoming event", "visit context", "appointment", "reminder", "dental work", "medical update"].includes(label)
+    || /\b(currently|right now|today|tomorrow|this week|through saturday|staying with|expected to|upcoming|appointment|surgery|procedure|dental|teeth|crowns?|bridge|implants?|recovering)\b/i.test(value);
 }
 
 const MODEL = process.env.RELATIONSHIP_OVERVIEW_MODEL || process.env.RELATIONSHIP_NOTE_MODEL || "openai/gpt-oss-120b";
@@ -285,6 +287,48 @@ function compactNote(value, maxLength = 1800) {
   return cleanText(value, maxLength).replace(/\n{3,}/g, "\n\n");
 }
 
+function ageMeta(value, now = new Date()) {
+  const date = value ? new Date(value) : null;
+  if (!date || !Number.isFinite(date.getTime())) {
+    return { iso: "", ageDays: null, recency: "unknown date" };
+  }
+  const diffDays = Math.floor((now.getTime() - date.getTime()) / 86400000);
+  const absDays = Math.abs(diffDays);
+  const recency = diffDays < 0
+    ? `future by ${absDays} day${absDays === 1 ? "" : "s"}`
+    : diffDays === 0 ? "today"
+    : diffDays === 1 ? "yesterday"
+    : `${diffDays} days ago`;
+  return { iso: date.toISOString(), ageDays: diffDays, recency };
+}
+
+function hasTemporarySignal(value) {
+  return /\b(currently|right now|today|tomorrow|tonight|this week|this weekend|through\s+\w+|staying with|expected to|plans? to|going to|upcoming|later|appointment|surgery|procedure|dental|teeth|crowns?|bridge|implants?|recovering|recovery|visiting|visit|temporary)\b/i.test(String(value || ""));
+}
+
+function temporalGuidance(text, dateValue, now = new Date()) {
+  const age = ageMeta(dateValue, now);
+  const temporary = hasTemporarySignal(text);
+  if (age.ageDays === null) {
+    return temporary
+      ? "Temporary-sounding item with unknown date; do not describe as current unless confirmed elsewhere."
+      : "Undated item; treat as lower confidence than dated recent evidence.";
+  }
+  if (temporary && age.ageDays > 7) {
+    return `Historical temporary context from ${age.recency}; do not describe as current. Say it happened/was noted then, or omit from overview unless still supported by an open current reminder.`;
+  }
+  if (temporary && age.ageDays > 2) {
+    return `Dated temporary context from ${age.recency}; avoid saying it is current unless repeated in newer notes.`;
+  }
+  if (temporary) {
+    return `Recent temporary context from ${age.recency}; may be current but phrase with date-aware caution.`;
+  }
+  if (age.ageDays > 30) {
+    return `Older durable context from ${age.recency}; use only for stable traits, relationships, or repeated patterns.`;
+  }
+  return `Dated context from ${age.recency}.`;
+}
+
 function validateAiOverview(overview) {
   const lower = cleanText(overview, 2200).toLowerCase();
   const forbiddenPhrases = [
@@ -304,7 +348,16 @@ function validateAiOverview(overview) {
 
 function profileContextForAi(person, interactions, memoryCards, reminders) {
   const profileFacts = extractProfileFacts(person, interactions, memoryCards);
+  const now = new Date();
+  const interactionDates = new Map(interactions.map((interaction) => [interaction.id, interaction.occurred_at || ""]));
   return {
+    generatedAt: now.toISOString(),
+    temporalRules: [
+      "Every conversation has occurredAt, ageDays, and recency. Use those fields to decide currentness.",
+      "Do not convert old temporary notes into present-tense facts.",
+      "Medical, dental, visit, appointment, recovery, travel, and 'currently/right now/through Saturday' notes expire unless they are recent, repeated, or backed by an open reminder.",
+      "Durable facts are relationships, long-term preferences, repeated routines, values, stable work/family context, and recurring patterns.",
+    ],
     person: {
       name: person?.name || "",
       preferredName: person?.preferred_name || "",
@@ -321,17 +374,25 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
       .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
       .slice(0, 80)
       .map((card) => ({
+        id: card.id || "",
         category: card.category || "",
         label: card.label || "",
         value: card.value || "",
         confidence: card.confidence || null,
+        sourceInteractionId: card.source_interaction_id || "",
+        sourceOccurredAt: interactionDates.get(card.source_interaction_id) || "",
+        sourceAge: ageMeta(interactionDates.get(card.source_interaction_id) || card.updated_at, now),
+        temporalGuidance: temporalGuidance(`${card.label || ""} ${card.value || ""}`, interactionDates.get(card.source_interaction_id) || card.updated_at, now),
         updatedAt: card.updated_at || "",
         metadata: card.metadata && typeof card.metadata === "object" ? card.metadata : {},
       })),
     conversations: interactions
       .slice(0, 40)
       .map((interaction) => ({
+        id: interaction.id || "",
         occurredAt: interaction.occurred_at || "",
+        age: ageMeta(interaction.occurred_at, now),
+        temporalGuidance: temporalGuidance(`${interaction.ai_summary || ""} ${interaction.notes || ""}`, interaction.occurred_at, now),
         location: interaction.location || "",
         mood: interaction.mood || "",
         topics: Array.isArray(interaction.topics) ? interaction.topics : [],
@@ -346,6 +407,10 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
         title: reminder.title || "",
         details: reminder.details || "",
         remindAt: reminder.remind_at || "",
+        dueAge: ageMeta(reminder.remind_at, now),
+        temporalGuidance: reminder.status === "open"
+          ? temporalGuidance(`${reminder.title || ""} ${reminder.details || ""}`, reminder.remind_at || reminder.created_at, now)
+          : "Closed reminder; use only as historical context.",
         status: reminder.status || "",
         priority: reminder.priority || "",
         metadata: reminder.metadata && typeof reminder.metadata === "object" ? reminder.metadata : {},
@@ -378,7 +443,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
         {
           role: "system",
           content:
-            "You write private People Notebook overviews for Quentin. Use all provided context for this single profile, including conversations that do not repeat the person's name. Produce a natural, useful profile summary, not a topic list. Start with who this person is in relation to Quentin or how he knows them when the context supports it. Then synthesize stable traits, life context, values, preferences, routines, and relationship dynamics that would help Quentin understand and care for this person. Treat reminders, dated logistics, temporary health/dental updates, and one-time plans as recent context, not permanent identity, unless repeated. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Do not invent facts. Write 2-4 concise sentences.",
+            "You write private People Notebook overviews for Quentin. Use all provided context for this single profile, including conversations that do not repeat the person's name. Produce a natural, useful profile summary, not a topic list. Start with who this person is in relation to Quentin or how he knows them when the context supports it. Then synthesize stable traits, life context, values, preferences, routines, and relationship dynamics that would help Quentin understand and care for this person. You must reason carefully from generatedAt, occurredAt, ageDays, recency, dueAge, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless they are recent, repeated in newer conversations, or backed by an open non-stale reminder. For old temporary details, either omit them or phrase them historically with the concrete date. Prioritize stable relationships and repeated patterns over stale logistics. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Do not invent facts. Write 2-4 concise sentences.",
         },
         {
           role: "user",
@@ -426,7 +491,7 @@ async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
     ),
     loadRows(
       supabaseRest,
-      `person_memory_cards?select=id,category,label,value,confidence,metadata,updated_at&person_id=eq.${encodedPersonId}&order=updated_at.desc&limit=80`,
+      `person_memory_cards?select=id,category,label,value,confidence,source_interaction_id,metadata,updated_at&person_id=eq.${encodedPersonId}&order=updated_at.desc&limit=80`,
       "Unable to load memory cards."
     ),
     loadRows(
