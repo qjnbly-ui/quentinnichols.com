@@ -283,98 +283,43 @@ function buildProfileOverview(person, interactions, memoryCards) {
   const identityBits = [];
   if (preferred && preferred !== name) identityBits.push(`goes by ${preferred}`);
   if (tags.length) identityBits.push(`tagged ${tags.join(", ")}`);
+  if (person?.first_met_location) identityBits.push(`connected to you through ${cleanText(person.first_met_location, 160)}`);
 
   const sentences = [];
   if (profileFacts.length) {
     sentences.push(profileFacts.join(" "));
   } else {
-    sentences.push(identityBits.length ? `${name} ${identityBits.join(" and ")}.` : `${name} is a profile in your people notebook.`);
+    sentences.push(identityBits.length ? `${name} ${identityBits.join(" and ")}.` : `${name} is someone in your People Notebook.`);
   }
-  if (!profileFacts.length && topMemories.length) {
-    sentences.push(`Key memory: ${topMemories.join("; ")}.`);
+  if (topMemories.length) {
+    sentences.push(`Saved context: ${topMemories.join("; ")}.`);
   }
-  if (topicList.length) {
-    sentences.push(`Your notes around this profile touch on ${topicList.join(", ")}.`);
-  }
-  if (!profileFacts.length && recentNotes.length) {
+  if (recentNotes.length) {
     sentences.push(`Recent context: ${recentNotes.join(" ")}`);
+  }
+  if (!topMemories.length && !recentNotes.length && topicList.length) {
+    sentences.push(`Conversation topics include ${topicList.join(", ")}.`);
   }
 
   return cleanText(sentences.join(" ").replace(/\s+/g, " "), 2000);
-}
-
-function buildNoDurableFactsOverview(person, interactions) {
-  const name = cleanText(person?.name, 160) || "This profile";
-  const count = Array.isArray(interactions) ? interactions.length : 0;
-  if (count) {
-    return `${name} has ${count} saved conversation${count === 1 ? "" : "s"}, but no durable overview facts have been saved yet.`;
-  }
-  return `${name} has no durable overview facts saved yet.`;
-}
-
-function factSentence(value) {
-  const sentence = cleanText(value, 500)
-    .replace(/\s+/g, " ")
-    .replace(/\bis my\b/gi, "is your")
-    .replace(/\bmy\b/gi, "your");
-  if (!sentence) return "";
-  return /[.!?]$/.test(sentence) ? sentence : `${sentence}.`;
-}
-
-function buildGroundedOverviewFromFacts(context) {
-  const facts = Array.isArray(context?.allowedOverviewFacts) ? context.allowedOverviewFacts : [];
-  const seen = new Set();
-  const uniqueSentence = (sentence) => {
-    const key = cleanText(sentence, 500).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-    if (!key || seen.has(key)) return "";
-    seen.add(key);
-    return sentence;
-  };
-  const durableFacts = facts
-    .filter((fact) => fact.sourceType !== "follow_up")
-    .map((fact) => factSentence(fact.value))
-    .map(uniqueSentence)
-    .filter(Boolean);
-  const followUps = facts
-    .filter((fact) => fact.sourceType === "follow_up")
-    .map((fact) => factSentence(fact.value))
-    .map(uniqueSentence)
-    .filter(Boolean);
-  const sentences = [...durableFacts, ...followUps].slice(0, 3);
-  if (sentences.length) return cleanText(sentences.join(" "), 1200);
-  return "";
 }
 
 function countWords(value) {
   return (String(value || "").match(/\b[\w'-]+\b/g) || []).length;
 }
 
-function contextEvidenceWordCount(context = {}) {
-  const conversationWords = Array.isArray(context.conversations)
-    ? context.conversations.reduce((total, conversation) => total + countWords(`${conversation.summary || ""} ${conversation.notes || ""}`), 0)
+function evidenceWordCount(context = {}) {
+  const conversationWords = Array.isArray(context.recentConversations)
+    ? context.recentConversations.reduce((total, conversation) => total + countWords(`${conversation.summary || ""} ${conversation.notes || ""}`), 0)
     : 0;
-  const memoryWords = Array.isArray(context.memoryCards)
-    ? context.memoryCards.reduce((total, card) => total + countWords(`${card.label || ""} ${card.value || ""}`), 0)
+  const memoryWords = Array.isArray(context.durableMemories)
+    ? context.durableMemories.reduce((total, card) => total + countWords(`${card.label || ""} ${card.value || ""}`), 0)
     : 0;
   return conversationWords + memoryWords;
 }
 
 function compactNote(value, maxLength = 1800) {
   return cleanText(value, maxLength).replace(/\n{3,}/g, "\n\n");
-}
-
-function overviewFact(label, value, source = {}) {
-  const cleanLabel = cleanText(label, 120);
-  const cleanValue = cleanText(value, 700);
-  if (!cleanLabel || !cleanValue) return null;
-  return {
-    label: cleanLabel,
-    value: cleanValue,
-    sourceType: source.sourceType || "",
-    sourceId: source.sourceId || "",
-    sourceDate: source.sourceDate || "",
-    temporalGuidance: source.temporalGuidance || "",
-  };
 }
 
 function ageMeta(value, now = new Date()) {
@@ -419,8 +364,19 @@ function temporalGuidance(text, dateValue, now = new Date()) {
   return `Dated context from ${age.recency}.`;
 }
 
-function validateAiOverview(overview, context = {}) {
-  const cleanOverview = cleanText(overview, 2200);
+function normalizeGeneratedOverview(value) {
+  return cleanText(value, 2000)
+    .replace(/^["']|["']$/g, "")
+    .replace(/\s+/g, " ");
+}
+
+function validateGeneratedOverview(overview, context = {}) {
+  const cleanOverview = normalizeGeneratedOverview(overview);
+  if (!cleanOverview) {
+    const error = new Error("empty overview");
+    error.statusCode = 502;
+    throw error;
+  }
   const lower = cleanOverview.toLowerCase();
   const forbiddenPhrases = [
     "your notes touch on",
@@ -435,52 +391,20 @@ function validateAiOverview(overview, context = {}) {
     error.statusCode = 502;
     throw error;
   }
-  const evidenceWords = contextEvidenceWordCount(context);
-  if (evidenceWords >= 180 && countWords(cleanOverview) < 70) {
-    const error = new Error("AI overview was too thin for the available conversation context. Try again.");
+  if (evidenceWordCount(context) >= 180 && countWords(cleanOverview) < 45) {
+    const error = new Error("overview was too thin");
     error.statusCode = 502;
     throw error;
   }
+  return cleanOverview;
 }
 
 function profileContextForAi(person, interactions, memoryCards, reminders) {
   const profileFacts = extractProfileFacts(person, interactions, memoryCards);
   const now = new Date();
   const interactionDates = new Map(interactions.map((interaction) => [interaction.id, interaction.occurred_at || ""]));
-  const allowedOverviewFacts = [
-    ...profileFacts.map((fact) => overviewFact("Profile fact", fact, { sourceType: "derived_profile_fact" })),
-    ...memoryCards
-      .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
-      .slice(0, 80)
-      .map((card) => overviewFact(card.label || "Memory", card.value || "", {
-        sourceType: "memory_card",
-        sourceId: card.id || "",
-        sourceDate: interactionDates.get(card.source_interaction_id) || card.updated_at || "",
-        temporalGuidance: temporalGuidance(`${card.label || ""} ${card.value || ""}`, interactionDates.get(card.source_interaction_id) || card.updated_at, now),
-      })),
-    ...reminders
-      .filter((reminder) => reminder.status === "open")
-      .filter((reminder) => {
-        const dueAge = ageMeta(reminder.remind_at || reminder.created_at, now);
-        return dueAge.ageDays === null || dueAge.ageDays <= 7;
-      })
-      .slice(0, 12)
-      .map((reminder) => overviewFact("Open follow-up", [reminder.title, reminder.details].filter(Boolean).join(" - "), {
-        sourceType: "follow_up",
-        sourceId: reminder.id || "",
-        sourceDate: reminder.remind_at || reminder.created_at || "",
-        temporalGuidance: temporalGuidance(`${reminder.title || ""} ${reminder.details || ""}`, reminder.remind_at || reminder.created_at, now),
-      })),
-  ].filter(Boolean);
   return {
     generatedAt: now.toISOString(),
-    allowedOverviewFacts,
-    temporalRules: [
-      "Every conversation has occurredAt, ageDays, and recency. Use those fields to decide currentness.",
-      "Do not convert old temporary notes into present-tense facts.",
-      "Medical, dental, visit, appointment, recovery, travel, and 'currently/right now/through Saturday' notes expire unless they are recent, repeated, or backed by an open reminder.",
-      "Durable facts are relationships, long-term preferences, repeated routines, values, stable work/family context, and recurring patterns.",
-    ],
     person: {
       name: person?.name || "",
       preferredName: person?.preferred_name || "",
@@ -493,7 +417,7 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
       metadata: person?.metadata && typeof person.metadata === "object" ? person.metadata : {},
     },
     profileFacts,
-    memoryCards: memoryCards
+    durableMemories: memoryCards
       .filter((card) => String(card.label || "").trim().toLowerCase() !== "raw note")
       .slice(0, 80)
       .map((card) => ({
@@ -509,7 +433,7 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
         updatedAt: card.updated_at || "",
         metadata: card.metadata && typeof card.metadata === "object" ? card.metadata : {},
       })),
-    conversations: interactions
+    recentConversations: interactions
       .slice(0, 40)
       .map((interaction) => ({
         id: interaction.id || "",
@@ -524,7 +448,8 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
         source: interaction.source || "",
         metadata: interaction.metadata && typeof interaction.metadata === "object" ? interaction.metadata : {},
       })),
-    reminders: reminders
+    openReminders: reminders
+      .filter((reminder) => reminder.status === "open")
       .slice(0, 20)
       .map((reminder) => ({
         title: reminder.title || "",
@@ -541,32 +466,38 @@ function profileContextForAi(person, interactions, memoryCards, reminders) {
   };
 }
 
+function hasProfileEvidence(context) {
+  return Boolean(
+    context.profileFacts?.length
+    || context.durableMemories?.length
+    || context.recentConversations?.length
+    || context.openReminders?.length
+    || context.person?.firstMetLocation
+  );
+}
+
 async function buildAiProfileOverview(person, interactions, memoryCards, reminders, fallbackOverview) {
   const context = profileContextForAi(person, interactions, memoryCards, reminders);
-  if (!context.allowedOverviewFacts.length && !context.conversations.length) {
-    return buildNoDurableFactsOverview(person, interactions);
+  if (!hasProfileEvidence(context)) {
+    return { overview: fallbackOverview, source: "fallback", error: "" };
   }
 
   const apiKey = process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    const error = new Error("AI overview refresh is not configured.");
-    error.statusCode = 503;
-    throw error;
+    return { overview: fallbackOverview, source: "fallback", error: "AI overview refresh is not configured." };
   }
 
   const systemPrompt = [
-    "Rewrite a private People Notebook profile overview for the named profile person, not for Quentin.",
-    "Quentin is the owner of the notes, so relationship language should be natural from his point of view when supported.",
-    "Use the full supplied evidence: profile fields, profileFacts, memoryCards, reminders, and especially dated conversations. Do not reduce the overview to only durable memory cards when conversations contain richer stable context.",
-    "Write the kind of overview that helps Quentin remember who this person is, how he knows them, what matters to them, their stable routines/preferences/responsibilities, and what would help him talk to or care for them.",
-    "Use natural connective language. The overview does not need every phrase to appear verbatim in the notes; it should be a careful human synthesis of the evidence.",
-    "You may synthesize recurring or clearly supported themes such as faith, family priorities, work routine, relationship hopes, food/drink preferences, health preferences, fears, or what makes them feel loved when the supplied notes support those details.",
-    "Do not invent concrete facts, names, places, events, motives, certainty, or future outcomes beyond the evidence.",
-    "Use dates carefully. Every conversation has occurredAt, ageDays, recency, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless recent, repeated, or backed by an open non-stale reminder.",
-    "For old temporary details, omit them or phrase them historically with a concrete date.",
-    "Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process.",
-    "Write 2-4 natural, information-dense sentences. If there is substantial conversation evidence, the overview should be substantial enough to capture it.",
+    "You write private People Notebook overviews for Quentin.",
+    "Write about the named person, not about the database or the note-taking process.",
+    "Use the evidence packet to create a warm, accurate, useful summary Quentin can read before talking to this person.",
+    "Use natural synthesis. You may connect repeated facts, preferences, values, routines, hopes, fears, family context, faith, work, health preferences, and relationship dynamics when the evidence supports them.",
+    "Do not invent concrete names, places, events, medical facts, relationship status, motives, promises, or future outcomes.",
+    "Handle time carefully. Temporary logistics, visits, travel, appointments, medical/dental procedures, and words like currently/tomorrow/this weekend expire unless recent, repeated, or backed by an open reminder.",
+    "Prefer stable and repeated context. Use recent temporary details only if they are genuinely helpful and date-aware.",
+    "Write 2-4 natural, information-dense sentences. No bullet list. No labels. No mention of tags, memory cards, database, evidence packet, or profile fields.",
   ].join(" ");
+
   const requestOverview = async (messages) => {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -592,16 +523,9 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
       throw error;
     }
     const payload = await response.json().catch(() => ({}));
-    const overview = cleanText(payload?.choices?.[0]?.message?.content || "", 2000)
-      .replace(/^["']|["']$/g, "")
-      .replace(/\s+/g, " ");
-    if (!overview) {
-      const error = new Error("AI overview refresh returned an empty overview.");
-      error.statusCode = 502;
-      throw error;
-    }
-    return overview;
+    return validateGeneratedOverview(payload?.choices?.[0]?.message?.content || "", context);
   };
+
   const baseMessages = [
     { role: "system", content: systemPrompt },
     {
@@ -612,30 +536,29 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
       }),
     },
   ];
-  let overview = "";
+
   try {
-    overview = await requestOverview(baseMessages);
-    validateAiOverview(overview, context);
-    return overview;
+    return { overview: await requestOverview(baseMessages), source: "ai", error: "" };
   } catch (error) {
-    if (error?.statusCode !== 502) throw error;
-    let retryOverview = "";
+    const firstError = error?.message || "AI overview refresh failed.";
     try {
-      retryOverview = await requestOverview([
-      ...baseMessages,
-      { role: "assistant", content: overview },
-      {
-        role: "user",
-        content: `That overview failed validation: ${error.message} Rewrite it as a natural, useful profile summary using the supplied profile fields, profileFacts, memory cards, reminders, and conversations. Use conversation evidence when it contains richer stable context than the memory cards. Do not add concrete names, places, events, or future outcomes that are not supported by the supplied context.`,
-      },
-      ]);
-      validateAiOverview(retryOverview, context);
-      return retryOverview;
-    } catch {
-      if (contextEvidenceWordCount(context) >= 180) throw error;
-      const groundedOverview = buildGroundedOverviewFromFacts(context);
-      if (groundedOverview) return groundedOverview;
-      throw error;
+      return {
+        overview: await requestOverview([
+          ...baseMessages,
+          {
+            role: "user",
+            content: "Try again. Write a complete, natural overview from the evidence packet. Keep it grounded, useful, and human. Do not mention the process.",
+          },
+        ]),
+        source: "ai",
+        error: "",
+      };
+    } catch (retryError) {
+      return {
+        overview: fallbackOverview,
+        source: "fallback",
+        error: retryError?.message || firstError,
+      };
     }
   }
 }
@@ -677,13 +600,12 @@ async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
   const fallbackOverview = buildProfileOverview(people[0], interactions, memoryCards);
   let overview = fallbackOverview;
   let overviewError = "";
+  let overviewSource = "fallback";
   if (options.useAi) {
-    try {
-      overview = await buildAiProfileOverview(people[0], interactions, memoryCards, reminders, fallbackOverview);
-    } catch (error) {
-      overviewError = error?.message || "AI overview refresh failed.";
-      if (options.requireAi) throw error;
-    }
+    const aiResult = await buildAiProfileOverview(people[0], interactions, memoryCards, reminders, fallbackOverview);
+    overview = aiResult.overview || fallbackOverview;
+    overviewError = aiResult.error || "";
+    overviewSource = aiResult.source || "fallback";
   }
   if (!overview) return "";
   const response = await supabaseRest(`people?id=eq.${encodedPersonId}&select=id,overview`, {
@@ -706,8 +628,8 @@ async function rebuildPersonOverview(supabaseRest, personId, options = {}) {
     return {
       overview,
       overviewError,
-      overviewSource: options.useAi && !overviewError ? "ai" : "fallback",
-      usedFallback: Boolean(overviewError),
+      overviewSource,
+      usedFallback: overviewSource !== "ai",
       person: payload[0],
     };
   }
