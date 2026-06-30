@@ -514,8 +514,18 @@ function validateAiOverview(overview, context = {}) {
     "November",
     "December",
   ]);
-  const names = cleanText(overview, 2200).match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g) || [];
-  const unsupportedName = names.find((name) => !ignoredNames.has(name) && !allowedLower.includes(name.toLowerCase()));
+  const isSentenceStart = (index) => {
+    const before = cleanOverview.slice(0, index).trimEnd();
+    return !before || /[.!?]["')\]]?$/.test(before);
+  };
+  const nameMatches = [...cleanOverview.matchAll(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g)];
+  const unsupportedName = nameMatches
+    .map((match) => ({ name: match[0], index: match.index || 0 }))
+    .find(({ name, index }) => {
+      if (ignoredNames.has(name) || allowedLower.includes(name.toLowerCase())) return false;
+      const wordCount = name.split(/\s+/).filter(Boolean).length;
+      return wordCount > 1 || !isSentenceStart(index);
+    })?.name;
   if (unsupportedName) {
     const error = new Error(`AI overview mentioned unsupported detail: ${unsupportedName}. Try again.`);
     error.statusCode = 502;

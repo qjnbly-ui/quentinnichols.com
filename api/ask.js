@@ -642,12 +642,21 @@ function isContextReferenceMemoryRequest(text) {
     && /\b(people entry|person entry|people notebook|relationship notebook|profile|memory|conversation|notebook)\b/i.test(value);
 }
 
+function isWritingReviewRequest(text) {
+  const value = String(text || "").trim();
+  if (!value) return false;
+  const writingTarget = /\b(blog|post|article|essay|writing|writings|draft|piece)\b/i.test(value);
+  const reviewIntent = /\b(what do you think|review|critique|feedback|add or remove|add\/remove|should i add|should i remove|anything to add|anything to remove|improve|edit)\b/i.test(value);
+  return writingTarget && reviewIntent;
+}
+
 function wantsPeopleMemoryAction(text) {
   const value = String(text || "").trim();
   if (!value) return false;
+  if (isWritingReviewRequest(value)) return false;
   if (isContextReferenceMemoryRequest(value)) return true;
   if (/\b(add|save|record|remember|note)\b/i.test(value) && /\babout\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/.test(value)) return true;
-  if (/\b(add|save|record|remember|note)\b/i.test(value) && /\b(people notebook|relationship notebook|person|people|profile|memory|conversation|remember|notebook)\b/i.test(value)) {
+  if (/\b(add|save|record|remember|note)\b/i.test(value) && /\b(people notebook|relationship notebook|person|people|profile|memory|remember|notebook|conversation entry|people conversation)\b/i.test(value)) {
     return true;
   }
   if (/^\s*(?:remember|save|record|note)\s+(?:that\s+)?/i.test(value) && /\b(my|your)\s+(mom|mother|dad|father|sister|brother|cousin|friend|coworker|co-worker|boss|manager|foreman)\b/i.test(value)) {
