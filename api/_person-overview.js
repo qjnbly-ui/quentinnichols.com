@@ -345,6 +345,20 @@ function buildGroundedOverviewFromFacts(context) {
   return "";
 }
 
+function countWords(value) {
+  return (String(value || "").match(/\b[\w'-]+\b/g) || []).length;
+}
+
+function contextEvidenceWordCount(context = {}) {
+  const conversationWords = Array.isArray(context.conversations)
+    ? context.conversations.reduce((total, conversation) => total + countWords(`${conversation.summary || ""} ${conversation.notes || ""}`), 0)
+    : 0;
+  const memoryWords = Array.isArray(context.memoryCards)
+    ? context.memoryCards.reduce((total, card) => total + countWords(`${card.label || ""} ${card.value || ""}`), 0)
+    : 0;
+  return conversationWords + memoryWords;
+}
+
 function compactNote(value, maxLength = 1800) {
   return cleanText(value, maxLength).replace(/\n{3,}/g, "\n\n");
 }
@@ -406,7 +420,8 @@ function temporalGuidance(text, dateValue, now = new Date()) {
 }
 
 function validateAiOverview(overview, context = {}) {
-  const lower = cleanText(overview, 2200).toLowerCase();
+  const cleanOverview = cleanText(overview, 2200);
+  const lower = cleanOverview.toLowerCase();
   const forbiddenPhrases = [
     "your notes touch on",
     "your notes around this profile",
@@ -428,6 +443,12 @@ function validateAiOverview(overview, context = {}) {
   ];
   if (forbiddenPhrases.some((phrase) => lower.includes(phrase))) {
     const error = new Error("AI overview refresh returned a low-quality summary. Try again.");
+    error.statusCode = 502;
+    throw error;
+  }
+  const evidenceWords = contextEvidenceWordCount(context);
+  if (evidenceWords >= 180 && countWords(cleanOverview) < 70) {
+    const error = new Error("AI overview was too thin for the available conversation context. Try again.");
     error.statusCode = 502;
     throw error;
   }
@@ -613,7 +634,18 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
     throw error;
   }
 
-  const systemPrompt = "You write private People Notebook overviews for Quentin using the supplied evidence. Produce a useful, natural overview, not a topic list. Use allowedOverviewFacts, explicit profile fields, memory cards, reminders, and dated conversation evidence. You may synthesize stable routines, preferences, hopes, responsibilities, relationship context, and recurring emotional/faith/family themes when they are directly supported by the notes. Do not invent facts, names, motives, or certainty beyond the evidence. Start with who this person is in relation to Quentin or how he knows them when supported. Then summarize the strongest stable context that would help Quentin talk to or care for them. You must reason carefully from generatedAt, occurredAt, ageDays, recency, dueAge, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless they are recent, repeated in newer conversations, or backed by an open non-stale reminder. For old temporary details, omit them or phrase them historically with the concrete date. Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process. Write 2-4 concise evidence-grounded sentences.";
+  const systemPrompt = [
+    "Rewrite a private People Notebook profile overview for the named profile person, not for Quentin.",
+    "Quentin is the owner of the notes, so relationship language should be natural from his point of view when supported.",
+    "Use the full supplied evidence: profile fields, profileFacts, memoryCards, reminders, and especially dated conversations. Do not reduce the overview to only durable memory cards when conversations contain richer stable context.",
+    "Write the kind of overview that helps Quentin remember who this person is, how he knows them, what matters to them, their stable routines/preferences/responsibilities, and what would help him talk to or care for them.",
+    "You may synthesize recurring or clearly supported themes such as faith, family priorities, work routine, relationship hopes, food/drink preferences, health preferences, fears, or what makes them feel loved, but only when the supplied notes directly support those details.",
+    "Do not invent facts, names, motives, certainty, or future outcomes beyond the evidence.",
+    "Use dates carefully. Every conversation has occurredAt, ageDays, recency, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless recent, repeated, or backed by an open non-stale reminder.",
+    "For old temporary details, omit them or phrase them historically with a concrete date.",
+    "Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process.",
+    "Write 2-4 natural, information-dense sentences. If there is substantial conversation evidence, the overview should be substantial enough to capture it.",
+  ].join(" ");
   const requestOverview = async (messages) => {
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -673,12 +705,13 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
       { role: "assistant", content: overview },
       {
         role: "user",
-        content: `That overview failed validation: ${error.message} Rewrite it using only supplied evidence from allowedOverviewFacts, profile fields, memory cards, reminders, and conversations. Do not add names, places, events, traits, or interpretations that are not present in the supplied context.`,
+        content: `That overview failed validation: ${error.message} Rewrite it using only supplied evidence from profile fields, profileFacts, memory cards, reminders, and conversations. Use conversation evidence when it contains richer stable context than the memory cards. Do not add names, places, events, traits, or interpretations that are not present in the supplied context.`,
       },
       ]);
       validateAiOverview(retryOverview, context);
       return retryOverview;
     } catch {
+      if (contextEvidenceWordCount(context) >= 180) throw error;
       const groundedOverview = buildGroundedOverviewFromFacts(context);
       if (groundedOverview) return groundedOverview;
       throw error;
