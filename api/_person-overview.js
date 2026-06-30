@@ -429,17 +429,6 @@ function validateAiOverview(overview, context = {}) {
     "memory cards",
     "database",
     "tags",
-    "appears to",
-    "seems to",
-    "shows she values",
-    "shows he values",
-    "shows they value",
-    "shows she",
-    "shows he",
-    "shows they",
-    "appears",
-    "seems",
-    "likely",
   ];
   if (forbiddenPhrases.some((phrase) => lower.includes(phrase))) {
     const error = new Error("AI overview refresh returned a low-quality summary. Try again.");
@@ -449,85 +438,6 @@ function validateAiOverview(overview, context = {}) {
   const evidenceWords = contextEvidenceWordCount(context);
   if (evidenceWords >= 180 && countWords(cleanOverview) < 70) {
     const error = new Error("AI overview was too thin for the available conversation context. Try again.");
-    error.statusCode = 502;
-    throw error;
-  }
-  const allowedText = [
-    context.person?.name || "",
-    context.person?.preferredName || "",
-    context.person?.firstMetLocation || "",
-    ...(Array.isArray(context.allowedOverviewFacts)
-      ? context.allowedOverviewFacts.flatMap((fact) => [fact.label, fact.value])
-      : []),
-    ...(Array.isArray(context.conversations)
-      ? context.conversations.flatMap((conversation) => [
-          conversation.location,
-          ...(Array.isArray(conversation.topics) ? conversation.topics : []),
-          conversation.summary,
-          conversation.notes,
-        ])
-      : []),
-    ...(Array.isArray(context.memoryCards)
-      ? context.memoryCards.flatMap((card) => [card.label, card.value])
-      : []),
-    ...(Array.isArray(context.reminders)
-      ? context.reminders.flatMap((reminder) => [reminder.title, reminder.details])
-      : []),
-  ].join(" ");
-  const allowedLower = allowedText.toLowerCase();
-  const ignoredNames = new Set([
-    "Quentin",
-    "People Notebook",
-    "He",
-    "She",
-    "They",
-    "This",
-    "That",
-    "The",
-    "A",
-    "An",
-    "On",
-    "In",
-    "As",
-    "During",
-    "Since",
-    "Today",
-    "Yesterday",
-    "Tomorrow",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ]);
-  const isSentenceStart = (index) => {
-    const before = cleanOverview.slice(0, index).trimEnd();
-    return !before || /[.!?]["')\]]?$/.test(before);
-  };
-  const nameMatches = [...cleanOverview.matchAll(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g)];
-  const unsupportedName = nameMatches
-    .map((match) => ({ name: match[0], index: match.index || 0 }))
-    .find(({ name, index }) => {
-      if (ignoredNames.has(name) || allowedLower.includes(name.toLowerCase())) return false;
-      const wordCount = name.split(/\s+/).filter(Boolean).length;
-      return wordCount > 1 || !isSentenceStart(index);
-    })?.name;
-  if (unsupportedName) {
-    const error = new Error(`AI overview mentioned unsupported detail: ${unsupportedName}. Try again.`);
     error.statusCode = 502;
     throw error;
   }
@@ -649,8 +559,9 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
     "Quentin is the owner of the notes, so relationship language should be natural from his point of view when supported.",
     "Use the full supplied evidence: profile fields, profileFacts, memoryCards, reminders, and especially dated conversations. Do not reduce the overview to only durable memory cards when conversations contain richer stable context.",
     "Write the kind of overview that helps Quentin remember who this person is, how he knows them, what matters to them, their stable routines/preferences/responsibilities, and what would help him talk to or care for them.",
-    "You may synthesize recurring or clearly supported themes such as faith, family priorities, work routine, relationship hopes, food/drink preferences, health preferences, fears, or what makes them feel loved, but only when the supplied notes directly support those details.",
-    "Do not invent facts, names, motives, certainty, or future outcomes beyond the evidence.",
+    "Use natural connective language. The overview does not need every phrase to appear verbatim in the notes; it should be a careful human synthesis of the evidence.",
+    "You may synthesize recurring or clearly supported themes such as faith, family priorities, work routine, relationship hopes, food/drink preferences, health preferences, fears, or what makes them feel loved when the supplied notes support those details.",
+    "Do not invent concrete facts, names, places, events, motives, certainty, or future outcomes beyond the evidence.",
     "Use dates carefully. Every conversation has occurredAt, ageDays, recency, and temporalGuidance. Do not describe old temporary logistics as current. Medical, dental, appointment, recovery, visit/travel, and 'currently/right now/through Saturday' details are temporary unless recent, repeated, or backed by an open non-stale reminder.",
     "For old temporary details, omit them or phrase them historically with a concrete date.",
     "Do not say 'your notes touch on', 'this profile', 'tags', 'memory cards', 'database', or mention the process.",
@@ -665,7 +576,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
       },
       body: JSON.stringify({
         model: MODEL,
-        temperature: 0.05,
+        temperature: 0.22,
         max_tokens: OVERVIEW_MAX_TOKENS,
         reasoning_effort: REASONING_EFFORT,
         reasoning_format: "hidden",
@@ -715,7 +626,7 @@ async function buildAiProfileOverview(person, interactions, memoryCards, reminde
       { role: "assistant", content: overview },
       {
         role: "user",
-        content: `That overview failed validation: ${error.message} Rewrite it using only supplied evidence from profile fields, profileFacts, memory cards, reminders, and conversations. Use conversation evidence when it contains richer stable context than the memory cards. Do not add names, places, events, traits, or interpretations that are not present in the supplied context.`,
+        content: `That overview failed validation: ${error.message} Rewrite it as a natural, useful profile summary using the supplied profile fields, profileFacts, memory cards, reminders, and conversations. Use conversation evidence when it contains richer stable context than the memory cards. Do not add concrete names, places, events, or future outcomes that are not supported by the supplied context.`,
       },
       ]);
       validateAiOverview(retryOverview, context);

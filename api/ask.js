@@ -510,8 +510,7 @@ function buildCalendarAction(messages) {
   if (/\b(task|todo|to-do)\b/i.test(latest) && !/\b(calendar|event|appointment)\b/i.test(latest)) return null;
   const haircutAction = buildHaircutCalendarAction(latest);
   if (haircutAction) return haircutAction;
-  const wantsCalendar =
-    /\b(add|create|put|schedule)\b/i.test(recent) && /\b(calendar|event|appointment|reminder)\b/i.test(recent);
+  const wantsCalendar = wantsCalendarFromText(recent);
   const hasDateSignal = /\b(today|tomorrow|tonight|sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/i.test(latest);
   const clock = parseClockTime(latest);
   if (!wantsCalendar && !(hasDateSignal && clock)) return null;
@@ -575,8 +574,11 @@ function looksLikeReminderRequest(text) {
 }
 
 function wantsCalendarFromText(text) {
-  const value = String(text || "");
-  return /\b(calendar|event|appointment)\b/i.test(value);
+  const value = String(text || "").trim();
+  if (!value || isWritingReviewRequest(value)) return false;
+  const calendarTarget = /\b(calendar|event|appointment)\b/i.test(value);
+  const scheduleIntent = /\b(add|create|put|schedule|book|set up|make)\b/i.test(value);
+  return calendarTarget && scheduleIntent;
 }
 
 function hasDateSignal(text) {
