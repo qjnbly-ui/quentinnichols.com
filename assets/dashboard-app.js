@@ -16,6 +16,7 @@
     people: "People Notebook",
     calendar: "Calendar",
     tasks: "Tasks",
+    fitness: "Fitness",
     notes: "Notes",
     ai: "AI Assistant",
     inquiries: "Inquiries",
@@ -44,6 +45,36 @@
   let tasksError = "";
   let tasksMode = "list";
   let editingTaskId = "";
+  const fitnessStorageKey = "qappFitnessState";
+  const fitnessRoutine = {
+    title: "Current Full-Body Circuit",
+    weekOneRounds: 5,
+    progression: "After Week 2, increase to 6-8 rounds. Work toward 8-10 rounds if recovery stays good.",
+    warmup: [
+      "Arm circles - 20 each direction",
+      "Shoulder rolls - 20",
+      "Leg swings front/back - 15 each leg",
+      "Side leg swings - 15 each leg",
+      "Hip circles - 10 each direction",
+      "Walking lunges - 10 each leg",
+      "Bodyweight squats - 15",
+      "Light chest and hamstring stretch - 20-30 seconds each",
+    ],
+    cardio: "1-mile treadmill run at conversational pace, around 9-11 minutes.",
+    exercises: [
+      { id: "bench_press", name: "Bench Press", target: "8 reps", type: "weighted", defaultWeight: 105, unit: "lb", note: "Start around 95-115 lb. Keep 2-3 reps left in the tank." },
+      { id: "push_ups", name: "Push-ups", target: "10-15 reps", type: "bodyweight" },
+      { id: "dumbbell_curls", name: "Dumbbell Curls", target: "10 each arm", type: "weighted", defaultWeight: 25, unit: "lb", note: "Slow lowering, no swinging." },
+      { id: "sit_ups", name: "Sit-ups", target: "15 reps", type: "bodyweight" },
+      { id: "bodyweight_squats", name: "Bodyweight Squats", target: "15 reps", type: "bodyweight" },
+      { id: "dumbbell_rows", name: "Bent-over Dumbbell Rows", target: "10 each arm", type: "weighted", defaultWeight: 30, unit: "lb", note: "Keep your back flat." },
+      { id: "shoulder_press", name: "Shoulder Press", target: "10 reps", type: "weighted", defaultWeight: 25, unit: "lb", note: "Slow and controlled." },
+      { id: "plank", name: "Plank", target: "30 seconds", type: "time" },
+    ],
+    finishers: ["Farmer carry", "Jump rope", "Incline walk", "Light rowing machine", "Stationary bike"],
+    cooldown: ["Chest", "Shoulders", "Hamstrings", "Quads", "Hip flexors", "Calves", "Lower back"],
+  };
+  let fitnessState = loadFitnessState();
 
   function escapeHtml(value) {
     return String(value || "")
@@ -207,6 +238,111 @@
     const date = dateFromKey(value);
     if (!date) return fallback;
     return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function defaultFitnessState() {
+    return {
+      logs: [],
+      habits: ["Nicotine", "Alcohol", "Junk food", "Late sleep", "Doomscrolling", "Skipped stretching"],
+    };
+  }
+
+  function loadFitnessState() {
+    try {
+      const parsed = JSON.parse(window.localStorage.getItem(fitnessStorageKey) || "null");
+      const defaults = defaultFitnessState();
+      return {
+        logs: Array.isArray(parsed?.logs) ? parsed.logs : defaults.logs,
+        habits: Array.isArray(parsed?.habits) && parsed.habits.length ? parsed.habits : defaults.habits,
+      };
+    } catch (error) {
+      return defaultFitnessState();
+    }
+  }
+
+  function saveFitnessState() {
+    window.localStorage.setItem(fitnessStorageKey, JSON.stringify(fitnessState));
+  }
+
+  function fitnessExerciseById(id) {
+    return fitnessRoutine.exercises.find((exercise) => exercise.id === id);
+  }
+
+  function completedFitnessSets(log) {
+    return Object.values(log?.sets || {}).flat().filter((set) => set.done).length;
+  }
+
+  function totalFitnessSets() {
+    return fitnessRoutine.weekOneRounds * fitnessRoutine.exercises.length;
+  }
+
+  function estimatedOneRepMax(weight, reps) {
+    const weightNumber = Number(weight);
+    const repNumber = Number(reps);
+    if (!weightNumber || !repNumber) return 0;
+    return Math.round(weightNumber * (1 + repNumber / 30));
+  }
+
+  function fitnessPrs() {
+    const best = new Map();
+    fitnessState.logs.forEach((log) => {
+      Object.entries(log.sets || {}).forEach(([exerciseId, sets]) => {
+        const exercise = fitnessExerciseById(exerciseId);
+        if (!exercise || exercise.type !== "weighted") return;
+        sets.forEach((set) => {
+          if (!set.done) return;
+          const weight = Number(set.weight);
+          const reps = Number(set.reps);
+          if (!weight || !reps) return;
+          const e1rm = estimatedOneRepMax(weight, reps);
+          const volume = weight * reps;
+          const current = best.get(exerciseId) || { weight: 0, reps: 0, e1rm: 0, volume: 0, date: "" };
+          if (e1rm > current.e1rm || (e1rm === current.e1rm && volume > current.volume)) {
+            best.set(exerciseId, {
+              name: exercise.name,
+              weight,
+              reps,
+              e1rm,
+              volume,
+              date: log.date,
+            });
+          }
+        });
+      });
+    });
+    return [...best.values()].sort((a, b) => b.e1rm - a.e1rm);
+  }
+
+  function latestFitnessLog() {
+    return [...fitnessState.logs].sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0))[0] || null;
+  }
+
+  function createFitnessLogFromForm(form) {
+    const formData = new FormData(form);
+    const sets = {};
+    fitnessRoutine.exercises.forEach((exercise) => {
+      sets[exercise.id] = Array.from({ length: fitnessRoutine.weekOneRounds }, (_, index) => {
+        const round = index + 1;
+        return {
+          done: formData.get(`${exercise.id}_${round}_done`) === "on",
+          reps: String(formData.get(`${exercise.id}_${round}_reps`) || "").trim(),
+          weight: String(formData.get(`${exercise.id}_${round}_weight`) || "").trim(),
+        };
+      });
+    });
+    return {
+      id: `fitness_${Date.now()}`,
+      date: String(formData.get("date") || toDateKey(new Date())),
+      createdAt: new Date().toISOString(),
+      energy: String(formData.get("energy") || "3"),
+      mood: String(formData.get("mood") || "3"),
+      soreness: String(formData.get("soreness") || "3"),
+      sleep: String(formData.get("sleep") || "3"),
+      finisher: String(formData.get("finisher") || "").trim(),
+      notes: String(formData.get("notes") || "").trim(),
+      habits: formData.getAll("habits").map((habit) => String(habit || "").trim()).filter(Boolean),
+      sets,
+    };
   }
 
   function monthLabel(date) {
@@ -1506,6 +1642,208 @@
     `;
   }
 
+  function renderFitnessSetInputs(exercise) {
+    return Array.from({ length: fitnessRoutine.weekOneRounds }, (_, index) => {
+      const round = index + 1;
+      const defaultReps = exercise.type === "time" ? "30" : (exercise.target.match(/\d+/)?.[0] || "");
+      return `
+        <div class="qapp-fitness-set-row">
+          <label class="qapp-check-row">
+            <input name="${exercise.id}_${round}_done" type="checkbox">
+            <span><strong>Round ${round}</strong><small>${escapeHtml(exercise.target)}</small></span>
+          </label>
+          ${exercise.type === "weighted" ? `
+            <input name="${exercise.id}_${round}_weight" type="number" min="0" step="5" value="${escapeHtml(exercise.defaultWeight)}" aria-label="${escapeHtml(`${exercise.name} round ${round} weight`)}">
+          ` : ""}
+          <input name="${exercise.id}_${round}_reps" type="number" min="0" step="1" value="${escapeHtml(defaultReps)}" aria-label="${escapeHtml(`${exercise.name} round ${round} reps or seconds`)}">
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderFitnessExerciseCard(exercise) {
+    return `
+      <article class="qapp-fitness-exercise">
+        <div class="qapp-panel-title-row">
+          <div>
+            <h4>${escapeHtml(exercise.name)}</h4>
+            <p>${escapeHtml(exercise.target)}${exercise.note ? ` - ${escapeHtml(exercise.note)}` : ""}</p>
+          </div>
+          ${statusPill(exercise.type === "weighted" ? `${exercise.defaultWeight} ${exercise.unit}` : exercise.type)}
+        </div>
+        <div class="qapp-fitness-set-grid">
+          ${renderFitnessSetInputs(exercise)}
+        </div>
+      </article>
+    `;
+  }
+
+  function renderFitness() {
+    const latest = latestFitnessLog();
+    const prs = fitnessPrs();
+    const latestSets = latest ? completedFitnessSets(latest) : 0;
+    const totalSets = totalFitnessSets();
+    const habitCounts = new Map();
+    fitnessState.logs.forEach((log) => {
+      (log.habits || []).forEach((habit) => habitCounts.set(habit, (habitCounts.get(habit) || 0) + 1));
+    });
+    const topHabits = [...habitCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4);
+
+    return `
+      <section class="qapp-grid qapp-grid--stats qapp-fitness-stats">
+        <article class="qapp-panel">
+          <span class="qapp-stat">${fitnessState.logs.length}</span>
+          <h3>Sessions Logged</h3>
+          <p>${latest ? `Last session: ${formatDate(latest.date)}` : "No workout logged yet."}</p>
+        </article>
+        <article class="qapp-panel">
+          <span class="qapp-stat">${latest ? `${latestSets}/${totalSets}` : "0"}</span>
+          <h3>Latest Sets</h3>
+          <p>Week 1 target is ${fitnessRoutine.weekOneRounds} rounds across the circuit.</p>
+        </article>
+        <article class="qapp-panel">
+          <span class="qapp-stat">${prs.length}</span>
+          <h3>PR Movements</h3>
+          <p>Bench, curls, rows, and shoulder press are tracked automatically.</p>
+        </article>
+      </section>
+
+      <section class="qapp-panel qapp-wide-panel">
+        <div class="qapp-panel-title-row">
+          <div>
+            <h3>${escapeHtml(fitnessRoutine.title)}</h3>
+            <p>${escapeHtml(fitnessRoutine.progression)}</p>
+          </div>
+          ${statusPill("Local Save")}
+        </div>
+        <div class="qapp-fitness-overview">
+          <div>
+            <h4>Warm-up</h4>
+            <ul>${fitnessRoutine.warmup.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+          </div>
+          <div>
+            <h4>Cardio</h4>
+            <p>${escapeHtml(fitnessRoutine.cardio)}</p>
+            <h4>Cool Down</h4>
+            <p>${fitnessRoutine.cooldown.map(escapeHtml).join(", ")}. Hold each stretch 20-30 seconds.</p>
+          </div>
+        </div>
+      </section>
+
+      <form id="qappFitnessForm" class="qapp-capture-form">
+        <section class="qapp-panel qapp-wide-panel">
+          <div class="qapp-panel-title-row">
+            <div>
+              <h3>Log Today</h3>
+              <p>Check off what you complete and record weight/reps for PR tracking.</p>
+            </div>
+            <button class="qapp-soft-button" data-fitness-action="clear-history" type="button">Clear Local Logs</button>
+          </div>
+          <div class="qapp-capture-grid">
+            <label>
+              <span>Date</span>
+              <input name="date" type="date" value="${escapeHtml(toDateKey(new Date()))}">
+            </label>
+            <label>
+              <span>Finisher</span>
+              <select name="finisher">
+                <option value="">None today</option>
+                ${fitnessRoutine.finishers.map((finisher) => `<option value="${escapeHtml(finisher)}">${escapeHtml(finisher)}</option>`).join("")}
+              </select>
+            </label>
+            ${["energy", "mood", "soreness", "sleep"].map((field) => `
+              <label>
+                <span>${escapeHtml(field.charAt(0).toUpperCase() + field.slice(1))}</span>
+                <input name="${field}" type="range" min="1" max="5" value="3">
+              </label>
+            `).join("")}
+          </div>
+        </section>
+
+        <section class="qapp-fitness-exercise-list">
+          ${fitnessRoutine.exercises.map(renderFitnessExerciseCard).join("")}
+        </section>
+
+        <section class="qapp-panel qapp-wide-panel">
+          <div class="qapp-panel-title-row">
+            <div>
+              <h3>Habits & Notes</h3>
+              <p>Select anything you want to track manually. Add a new habit once and it becomes reselectable.</p>
+            </div>
+          </div>
+          <div class="qapp-fitness-habits">
+            ${fitnessState.habits.map((habit) => `
+              <label class="qapp-check-row">
+                <input name="habits" type="checkbox" value="${escapeHtml(habit)}">
+                <span><strong>${escapeHtml(habit)}</strong><small>${escapeHtml(`${habitCounts.get(habit) || 0} previous log${habitCounts.get(habit) === 1 ? "" : "s"}`)}</small></span>
+              </label>
+            `).join("")}
+          </div>
+          <div class="qapp-capture-grid">
+            <label>
+              <span>Add Habit</span>
+              <input name="newHabit" type="text" placeholder="Example: too much caffeine">
+            </label>
+            <label>
+              <span>Notes</span>
+              <textarea name="notes" rows="3" placeholder="How the workout felt, pain, form notes, recovery..."></textarea>
+            </label>
+          </div>
+          <div class="qapp-action-row">
+            <button type="submit">Save Workout Log</button>
+          </div>
+        </section>
+      </form>
+
+      <section class="qapp-grid qapp-fitness-results">
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>PRs</h3>
+            ${statusPill(String(prs.length))}
+          </div>
+          <div class="qapp-fitness-list">
+            ${prs.length ? prs.map((pr) => `
+              <div class="qapp-memory-card">
+                <span>${escapeHtml(pr.name)}</span>
+                <strong>${escapeHtml(`${pr.weight} lb best weight · ${pr.e1rm} lb est. 1RM`)}</strong>
+                <small>${escapeHtml(`${pr.reps} reps on ${formatDate(pr.date)}`)}</small>
+              </div>
+            `).join("") : `<div class="qapp-memory-card"><span>PR Tracker</span><strong>Log a weighted set to start tracking records.</strong></div>`}
+          </div>
+        </article>
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Habit Trends</h3>
+            ${statusPill(String(topHabits.length))}
+          </div>
+          <div class="qapp-fitness-list">
+            ${topHabits.length ? topHabits.map(([habit, count]) => `
+              <div class="qapp-memory-card">
+                <span>${escapeHtml(habit)}</span>
+                <strong>${count} log${count === 1 ? "" : "s"}</strong>
+              </div>
+            `).join("") : `<div class="qapp-memory-card"><span>Habits</span><strong>No habit patterns yet.</strong></div>`}
+          </div>
+        </article>
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Recent Sessions</h3>
+            ${statusPill(String(fitnessState.logs.slice(0, 5).length))}
+          </div>
+          <div class="qapp-fitness-list">
+            ${fitnessState.logs.slice(0, 5).map((log) => `
+              <div class="qapp-memory-card">
+                <span>${escapeHtml(formatDate(log.date))}</span>
+                <strong>${escapeHtml(`${completedFitnessSets(log)}/${totalSets} sets · energy ${log.energy}/5 · mood ${log.mood}/5`)}</strong>
+                <small>${escapeHtml([log.finisher ? `Finisher: ${log.finisher}` : "", (log.habits || []).length ? `Habits: ${log.habits.join(", ")}` : "", log.notes].filter(Boolean).join(" | "))}</small>
+              </div>
+            `).join("") || `<div class="qapp-memory-card"><span>History</span><strong>Your saved sessions will show here.</strong></div>`}
+          </div>
+        </article>
+      </section>
+    `;
+  }
+
   function renderPlaceholder(route, kicker, title, copy, items) {
     return `
       <section class="qapp-grid">
@@ -1544,6 +1882,9 @@
     } else if (currentRoute === "tasks") {
       view.innerHTML = renderTasks();
       bindTaskForms();
+    } else if (currentRoute === "fitness") {
+      view.innerHTML = renderFitness();
+      bindFitnessForms();
     } else if (currentRoute === "notes") {
       view.innerHTML = renderPlaceholder("notes", "Capture", "Notes", "Notes will hold quick thoughts, planning entries, and raw material before AI organizes it.", [
         { title: "Quick Note", status: "Planned", copy: "Capture a thought without deciding where it belongs yet." },
@@ -1830,6 +2171,39 @@
         submitButton.disabled = false;
         submitButton.textContent = payload.id ? "Save Task" : "Create Task";
       }
+    });
+  }
+
+  function bindFitnessForms() {
+    const form = document.getElementById("qappFitnessForm");
+    const clearButton = document.querySelector('[data-fitness-action="clear-history"]');
+
+    if (clearButton) {
+      clearButton.addEventListener("click", async () => {
+        if (!await qappConfirm("Clear locally saved workout logs and keep your habit list?", "Clear fitness logs", { confirmLabel: "Clear Logs", danger: true })) return;
+        fitnessState.logs = [];
+        saveFitnessState();
+        render();
+      });
+    }
+
+    if (!form) return;
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const newHabit = String(formData.get("newHabit") || "").trim();
+      if (newHabit && !fitnessState.habits.some((habit) => habit.toLowerCase() === newHabit.toLowerCase())) {
+        fitnessState.habits.push(newHabit);
+      }
+      const log = createFitnessLogFromForm(form);
+      if (newHabit && !log.habits.some((habit) => habit.toLowerCase() === newHabit.toLowerCase())) {
+        log.habits.push(newHabit);
+      }
+      fitnessState.logs = [log, ...fitnessState.logs].slice(0, 120);
+      saveFitnessState();
+      render();
+      await qappAlert("Workout log saved locally in this browser.", "Fitness");
     });
   }
 

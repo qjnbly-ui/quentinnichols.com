@@ -5076,6 +5076,78 @@ body.nav-menu-open {
   margin-top: 0;
 }
 
+.qapp-fitness-overview {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+}
+
+.qapp-fitness-overview h4,
+.qapp-fitness-exercise h4 {
+  font-size: 0.84rem;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.qapp-fitness-overview ul {
+  color: var(--qapp-muted);
+  line-height: 1.5;
+  margin: 10px 0 0;
+  padding-left: 18px;
+}
+
+.qapp-fitness-exercise-list {
+  display: grid;
+  gap: 12px;
+}
+
+.qapp-fitness-exercise {
+  background: var(--qapp-panel);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.qapp-fitness-set-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.qapp-fitness-set-row {
+  background: var(--qapp-panel-soft);
+  border: 1px solid var(--qapp-border);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+}
+
+.qapp-fitness-set-row input[type="number"] {
+  min-height: 36px;
+  padding: 0 10px;
+}
+
+.qapp-fitness-habits {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.qapp-fitness-results {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.qapp-fitness-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
 .qapp-soft-button,
 .qapp-danger-button,
 .qapp-item-actions button {
@@ -6050,7 +6122,7 @@ body.nav-menu-open {
   bottom: 0;
   display: grid;
   gap: 2px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   left: 0;
   min-height: calc(78px + env(safe-area-inset-bottom, 0px));
   padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
@@ -6088,8 +6160,15 @@ body.qapp-drawer-open {
   .qapp-review-grid,
   .qapp-memory-list,
   .qapp-calendar-layout,
-  .qapp-task-board {
+  .qapp-task-board,
+  .qapp-fitness-overview,
+  .qapp-fitness-habits,
+  .qapp-fitness-results {
     grid-template-columns: 1fr;
+  }
+
+  .qapp-fitness-set-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .qapp-task-board .qapp-task-section:first-child {
@@ -6151,5 +6230,11 @@ body.qapp-drawer-open {
 
   .qapp-view {
     padding: 18px 12px 24px;
+  }
+}
+
+@media (max-width: 430px) {
+  .qapp-fitness-set-grid {
+    grid-template-columns: 1fr;
   }
 }
