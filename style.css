@@ -2942,6 +2942,10 @@ body.nav-menu-open {
   color: #f4f2ec;
 }
 
+.reads-quote-lead {
+  font-weight: 700;
+}
+
 .reads-quote-attribution {
   margin: 18px 0 0;
   font-size: 13px;

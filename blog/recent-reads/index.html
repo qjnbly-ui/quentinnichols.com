@@ -159,7 +159,15 @@
             <img src="/assets/Books%20I%20Have%20Read/ReadYourMind.jpeg" alt="Read Your Mind book cover" loading="lazy">
           </div>
           <div class="reads-shelf-card">
-            <img src="/assets/Books%20I%20Have%20Read/28.webp" alt="Book cover 28" loading="lazy">
+            <button
+              class="reads-quote-trigger"
+              type="button"
+              data-quote-trigger="american-kingpin"
+              aria-label="Open reflection on American Kingpin"
+            >
+              <img src="/assets/Books%20I%20Have%20Read/28.webp" alt="American Kingpin book cover" loading="lazy">
+              <span class="reads-shelf-badge">Reflection</span>
+            </button>
           </div>
           <div class="reads-shelf-card">
             <button
@@ -222,15 +230,80 @@
       </div>
     </section>
   </main>
+  <div class="reads-quote-modal" data-quote-modal="american-kingpin" hidden>
+    <button class="reads-quote-backdrop" type="button" data-quote-close aria-label="Close reflection popup"></button>
+    <div class="reads-quote-dialog reads-reflection-dialog" role="dialog" aria-modal="true" aria-labelledby="american-kingpin-title">
+      <button class="reads-quote-close" type="button" data-quote-close aria-label="Close reflection popup">&times;</button>
+      <p id="american-kingpin-title" class="reads-quote-title">From <em>American Kingpin</em></p>
+
+      <h2 class="reads-reflection-heading">Biggest Takeaway</h2>
+      <p class="reads-reflection-text">
+        Building something extraordinary requires obsession, relentless learning, and the willingness to pursue a vision
+        long before anyone else believes in it.
+      </p>
+
+      <h2 class="reads-reflection-heading">Reflection</h2>
+      <p class="reads-reflection-text">
+        This is one of those books that completely pulled me in. I can still remember where I was trimming trees,
+        physically and mentally, while listening to different parts of the story. Very few books have immersed me like
+        this one.
+      </p>
+      <p class="reads-reflection-text">
+        One thing that stood out was Ross Ulbricht’s ability to build something from nothing. Although Silk Road was
+        illegal, the technical challenge and entrepreneurial spirit fascinated me. It made me want to build a successful
+        product of my own, one that creates value instead of breaking the law. Looking at the code behind Silk Road
+        today, I find myself thinking, “I could build the front end in a day, and with enough focus, probably have the
+        back end with payments and storage finished within a month.” That realization was surprisingly motivating.
+      </p>
+      <p class="reads-reflection-text">
+        The book also made me appreciate the excitement of creating something ambitious. There is something deeply
+        fulfilling about taking an idea that only exists in your mind and turning it into something real that thousands
+        of people use.
+      </p>
+      <p class="reads-reflection-text">
+        Beyond the technology, I found myself fascinated by the history surrounding San Francisco, and by the
+        relationships throughout the story. While Ross lived a life built on secrecy, it reinforced something I want for
+        my own future. If I ever build something meaningful, I want to build it alongside the person I love. Success
+        would mean far less if I couldn’t share the journey.
+      </p>
+    </div>
+  </div>
   <div class="reads-quote-modal" data-quote-modal="war-of-art" hidden>
     <button class="reads-quote-backdrop" type="button" data-quote-close aria-label="Close quote popup"></button>
-    <div class="reads-quote-dialog" role="dialog" aria-modal="true" aria-labelledby="reads-quote-title">
+    <div class="reads-quote-dialog reads-reflection-dialog" role="dialog" aria-modal="true" aria-labelledby="reads-quote-title">
       <button class="reads-quote-close" type="button" data-quote-close aria-label="Close quote popup">&times;</button>
       <p id="reads-quote-title" class="reads-quote-title">From <em>The War of Art</em></p>
-      <blockquote class="reads-quote-text">
+      <blockquote class="reads-quote-text reads-quote-lead">
         “It was easier for Hitler to start World War II than it was for him to face a blank square of canvas.”
       </blockquote>
       <p class="reads-quote-attribution">— Steven Pressfield, <em>The War of Art</em> (2002)</p>
+
+      <h2 class="reads-reflection-heading">Biggest Takeaway</h2>
+      <p class="reads-reflection-text">
+        The work that matters most is often the work I feel the most resistance toward. Waiting until I feel motivated
+        only gives Resistance more control.
+      </p>
+
+      <h2 class="reads-reflection-heading">Reflection</h2>
+      <p class="reads-reflection-text">
+        This book gave a name to something I’d experienced countless times but never understood. Every meaningful goal,
+        whether building a business, exercising, reading, or becoming a better person, comes with an invisible force
+        pulling me toward comfort and distraction.
+      </p>
+      <p class="reads-reflection-text">
+        The biggest lesson wasn’t to eliminate Resistance, but to expect it. If I only act when I feel inspired, I’ll
+        rarely accomplish what matters most. Progress comes from showing up consistently, even on the days when I don’t
+        feel like it. Discipline isn’t about feeling motivated; it’s about refusing to let Resistance decide who I become.
+      </p>
+
+      <h2 class="reads-reflection-heading">Quotes That Stuck With Me</h2>
+      <blockquote class="reads-reflection-quote">
+        “The more important a call or action is to our soul’s evolution, the more Resistance we will feel toward pursuing
+        it.”
+      </blockquote>
+      <blockquote class="reads-reflection-quote">
+        “The professional shows up every day.”
+      </blockquote>
     </div>
   </div>
   <div class="reads-quote-modal" data-quote-modal="ruthless-elimination-of-hurry" hidden>
