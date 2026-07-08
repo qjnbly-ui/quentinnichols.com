@@ -52,6 +52,8 @@
   let fitnessState = loadFitnessState();
   let fitnessTimerId = 0;
   const substanceStorageKey = "qappSubstanceTrackerState";
+  let substanceStatus = "idle";
+  let substanceError = "";
   let substanceState = loadSubstanceState();
 
   function escapeHtml(value) {
@@ -168,6 +170,9 @@
     }
     if (currentRoute === "fitness" && fitnessStatus === "idle") {
       loadFitnessData();
+    }
+    if (currentRoute === "substances" && substanceStatus === "idle") {
+      loadSubstanceData();
     }
   }
 
@@ -301,24 +306,26 @@
   function normalizeSubstanceEntry(row) {
     return {
       id: row?.id || `substance-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      clientId: row?.client_id || row?.clientId || row?.id || "",
       type: String(row?.type || "custom").trim(),
       amount: String(row?.amount || "").trim(),
       context: String(row?.context || "").trim(),
-      feelingBefore: String(row?.feelingBefore || "").trim(),
-      feelingAfter: String(row?.feelingAfter || "").trim(),
-      note: String(row?.note || "").trim(),
-      date: row?.date || new Date().toISOString(),
+      feelingBefore: String(row?.feeling_before || row?.feelingBefore || "").trim(),
+      feelingAfter: String(row?.feeling_after || row?.feelingAfter || "").trim(),
+      note: String(row?.notes || row?.note || "").trim(),
+      date: row?.logged_at || row?.date || new Date().toISOString(),
     };
   }
 
   function normalizeCraving(row) {
     return {
       id: row?.id || `craving-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      clientId: row?.client_id || row?.clientId || row?.id || "",
       type: String(row?.type || "custom").trim(),
       intensity: Math.max(1, Math.min(5, Number(row?.intensity || 3))),
       context: String(row?.context || "").trim(),
       action: String(row?.action || "").trim(),
-      date: row?.date || new Date().toISOString(),
+      date: row?.logged_at || row?.date || new Date().toISOString(),
     };
   }
 
@@ -338,6 +345,72 @@
 
   function saveSubstanceState() {
     window.localStorage.setItem(substanceStorageKey, JSON.stringify(substanceState));
+  }
+
+  function clearSubstanceLocalState() {
+    window.localStorage.removeItem(substanceStorageKey);
+  }
+
+  function hasSubstanceData(state) {
+    return Boolean(
+      (Array.isArray(state?.entries) && state.entries.length)
+      || (Array.isArray(state?.cravings) && state.cravings.length)
+      || (state?.goals && Object.keys(state.goals).some((key) => String(state.goals[key] || "").trim()))
+    );
+  }
+
+  function normalizeSubstanceGoals(rows) {
+    const defaults = defaultSubstanceState().goals;
+    if (!Array.isArray(rows) || !rows.length) return defaults;
+    return rows.reduce((goals, row) => {
+      const category = String(row?.category || "").trim();
+      if (category) goals[category] = String(row?.goal || "").trim();
+      return goals;
+    }, { ...defaults });
+  }
+
+  function applySubstancePayload(payload) {
+    substanceState = {
+      entries: Array.isArray(payload.entries) ? payload.entries.map(normalizeSubstanceEntry) : [],
+      cravings: Array.isArray(payload.cravings) ? payload.cravings.map(normalizeCraving) : [],
+      goals: normalizeSubstanceGoals(payload.goals),
+    };
+  }
+
+  async function loadSubstanceData() {
+    const hadPendingLocalState = Boolean(window.localStorage.getItem(substanceStorageKey));
+    const pendingLocalState = loadSubstanceState();
+    substanceStatus = "loading";
+    substanceError = "";
+    render();
+    try {
+      applySubstancePayload(await apiJson("/api/substances"));
+      if (hadPendingLocalState && hasSubstanceData(pendingLocalState)) {
+        applySubstancePayload(await apiJson("/api/substances?resource=bulk", {
+          method: "POST",
+          body: pendingLocalState,
+        }));
+        clearSubstanceLocalState();
+      }
+      substanceStatus = "ready";
+    } catch (error) {
+      substanceStatus = "error";
+      substanceError = error?.message || "Unable to sync substance tracker.";
+      substanceState = pendingLocalState;
+    }
+    render();
+  }
+
+  async function saveSubstanceResource(resource, body) {
+    await apiJson(`/api/substances?resource=${encodeURIComponent(resource)}`, {
+      method: "POST",
+      body,
+    });
+    applySubstancePayload(await apiJson("/api/substances"));
+    clearSubstanceLocalState();
+    substanceStatus = "ready";
+    substanceError = "";
+    render();
   }
 
   function currentDateTimeInputValue() {
@@ -739,9 +812,6 @@
 
       overlay.querySelector(".qapp-modal-cancel")?.addEventListener("click", () => close(null));
       overlay.querySelector(".qapp-modal-confirm").addEventListener("click", () => close(fields.length ? readValues() : true));
-      overlay.addEventListener("click", (event) => {
-        if (event.target === overlay) close(null);
-      });
       document.addEventListener("keydown", onKeydown);
       document.body.appendChild(overlay);
       const firstField = overlay.querySelector("[data-modal-field]");
@@ -832,9 +902,6 @@
 
       overlay.querySelector(".qapp-modal-cancel")?.addEventListener("click", () => close(null));
       overlay.querySelector(".qapp-modal-confirm")?.addEventListener("click", () => close(readSelection()));
-      overlay.addEventListener("click", (event) => {
-        if (event.target === overlay) close(null);
-      });
       document.addEventListener("keydown", onKeydown);
       document.body.appendChild(overlay);
       setTimeout(() => overlay.querySelector(".qapp-modal-confirm")?.focus(), 0);
@@ -2286,12 +2353,18 @@
     const todayEntries = substanceEntriesForDay(substanceTodayKey());
     const todayCravings = substanceState.cravings.filter((item) => toDateKey(item.date) === substanceTodayKey());
     const daysSinceUse = daysSinceLastSubstanceUse();
+    const syncPanel = substanceStatus === "loading"
+      ? `<section class="qapp-panel"><p>Syncing substance tracker...</p></section>`
+      : substanceStatus === "error"
+        ? `<section class="qapp-panel"><p>${escapeHtml(substanceError)} Saved changes will stay local until Supabase is available.</p></section>`
+        : "";
     const recentRows = [
       ...substanceState.entries.map((item) => ({ kind: "Use", date: item.date, title: `${item.type}${item.amount ? ` · ${item.amount}` : ""}`, note: [item.context, item.note].filter(Boolean).join(" · ") })),
       ...substanceState.cravings.map((item) => ({ kind: "Craving", date: item.date, title: `${item.type} · intensity ${item.intensity}/5`, note: [item.context, item.action].filter(Boolean).join(" · ") })),
     ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
 
     return `
+      ${syncPanel}
       <section class="qapp-grid qapp-grid--stats">
         <article class="qapp-panel">
           <span class="qapp-stat">${todayEntries.length}</span>
@@ -3013,9 +3086,6 @@
         event.preventDefault();
         close(new FormData(event.currentTarget));
       });
-      overlay.addEventListener("click", (event) => {
-        if (event.target === overlay) close(null);
-      });
       document.addEventListener("keydown", onKeydown);
       document.body.appendChild(overlay);
       setTimeout(() => overlay.querySelector('select[name="type"]')?.focus(), 0);
@@ -3054,9 +3124,6 @@
       </section>
     `;
     overlay.querySelector(".qapp-modal-confirm")?.addEventListener("click", () => overlay.remove());
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay) overlay.remove();
-    });
     document.body.appendChild(overlay);
   }
 
@@ -3067,7 +3134,7 @@
         if (action === "log-use") {
           const formData = await qappSubstanceFormModal("use");
           if (!formData) return;
-          substanceState.entries.unshift(normalizeSubstanceEntry({
+          const entry = normalizeSubstanceEntry({
             type: selectedSubstanceValue(formData),
             amount: formData.get("amount"),
             context: formData.get("context"),
@@ -3075,25 +3142,39 @@
             feelingAfter: formData.get("feelingAfter"),
             note: formData.get("note"),
             date: localDateTimeToIso(formData.get("date")),
-          }));
-          substanceState.entries = substanceState.entries.slice(0, 300);
-          saveSubstanceState();
-          render();
+          });
+          try {
+            await saveSubstanceResource("entry", entry);
+          } catch (error) {
+            substanceState.entries.unshift(entry);
+            substanceState.entries = substanceState.entries.slice(0, 300);
+            substanceStatus = "error";
+            substanceError = error?.message || "Unable to sync substance entry.";
+            saveSubstanceState();
+            render();
+          }
           return;
         }
         if (action === "log-craving") {
           const formData = await qappSubstanceFormModal("craving");
           if (!formData) return;
-          substanceState.cravings.unshift(normalizeCraving({
+          const craving = normalizeCraving({
             type: selectedSubstanceValue(formData),
             intensity: formData.get("intensity"),
             context: formData.get("context"),
             action: formData.get("action"),
             date: localDateTimeToIso(formData.get("date")),
-          }));
-          substanceState.cravings = substanceState.cravings.slice(0, 300);
-          saveSubstanceState();
-          render();
+          });
+          try {
+            await saveSubstanceResource("craving", craving);
+          } catch (error) {
+            substanceState.cravings.unshift(craving);
+            substanceState.cravings = substanceState.cravings.slice(0, 300);
+            substanceStatus = "error";
+            substanceError = error?.message || "Unable to sync craving.";
+            saveSubstanceState();
+            render();
+          }
           return;
         }
         if (action === "goals") {
@@ -3113,8 +3194,14 @@
             alcohol: values[1],
             caffeine: values[2],
           };
-          saveSubstanceState();
-          render();
+          try {
+            await saveSubstanceResource("goals", { goals: substanceState.goals });
+          } catch (error) {
+            substanceStatus = "error";
+            substanceError = error?.message || "Unable to sync goals.";
+            saveSubstanceState();
+            render();
+          }
           return;
         }
         if (action === "patterns") {
@@ -3122,11 +3209,21 @@
           return;
         }
         if (action === "clear-logs") {
-          if (!await qappConfirm("Clear all substance and craving logs from this device?", "Clear logs", { confirmLabel: "Clear", danger: true })) return;
-          substanceState.entries = [];
-          substanceState.cravings = [];
-          saveSubstanceState();
-          render();
+          if (!await qappConfirm("Clear all substance and craving logs?", "Clear logs", { confirmLabel: "Clear", danger: true })) return;
+          try {
+            applySubstancePayload(await apiJson("/api/substances?resource=all", { method: "DELETE" }));
+            clearSubstanceLocalState();
+            substanceStatus = "ready";
+            substanceError = "";
+            render();
+          } catch (error) {
+            substanceState.entries = [];
+            substanceState.cravings = [];
+            substanceStatus = "error";
+            substanceError = error?.message || "Unable to clear Supabase logs.";
+            saveSubstanceState();
+            render();
+          }
         }
       });
     });
