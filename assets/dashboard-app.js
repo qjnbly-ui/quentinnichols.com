@@ -2251,16 +2251,16 @@
     return toDateKey(new Date());
   }
 
+  function substanceEntriesForDay(key) {
+    return substanceState.entries.filter((entry) => toDateKey(entry.date) === key);
+  }
+
   function substanceDayKeys(days = 7) {
     return Array.from({ length: days }, (_, index) => {
       const date = new Date();
       date.setDate(date.getDate() - (days - 1 - index));
       return toDateKey(date);
     });
-  }
-
-  function substanceEntriesForDay(key) {
-    return substanceState.entries.filter((entry) => toDateKey(entry.date) === key);
   }
 
   function daysSinceLastSubstanceUse() {
@@ -2286,118 +2286,45 @@
     const todayEntries = substanceEntriesForDay(substanceTodayKey());
     const todayCravings = substanceState.cravings.filter((item) => toDateKey(item.date) === substanceTodayKey());
     const daysSinceUse = daysSinceLastSubstanceUse();
-    const dayKeys = substanceDayKeys(7);
-    const maxDayCount = Math.max(1, ...dayKeys.map((key) => substanceEntriesForDay(key).length));
     const recentRows = [
       ...substanceState.entries.map((item) => ({ kind: "Use", date: item.date, title: `${item.type}${item.amount ? ` · ${item.amount}` : ""}`, note: [item.context, item.note].filter(Boolean).join(" · ") })),
       ...substanceState.cravings.map((item) => ({ kind: "Craving", date: item.date, title: `${item.type} · intensity ${item.intensity}/5`, note: [item.context, item.action].filter(Boolean).join(" · ") })),
-    ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 12);
-    const contexts = topSubstanceContexts();
-    const goalRows = Object.entries(substanceState.goals || {});
+    ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
 
     return `
       <section class="qapp-grid qapp-grid--stats">
         <article class="qapp-panel">
           <span class="qapp-stat">${todayEntries.length}</span>
-          <h3>Use Logs Today</h3>
-          <p>${todayEntries.length ? "Logged without judgment. Look for the pattern." : "Nothing logged today."}</p>
+          <h3>Use Today</h3>
+          <p>${todayEntries.length ? "Logged." : "None logged."}</p>
         </article>
         <article class="qapp-panel">
           <span class="qapp-stat">${todayCravings.length}</span>
-          <h3>Cravings Today</h3>
-          <p>${todayCravings.length ? "Cravings captured before they disappear from memory." : "No cravings logged yet."}</p>
+          <h3>Cravings</h3>
+          <p>${todayCravings.length ? "Captured today." : "None logged."}</p>
         </article>
         <article class="qapp-panel">
           <span class="qapp-stat">${daysSinceUse === null ? "-" : daysSinceUse}</span>
-          <h3>Days Since Last Use</h3>
-          <p>${daysSinceUse === null ? "Start logging to build your baseline." : "A gap is information, not a verdict."}</p>
+          <h3>Days Since Use</h3>
+          <p>${daysSinceUse === null ? "No baseline yet." : "Current gap."}</p>
         </article>
       </section>
 
-      <section class="qapp-grid qapp-substance-main-grid">
-        <article class="qapp-panel">
-          <div class="qapp-panel-title-row">
-            <h3>Log Use</h3>
-            ${statusPill("Quick")}
-          </div>
-          <form id="qappSubstanceUseForm" class="qapp-capture-form qapp-substance-form">
-            <div class="qapp-capture-grid">
-              <label><span>Substance</span><select name="type">
-                ${["Nicotine", "Alcohol", "Caffeine", "Cannabis", "Medication", "Custom"].map((item) => `<option value="${item}">${item}</option>`).join("")}
-              </select></label>
-              <label><span>Amount</span><input name="amount" type="text" placeholder="1 pouch, 2 drinks, 120mg"></label>
-              <label><span>Context</span><select name="context">
-                ${["Stress", "Boredom", "Social", "Work", "Tired", "After meal", "Celebration", "Habit", "Other"].map((item) => `<option value="${item}">${item}</option>`).join("")}
-              </select></label>
-              <label><span>Time</span><input name="date" type="datetime-local" value="${escapeHtml(currentDateTimeInputValue())}"></label>
-            </div>
-            <div class="qapp-capture-grid">
-              <label><span>Feeling before</span><input name="feelingBefore" type="text" placeholder="Anxious, tired, restless"></label>
-              <label><span>Feeling after</span><input name="feelingAfter" type="text" placeholder="Calmer, foggy, unchanged"></label>
-            </div>
-            <label><span>Note</span><textarea name="note" rows="3" placeholder="What was happening? What would help next time?"></textarea></label>
-            <button type="submit">Save Use Log</button>
-          </form>
-        </article>
-
-        <article class="qapp-panel">
-          <div class="qapp-panel-title-row">
-            <h3>Log Craving</h3>
-            ${statusPill("Interrupt")}
-          </div>
-          <form id="qappSubstanceCravingForm" class="qapp-capture-form qapp-substance-form">
-            <div class="qapp-capture-grid">
-              <label><span>Substance</span><select name="type">
-                ${["Nicotine", "Alcohol", "Caffeine", "Cannabis", "Medication", "Custom"].map((item) => `<option value="${item}">${item}</option>`).join("")}
-              </select></label>
-              <label><span>Intensity</span><input name="intensity" type="range" min="1" max="5" value="3"></label>
-              <label><span>Context</span><select name="context">
-                ${["Stress", "Boredom", "Social", "Work", "Tired", "After meal", "Celebration", "Habit", "Other"].map((item) => `<option value="${item}">${item}</option>`).join("")}
-              </select></label>
-              <label><span>Time</span><input name="date" type="datetime-local" value="${escapeHtml(currentDateTimeInputValue())}"></label>
-            </div>
-            <label><span>What helped or what will you try?</span><textarea name="action" rows="3" placeholder="Walk, water, workout, call someone, wait 10 minutes..."></textarea></label>
-            <button type="submit">Save Craving</button>
-          </form>
-        </article>
-      </section>
-
-      <section class="qapp-grid">
-        <article class="qapp-panel">
-          <h3>Last 7 Days</h3>
-          <div class="qapp-substance-bars">
-            ${dayKeys.map((key) => {
-              const count = substanceEntriesForDay(key).length;
-              const percent = Math.round((count / maxDayCount) * 100);
-              return `<div><span>${escapeHtml(formatDateKey(key, key).replace(/, \\d{4}$/, ""))}</span><strong style="width:${percent}%"></strong><em>${count}</em></div>`;
-            }).join("")}
-          </div>
-        </article>
-        <article class="qapp-panel">
-          <h3>Common Triggers</h3>
-          <div class="qapp-list">
-            ${contexts.length ? contexts.map(([context, count]) => `<div class="qapp-memory-card"><span>${escapeHtml(context)}</span><strong>${count} log${count === 1 ? "" : "s"}</strong></div>`).join("") : `<p>No trigger patterns yet.</p>`}
-          </div>
-        </article>
-        <article class="qapp-panel">
-          <div class="qapp-panel-title-row">
-            <h3>Goals</h3>
-            <button class="qapp-text-button" data-substance-action="reset-goals" type="button">Reset</button>
-          </div>
-          <form id="qappSubstanceGoalsForm" class="qapp-capture-form qapp-substance-goals">
-            ${goalRows.map(([name, goal]) => `
-              <label><span>${escapeHtml(name.charAt(0).toUpperCase() + name.slice(1))}</span><input name="${escapeHtml(name)}" type="text" value="${escapeHtml(goal)}"></label>
-            `).join("")}
-            <button type="submit">Save Goals</button>
-          </form>
-        </article>
+      <section class="qapp-panel qapp-substance-simple">
+        <div class="qapp-panel-title-row">
+          <h3>Actions</h3>
+          <button class="qapp-text-button" data-substance-action="clear-logs" type="button">Clear</button>
+        </div>
+        <div class="qapp-action-row">
+          <button class="qapp-inline-button" data-substance-action="log-use" type="button">Log Use</button>
+          <button class="qapp-soft-button" data-substance-action="log-craving" type="button">Log Craving</button>
+          <button class="qapp-soft-button" data-substance-action="goals" type="button">Goals</button>
+          <button class="qapp-soft-button" data-substance-action="patterns" type="button">Patterns</button>
+        </div>
       </section>
 
       <section class="qapp-panel qapp-wide-panel">
-        <div class="qapp-panel-title-row">
-          <h3>Recent Logs</h3>
-          <button class="qapp-danger-button" data-substance-action="clear-logs" type="button">Clear Logs</button>
-        </div>
+        <h3>Recent</h3>
         <div class="qapp-list">
           ${recentRows.length ? recentRows.map((row) => `
             <article class="qapp-memory-card">
@@ -2405,7 +2332,7 @@
               <strong>${escapeHtml(row.title)}</strong>
               ${row.note ? `<small>${escapeHtml(row.note)}</small>` : ""}
             </article>
-          `).join("") : `<article class="qapp-memory-card"><span>No entries yet</span><strong>Use the forms above to start seeing patterns.</strong></article>`}
+          `).join("") : `<article class="qapp-memory-card"><span>No entries yet</span><strong>Nothing logged.</strong></article>`}
         </div>
       </section>
     `;
@@ -3012,61 +2939,186 @@
     return Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString();
   }
 
+  function selectedSubstanceValue(formData) {
+    const selected = String(formData.get("type") || "").trim();
+    const custom = String(formData.get("customType") || "").trim();
+    return selected === "Custom" ? custom || "Custom" : selected;
+  }
+
+  function substanceOptionsHtml() {
+    return ["Nicotine", "Alcohol", "Caffeine", "Cannabis", "Medication", "Custom"]
+      .map((item) => `<option value="${item}">${item}</option>`)
+      .join("");
+  }
+
+  function qappSubstanceFormModal(kind) {
+    return new Promise((resolve) => {
+      const isCraving = kind === "craving";
+      const overlay = document.createElement("div");
+      overlay.className = "qapp-modal-overlay";
+      overlay.innerHTML = `
+        <section class="qapp-modal qapp-substance-modal" role="dialog" aria-modal="true" aria-labelledby="qappSubstanceModalTitle">
+          <div class="qapp-modal-header">
+            <h2 id="qappSubstanceModalTitle">${isCraving ? "Log Craving" : "Log Use"}</h2>
+            <p>${isCraving ? "Capture the urge before the details fade." : "Keep the log quick and factual."}</p>
+          </div>
+          <form id="qappSubstanceModalForm" class="qapp-capture-form">
+            <div class="qapp-capture-grid">
+              <label><span>Substance</span><select name="type">${substanceOptionsHtml()}</select></label>
+              <label data-custom-substance-field hidden><span>Custom substance</span><input name="customType" type="text" placeholder="Name it"></label>
+              ${isCraving
+                ? `<label><span>Intensity</span><input name="intensity" type="range" min="1" max="5" value="3"></label>`
+                : `<label><span>Amount</span><input name="amount" type="text" placeholder="1 pouch, 2 drinks, 120mg"></label>`}
+              <label><span>Context</span><select name="context">
+                ${["Stress", "Boredom", "Social", "Work", "Tired", "After meal", "Celebration", "Habit", "Other"].map((item) => `<option value="${item}">${item}</option>`).join("")}
+              </select></label>
+              <label><span>Time</span><input name="date" type="datetime-local" value="${escapeHtml(currentDateTimeInputValue())}"></label>
+            </div>
+            ${isCraving
+              ? `<label><span>What helped or what will you try?</span><textarea name="action" rows="3" placeholder="Walk, water, workout, call someone, wait 10 minutes..."></textarea></label>`
+              : `<div class="qapp-capture-grid">
+                  <label><span>Feeling before</span><input name="feelingBefore" type="text" placeholder="Anxious, tired, restless"></label>
+                  <label><span>Feeling after</span><input name="feelingAfter" type="text" placeholder="Calmer, foggy, unchanged"></label>
+                </div>
+                <label><span>Note</span><textarea name="note" rows="3" placeholder="What was happening?"></textarea></label>`}
+            <div class="qapp-modal-actions">
+              <button class="qapp-modal-cancel" type="button">Cancel</button>
+              <button class="qapp-modal-confirm" type="submit">${isCraving ? "Save Craving" : "Save Use"}</button>
+            </div>
+          </form>
+        </section>
+      `;
+
+      function close(result) {
+        document.removeEventListener("keydown", onKeydown);
+        overlay.remove();
+        resolve(result);
+      }
+
+      function syncCustomField() {
+        const select = overlay.querySelector('select[name="type"]');
+        const field = overlay.querySelector("[data-custom-substance-field]");
+        if (!select || !field) return;
+        field.hidden = select.value !== "Custom";
+        if (!field.hidden) field.querySelector("input")?.focus();
+      }
+
+      function onKeydown(event) {
+        if (event.key === "Escape") close(null);
+      }
+
+      overlay.querySelector('select[name="type"]')?.addEventListener("change", syncCustomField);
+      overlay.querySelector(".qapp-modal-cancel")?.addEventListener("click", () => close(null));
+      overlay.querySelector("#qappSubstanceModalForm")?.addEventListener("submit", (event) => {
+        event.preventDefault();
+        close(new FormData(event.currentTarget));
+      });
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) close(null);
+      });
+      document.addEventListener("keydown", onKeydown);
+      document.body.appendChild(overlay);
+      setTimeout(() => overlay.querySelector('select[name="type"]')?.focus(), 0);
+    });
+  }
+
+  function qappSubstancePatternsModal() {
+    const dayKeys = substanceDayKeys(7);
+    const maxDayCount = Math.max(1, ...dayKeys.map((key) => substanceEntriesForDay(key).length));
+    const contexts = topSubstanceContexts();
+    const overlay = document.createElement("div");
+    overlay.className = "qapp-modal-overlay";
+    overlay.innerHTML = `
+      <section class="qapp-modal qapp-substance-modal" role="dialog" aria-modal="true" aria-labelledby="qappSubstancePatternsTitle">
+        <div class="qapp-modal-header">
+          <h2 id="qappSubstancePatternsTitle">Patterns</h2>
+          <p>Small signals from the logs on this device.</p>
+        </div>
+        <div class="qapp-substance-modal-body">
+          <h3>Last 7 Days</h3>
+          <div class="qapp-substance-bars">
+            ${dayKeys.map((key) => {
+              const count = substanceEntriesForDay(key).length;
+              const percent = Math.round((count / maxDayCount) * 100);
+              return `<div><span>${escapeHtml(formatDateKey(key, key).replace(/, \\d{4}$/, ""))}</span><strong style="width:${percent}%"></strong><em>${count}</em></div>`;
+            }).join("")}
+          </div>
+          <h3>Common Triggers</h3>
+          <div class="qapp-list">
+            ${contexts.length ? contexts.map(([context, count]) => `<div class="qapp-memory-card"><span>${escapeHtml(context)}</span><strong>${count} log${count === 1 ? "" : "s"}</strong></div>`).join("") : `<p>No trigger patterns yet.</p>`}
+          </div>
+        </div>
+        <div class="qapp-modal-actions">
+          <button class="qapp-modal-confirm" type="button">Done</button>
+        </div>
+      </section>
+    `;
+    overlay.querySelector(".qapp-modal-confirm")?.addEventListener("click", () => overlay.remove());
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+  }
+
   function bindSubstanceForms() {
-    const useForm = document.getElementById("qappSubstanceUseForm");
-    useForm?.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const formData = new FormData(useForm);
-      substanceState.entries.unshift(normalizeSubstanceEntry({
-        type: formData.get("type"),
-        amount: formData.get("amount"),
-        context: formData.get("context"),
-        feelingBefore: formData.get("feelingBefore"),
-        feelingAfter: formData.get("feelingAfter"),
-        note: formData.get("note"),
-        date: localDateTimeToIso(formData.get("date")),
-      }));
-      substanceState.entries = substanceState.entries.slice(0, 300);
-      saveSubstanceState();
-      render();
-    });
-
-    const cravingForm = document.getElementById("qappSubstanceCravingForm");
-    cravingForm?.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const formData = new FormData(cravingForm);
-      substanceState.cravings.unshift(normalizeCraving({
-        type: formData.get("type"),
-        intensity: formData.get("intensity"),
-        context: formData.get("context"),
-        action: formData.get("action"),
-        date: localDateTimeToIso(formData.get("date")),
-      }));
-      substanceState.cravings = substanceState.cravings.slice(0, 300);
-      saveSubstanceState();
-      render();
-    });
-
-    const goalsForm = document.getElementById("qappSubstanceGoalsForm");
-    goalsForm?.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const formData = new FormData(goalsForm);
-      substanceState.goals = {
-        nicotine: String(formData.get("nicotine") || "").trim(),
-        alcohol: String(formData.get("alcohol") || "").trim(),
-        caffeine: String(formData.get("caffeine") || "").trim(),
-      };
-      saveSubstanceState();
-      render();
-    });
-
     [...document.querySelectorAll("[data-substance-action]")].forEach((button) => {
       button.addEventListener("click", async () => {
         const action = button.dataset.substanceAction || "";
-        if (action === "reset-goals") {
-          substanceState.goals = defaultSubstanceState().goals;
+        if (action === "log-use") {
+          const formData = await qappSubstanceFormModal("use");
+          if (!formData) return;
+          substanceState.entries.unshift(normalizeSubstanceEntry({
+            type: selectedSubstanceValue(formData),
+            amount: formData.get("amount"),
+            context: formData.get("context"),
+            feelingBefore: formData.get("feelingBefore"),
+            feelingAfter: formData.get("feelingAfter"),
+            note: formData.get("note"),
+            date: localDateTimeToIso(formData.get("date")),
+          }));
+          substanceState.entries = substanceState.entries.slice(0, 300);
           saveSubstanceState();
           render();
+          return;
+        }
+        if (action === "log-craving") {
+          const formData = await qappSubstanceFormModal("craving");
+          if (!formData) return;
+          substanceState.cravings.unshift(normalizeCraving({
+            type: selectedSubstanceValue(formData),
+            intensity: formData.get("intensity"),
+            context: formData.get("context"),
+            action: formData.get("action"),
+            date: localDateTimeToIso(formData.get("date")),
+          }));
+          substanceState.cravings = substanceState.cravings.slice(0, 300);
+          saveSubstanceState();
+          render();
+          return;
+        }
+        if (action === "goals") {
+          const values = await qappModal({
+            title: "Goals",
+            message: "Keep these simple and useful.",
+            fields: [
+              { label: "Nicotine", value: substanceState.goals.nicotine || "" },
+              { label: "Alcohol", value: substanceState.goals.alcohol || "" },
+              { label: "Caffeine", value: substanceState.goals.caffeine || "" },
+            ],
+            confirmLabel: "Save Goals",
+          });
+          if (!values) return;
+          substanceState.goals = {
+            nicotine: values[0],
+            alcohol: values[1],
+            caffeine: values[2],
+          };
+          saveSubstanceState();
+          render();
+          return;
+        }
+        if (action === "patterns") {
+          qappSubstancePatternsModal();
           return;
         }
         if (action === "clear-logs") {
