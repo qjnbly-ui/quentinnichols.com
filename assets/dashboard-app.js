@@ -17,6 +17,7 @@
     calendar: "Calendar",
     tasks: "Tasks",
     fitness: "Fitness",
+    substances: "Substance Tracker",
     notes: "Notes",
     ai: "AI Assistant",
   };
@@ -50,6 +51,8 @@
   let fitnessError = "";
   let fitnessState = loadFitnessState();
   let fitnessTimerId = 0;
+  const substanceStorageKey = "qappSubstanceTrackerState";
+  let substanceState = loadSubstanceState();
 
   function escapeHtml(value) {
     return String(value || "")
@@ -281,6 +284,66 @@
 
   function saveFitnessState() {
     window.localStorage.setItem(fitnessStorageKey, JSON.stringify(fitnessState));
+  }
+
+  function defaultSubstanceState() {
+    return {
+      entries: [],
+      cravings: [],
+      goals: {
+        nicotine: "Reduce and stay aware",
+        alcohol: "Keep within intentional limits",
+        caffeine: "Avoid late-day use",
+      },
+    };
+  }
+
+  function normalizeSubstanceEntry(row) {
+    return {
+      id: row?.id || `substance-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      type: String(row?.type || "custom").trim(),
+      amount: String(row?.amount || "").trim(),
+      context: String(row?.context || "").trim(),
+      feelingBefore: String(row?.feelingBefore || "").trim(),
+      feelingAfter: String(row?.feelingAfter || "").trim(),
+      note: String(row?.note || "").trim(),
+      date: row?.date || new Date().toISOString(),
+    };
+  }
+
+  function normalizeCraving(row) {
+    return {
+      id: row?.id || `craving-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      type: String(row?.type || "custom").trim(),
+      intensity: Math.max(1, Math.min(5, Number(row?.intensity || 3))),
+      context: String(row?.context || "").trim(),
+      action: String(row?.action || "").trim(),
+      date: row?.date || new Date().toISOString(),
+    };
+  }
+
+  function loadSubstanceState() {
+    const defaults = defaultSubstanceState();
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(substanceStorageKey) || "null") || {};
+      return {
+        entries: Array.isArray(saved.entries) ? saved.entries.map(normalizeSubstanceEntry) : [],
+        cravings: Array.isArray(saved.cravings) ? saved.cravings.map(normalizeCraving) : [],
+        goals: { ...defaults.goals, ...(saved.goals && typeof saved.goals === "object" ? saved.goals : {}) },
+      };
+    } catch {
+      return defaults;
+    }
+  }
+
+  function saveSubstanceState() {
+    window.localStorage.setItem(substanceStorageKey, JSON.stringify(substanceState));
+  }
+
+  function currentDateTimeInputValue() {
+    const date = new Date();
+    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+    return date.toISOString().slice(0, 16);
   }
 
   function fitnessTodayKey() {
@@ -2184,6 +2247,170 @@
     return renderFitnessHome();
   }
 
+  function substanceTodayKey() {
+    return toDateKey(new Date());
+  }
+
+  function substanceDayKeys(days = 7) {
+    return Array.from({ length: days }, (_, index) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (days - 1 - index));
+      return toDateKey(date);
+    });
+  }
+
+  function substanceEntriesForDay(key) {
+    return substanceState.entries.filter((entry) => toDateKey(entry.date) === key);
+  }
+
+  function daysSinceLastSubstanceUse() {
+    if (!substanceState.entries.length) return null;
+    const latest = [...substanceState.entries].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    const latestDate = dateFromKey(toDateKey(latest.date));
+    const today = dateFromKey(substanceTodayKey());
+    if (!latestDate || !today) return null;
+    return Math.max(0, Math.floor((today - latestDate) / 86400000));
+  }
+
+  function topSubstanceContexts(limit = 5) {
+    const counts = new Map();
+    [...substanceState.entries, ...substanceState.cravings].forEach((item) => {
+      const context = String(item.context || "").trim();
+      if (!context) return;
+      counts.set(context, (counts.get(context) || 0) + 1);
+    });
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+  }
+
+  function renderSubstanceTracker() {
+    const todayEntries = substanceEntriesForDay(substanceTodayKey());
+    const todayCravings = substanceState.cravings.filter((item) => toDateKey(item.date) === substanceTodayKey());
+    const daysSinceUse = daysSinceLastSubstanceUse();
+    const dayKeys = substanceDayKeys(7);
+    const maxDayCount = Math.max(1, ...dayKeys.map((key) => substanceEntriesForDay(key).length));
+    const recentRows = [
+      ...substanceState.entries.map((item) => ({ kind: "Use", date: item.date, title: `${item.type}${item.amount ? ` · ${item.amount}` : ""}`, note: [item.context, item.note].filter(Boolean).join(" · ") })),
+      ...substanceState.cravings.map((item) => ({ kind: "Craving", date: item.date, title: `${item.type} · intensity ${item.intensity}/5`, note: [item.context, item.action].filter(Boolean).join(" · ") })),
+    ].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 12);
+    const contexts = topSubstanceContexts();
+    const goalRows = Object.entries(substanceState.goals || {});
+
+    return `
+      <section class="qapp-grid qapp-grid--stats">
+        <article class="qapp-panel">
+          <span class="qapp-stat">${todayEntries.length}</span>
+          <h3>Use Logs Today</h3>
+          <p>${todayEntries.length ? "Logged without judgment. Look for the pattern." : "Nothing logged today."}</p>
+        </article>
+        <article class="qapp-panel">
+          <span class="qapp-stat">${todayCravings.length}</span>
+          <h3>Cravings Today</h3>
+          <p>${todayCravings.length ? "Cravings captured before they disappear from memory." : "No cravings logged yet."}</p>
+        </article>
+        <article class="qapp-panel">
+          <span class="qapp-stat">${daysSinceUse === null ? "-" : daysSinceUse}</span>
+          <h3>Days Since Last Use</h3>
+          <p>${daysSinceUse === null ? "Start logging to build your baseline." : "A gap is information, not a verdict."}</p>
+        </article>
+      </section>
+
+      <section class="qapp-grid qapp-substance-main-grid">
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Log Use</h3>
+            ${statusPill("Quick")}
+          </div>
+          <form id="qappSubstanceUseForm" class="qapp-capture-form qapp-substance-form">
+            <div class="qapp-capture-grid">
+              <label><span>Substance</span><select name="type">
+                ${["Nicotine", "Alcohol", "Caffeine", "Cannabis", "Medication", "Custom"].map((item) => `<option value="${item}">${item}</option>`).join("")}
+              </select></label>
+              <label><span>Amount</span><input name="amount" type="text" placeholder="1 pouch, 2 drinks, 120mg"></label>
+              <label><span>Context</span><select name="context">
+                ${["Stress", "Boredom", "Social", "Work", "Tired", "After meal", "Celebration", "Habit", "Other"].map((item) => `<option value="${item}">${item}</option>`).join("")}
+              </select></label>
+              <label><span>Time</span><input name="date" type="datetime-local" value="${escapeHtml(currentDateTimeInputValue())}"></label>
+            </div>
+            <div class="qapp-capture-grid">
+              <label><span>Feeling before</span><input name="feelingBefore" type="text" placeholder="Anxious, tired, restless"></label>
+              <label><span>Feeling after</span><input name="feelingAfter" type="text" placeholder="Calmer, foggy, unchanged"></label>
+            </div>
+            <label><span>Note</span><textarea name="note" rows="3" placeholder="What was happening? What would help next time?"></textarea></label>
+            <button type="submit">Save Use Log</button>
+          </form>
+        </article>
+
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Log Craving</h3>
+            ${statusPill("Interrupt")}
+          </div>
+          <form id="qappSubstanceCravingForm" class="qapp-capture-form qapp-substance-form">
+            <div class="qapp-capture-grid">
+              <label><span>Substance</span><select name="type">
+                ${["Nicotine", "Alcohol", "Caffeine", "Cannabis", "Medication", "Custom"].map((item) => `<option value="${item}">${item}</option>`).join("")}
+              </select></label>
+              <label><span>Intensity</span><input name="intensity" type="range" min="1" max="5" value="3"></label>
+              <label><span>Context</span><select name="context">
+                ${["Stress", "Boredom", "Social", "Work", "Tired", "After meal", "Celebration", "Habit", "Other"].map((item) => `<option value="${item}">${item}</option>`).join("")}
+              </select></label>
+              <label><span>Time</span><input name="date" type="datetime-local" value="${escapeHtml(currentDateTimeInputValue())}"></label>
+            </div>
+            <label><span>What helped or what will you try?</span><textarea name="action" rows="3" placeholder="Walk, water, workout, call someone, wait 10 minutes..."></textarea></label>
+            <button type="submit">Save Craving</button>
+          </form>
+        </article>
+      </section>
+
+      <section class="qapp-grid">
+        <article class="qapp-panel">
+          <h3>Last 7 Days</h3>
+          <div class="qapp-substance-bars">
+            ${dayKeys.map((key) => {
+              const count = substanceEntriesForDay(key).length;
+              const percent = Math.round((count / maxDayCount) * 100);
+              return `<div><span>${escapeHtml(formatDateKey(key, key).replace(/, \\d{4}$/, ""))}</span><strong style="width:${percent}%"></strong><em>${count}</em></div>`;
+            }).join("")}
+          </div>
+        </article>
+        <article class="qapp-panel">
+          <h3>Common Triggers</h3>
+          <div class="qapp-list">
+            ${contexts.length ? contexts.map(([context, count]) => `<div class="qapp-memory-card"><span>${escapeHtml(context)}</span><strong>${count} log${count === 1 ? "" : "s"}</strong></div>`).join("") : `<p>No trigger patterns yet.</p>`}
+          </div>
+        </article>
+        <article class="qapp-panel">
+          <div class="qapp-panel-title-row">
+            <h3>Goals</h3>
+            <button class="qapp-text-button" data-substance-action="reset-goals" type="button">Reset</button>
+          </div>
+          <form id="qappSubstanceGoalsForm" class="qapp-capture-form qapp-substance-goals">
+            ${goalRows.map(([name, goal]) => `
+              <label><span>${escapeHtml(name.charAt(0).toUpperCase() + name.slice(1))}</span><input name="${escapeHtml(name)}" type="text" value="${escapeHtml(goal)}"></label>
+            `).join("")}
+            <button type="submit">Save Goals</button>
+          </form>
+        </article>
+      </section>
+
+      <section class="qapp-panel qapp-wide-panel">
+        <div class="qapp-panel-title-row">
+          <h3>Recent Logs</h3>
+          <button class="qapp-danger-button" data-substance-action="clear-logs" type="button">Clear Logs</button>
+        </div>
+        <div class="qapp-list">
+          ${recentRows.length ? recentRows.map((row) => `
+            <article class="qapp-memory-card">
+              <span>${escapeHtml(`${row.kind} · ${formatDateTime(row.date)}`)}</span>
+              <strong>${escapeHtml(row.title)}</strong>
+              ${row.note ? `<small>${escapeHtml(row.note)}</small>` : ""}
+            </article>
+          `).join("") : `<article class="qapp-memory-card"><span>No entries yet</span><strong>Use the forms above to start seeing patterns.</strong></article>`}
+        </div>
+      </section>
+    `;
+  }
+
   function renderPlaceholder(route, kicker, title, copy, items) {
     return `
       <section class="qapp-grid">
@@ -2225,6 +2452,9 @@
     } else if (currentRoute === "fitness") {
       view.innerHTML = renderFitness();
       bindFitnessForms();
+    } else if (currentRoute === "substances") {
+      view.innerHTML = renderSubstanceTracker();
+      bindSubstanceForms();
     } else if (currentRoute === "notes") {
       view.innerHTML = renderPlaceholder("notes", "Capture", "Notes", "Notes will hold quick thoughts, planning entries, and raw material before AI organizes it.", [
         { title: "Quick Note", status: "Planned", copy: "Capture a thought without deciding where it belongs yet." },
@@ -2774,6 +3004,79 @@
       } catch (error) {
         await qappAlert(error?.message || "Unable to save workout plan.", "Fitness");
       }
+    });
+  }
+
+  function localDateTimeToIso(value) {
+    const date = value ? new Date(value) : new Date();
+    return Number.isFinite(date.getTime()) ? date.toISOString() : new Date().toISOString();
+  }
+
+  function bindSubstanceForms() {
+    const useForm = document.getElementById("qappSubstanceUseForm");
+    useForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = new FormData(useForm);
+      substanceState.entries.unshift(normalizeSubstanceEntry({
+        type: formData.get("type"),
+        amount: formData.get("amount"),
+        context: formData.get("context"),
+        feelingBefore: formData.get("feelingBefore"),
+        feelingAfter: formData.get("feelingAfter"),
+        note: formData.get("note"),
+        date: localDateTimeToIso(formData.get("date")),
+      }));
+      substanceState.entries = substanceState.entries.slice(0, 300);
+      saveSubstanceState();
+      render();
+    });
+
+    const cravingForm = document.getElementById("qappSubstanceCravingForm");
+    cravingForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = new FormData(cravingForm);
+      substanceState.cravings.unshift(normalizeCraving({
+        type: formData.get("type"),
+        intensity: formData.get("intensity"),
+        context: formData.get("context"),
+        action: formData.get("action"),
+        date: localDateTimeToIso(formData.get("date")),
+      }));
+      substanceState.cravings = substanceState.cravings.slice(0, 300);
+      saveSubstanceState();
+      render();
+    });
+
+    const goalsForm = document.getElementById("qappSubstanceGoalsForm");
+    goalsForm?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = new FormData(goalsForm);
+      substanceState.goals = {
+        nicotine: String(formData.get("nicotine") || "").trim(),
+        alcohol: String(formData.get("alcohol") || "").trim(),
+        caffeine: String(formData.get("caffeine") || "").trim(),
+      };
+      saveSubstanceState();
+      render();
+    });
+
+    [...document.querySelectorAll("[data-substance-action]")].forEach((button) => {
+      button.addEventListener("click", async () => {
+        const action = button.dataset.substanceAction || "";
+        if (action === "reset-goals") {
+          substanceState.goals = defaultSubstanceState().goals;
+          saveSubstanceState();
+          render();
+          return;
+        }
+        if (action === "clear-logs") {
+          if (!await qappConfirm("Clear all substance and craving logs from this device?", "Clear logs", { confirmLabel: "Clear", danger: true })) return;
+          substanceState.entries = [];
+          substanceState.cravings = [];
+          saveSubstanceState();
+          render();
+        }
+      });
     });
   }
 

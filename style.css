@@ -5137,6 +5137,10 @@ body.nav-menu-open {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.qapp-substance-main-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .qapp-fitness-option {
   background: var(--qapp-panel);
   border: 1px solid var(--qapp-border);
@@ -5312,7 +5316,14 @@ body.nav-menu-open {
   margin-top: 14px;
 }
 
-.qapp-fitness-bars div {
+.qapp-substance-bars {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.qapp-fitness-bars div,
+.qapp-substance-bars div {
   align-items: center;
   display: grid;
   gap: 8px;
@@ -5320,13 +5331,16 @@ body.nav-menu-open {
 }
 
 .qapp-fitness-bars span,
-.qapp-fitness-bars em {
+.qapp-fitness-bars em,
+.qapp-substance-bars span,
+.qapp-substance-bars em {
   color: var(--qapp-muted);
   font-size: 0.78rem;
   font-style: normal;
 }
 
-.qapp-fitness-bars strong {
+.qapp-fitness-bars strong,
+.qapp-substance-bars strong {
   background: linear-gradient(90deg, rgba(200, 173, 106, 0.9), rgba(142, 191, 159, 0.9));
   border-radius: 999px;
   display: block;
@@ -6358,6 +6372,7 @@ body.qapp-drawer-open {
   .qapp-memory-list,
   .qapp-calendar-layout,
   .qapp-task-board,
+  .qapp-substance-main-grid,
   .qapp-fitness-options,
   .qapp-fitness-plan-list,
   .qapp-fitness-habit-grid {
