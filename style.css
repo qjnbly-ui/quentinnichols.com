@@ -2906,6 +2906,8 @@ body.nav-menu-open {
   position: relative;
   z-index: 1;
   width: min(640px, 100%);
+  max-height: min(760px, calc(100vh - 40px));
+  overflow: auto;
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: #121212;
@@ -2944,6 +2946,45 @@ body.nav-menu-open {
   margin: 18px 0 0;
   font-size: 13px;
   color: var(--muted);
+}
+
+.reads-reflection-dialog {
+  width: min(720px, 100%);
+}
+
+.reads-reflection-heading {
+  margin: 24px 0 8px;
+  font-size: 13px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d7c7a1;
+}
+
+.reads-reflection-heading:first-of-type {
+  margin-top: 0;
+}
+
+.reads-reflection-text,
+.reads-reflection-quote {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: #f4f2ec;
+}
+
+.reads-reflection-text + .reads-reflection-text {
+  margin-top: 14px;
+}
+
+.reads-reflection-quote {
+  border-left: 2px solid rgba(215, 199, 161, 0.45);
+  padding-left: 14px;
+  color: #ebe3d2;
+}
+
+.reads-reflection-quote + .reads-reflection-quote {
+  margin-top: 12px;
 }
 
 @media (max-width: 720px) {

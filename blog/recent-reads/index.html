@@ -165,7 +165,7 @@
             <button
               class="reads-quote-trigger"
               type="button"
-              data-quote-trigger
+              data-quote-trigger="war-of-art"
               aria-label="Open quote from The War of Art"
             >
               <img src="/blog/images/theWarofArt.jpg" alt="The War of Art book cover" loading="lazy">
@@ -173,10 +173,26 @@
             </button>
           </div>
           <div class="reads-shelf-card">
-            <img src="/assets/Books%20I%20Have%20Read/theruthlesseliminationofhurry.jpeg" alt="The Ruthless Elimination of Hurry book cover" loading="lazy">
+            <button
+              class="reads-quote-trigger"
+              type="button"
+              data-quote-trigger="ruthless-elimination-of-hurry"
+              aria-label="Open reflection on The Ruthless Elimination of Hurry"
+            >
+              <img src="/assets/Books%20I%20Have%20Read/theruthlesseliminationofhurry.jpeg" alt="The Ruthless Elimination of Hurry book cover" loading="lazy">
+              <span class="reads-shelf-badge">Reflection</span>
+            </button>
           </div>
           <div class="reads-shelf-card">
-            <img src="/assets/Books%20I%20Have%20Read/dopaminenation.jpg" alt="Dopamine Nation book cover" loading="lazy">
+            <button
+              class="reads-quote-trigger"
+              type="button"
+              data-quote-trigger="dopamine-nation"
+              aria-label="Open reflection on Dopamine Nation"
+            >
+              <img src="/assets/Books%20I%20Have%20Read/dopaminenation.jpg" alt="Dopamine Nation book cover" loading="lazy">
+              <span class="reads-shelf-badge">Reflection</span>
+            </button>
           </div>
         </div>
       </div>
@@ -206,7 +222,7 @@
       </div>
     </section>
   </main>
-  <div class="reads-quote-modal" data-quote-modal hidden>
+  <div class="reads-quote-modal" data-quote-modal="war-of-art" hidden>
     <button class="reads-quote-backdrop" type="button" data-quote-close aria-label="Close quote popup"></button>
     <div class="reads-quote-dialog" role="dialog" aria-modal="true" aria-labelledby="reads-quote-title">
       <button class="reads-quote-close" type="button" data-quote-close aria-label="Close quote popup">&times;</button>
@@ -217,32 +233,123 @@
       <p class="reads-quote-attribution">— Steven Pressfield, <em>The War of Art</em> (2002)</p>
     </div>
   </div>
+  <div class="reads-quote-modal" data-quote-modal="ruthless-elimination-of-hurry" hidden>
+    <button class="reads-quote-backdrop" type="button" data-quote-close aria-label="Close reflection popup"></button>
+    <div class="reads-quote-dialog reads-reflection-dialog" role="dialog" aria-modal="true" aria-labelledby="ruthless-elimination-title">
+      <button class="reads-quote-close" type="button" data-quote-close aria-label="Close reflection popup">&times;</button>
+      <p id="ruthless-elimination-title" class="reads-quote-title">From <em>The Ruthless Elimination of Hurry</em></p>
+
+      <h2 class="reads-reflection-heading">Biggest Takeaway</h2>
+      <p class="reads-reflection-text">
+        Hurry isn’t just moving fast. It’s a state of mind that keeps us from fully experiencing the present moment and
+        from noticing God, other people, and even our own lives.
+      </p>
+
+      <h2 class="reads-reflection-heading">Reflection</h2>
+      <p class="reads-reflection-text">
+        What made this book different was John Mark Comer himself. He doesn’t write as someone who has life completely
+        figured out. Instead, he openly shares his own struggles with hurry, distraction, ambition, and the pressures of
+        modern life. That honesty made his message feel genuine and relatable.
+      </p>
+      <p class="reads-reflection-text">
+        One of the ideas that stayed with me most was how Jesus was never in a hurry. Even with endless demands on His
+        time, He was fully present with the people in front of Him. He regularly withdrew to pray, made time with the
+        Father even during His busiest days, walked instead of rushed, and never seemed controlled by urgency. It
+        challenged me to realize that being busy isn’t the same as living well.
+      </p>
+      <p class="reads-reflection-text">
+        The book also gave me a new appreciation for the Sabbath. The idea of intentionally setting aside time to rest,
+        worship, and simply be present with God feels incredibly meaningful in a culture that celebrates constant
+        productivity. I hope to make that a reality in my own life someday.
+      </p>
+      <p class="reads-reflection-text">
+        This book made me question how often I’m physically present but mentally somewhere else, thinking about what’s
+        next instead of appreciating where I am. Slowing down isn’t about accomplishing less; it’s about becoming more
+        present with God, with others, and with the life I’ve already been given.
+      </p>
+
+      <h2 class="reads-reflection-heading">Quotes That Stuck With Me</h2>
+      <blockquote class="reads-reflection-quote">
+        “Love, joy, and peace are at the heart of all Jesus is trying to grow in the soil of your life. But all three are
+        incompatible with hurry.”
+      </blockquote>
+      <blockquote class="reads-reflection-quote">
+        “Who are you becoming?”
+      </blockquote>
+    </div>
+  </div>
+  <div class="reads-quote-modal" data-quote-modal="dopamine-nation" hidden>
+    <button class="reads-quote-backdrop" type="button" data-quote-close aria-label="Close reflection popup"></button>
+    <div class="reads-quote-dialog reads-reflection-dialog" role="dialog" aria-modal="true" aria-labelledby="dopamine-nation-title">
+      <button class="reads-quote-close" type="button" data-quote-close aria-label="Close reflection popup">&times;</button>
+      <p id="dopamine-nation-title" class="reads-quote-title">From <em>Dopamine Nation</em></p>
+
+      <h2 class="reads-reflection-heading">Biggest Takeaway</h2>
+      <p class="reads-reflection-text">
+        Pleasure and pain are part of the same system. The more I chase constant stimulation, the harder it becomes to
+        enjoy ordinary life.
+      </p>
+
+      <h2 class="reads-reflection-heading">Reflection</h2>
+      <p class="reads-reflection-text">
+        This book completely changed how I viewed my own habits. I always thought my struggles were about nicotine or my
+        phone individually, but I came to realize they were all expressions of the same reward system. It explained why I
+        could quit one habit only to immediately crave another.
+      </p>
+      <p class="reads-reflection-text">
+        Instead of asking, “How do I avoid discomfort?” I’ve started asking, “What kind of discomfort is actually helping
+        me grow?” Working out, staying busy, and resisting constant stimulation have become ways of retraining my brain
+        rather than simply exercising discipline. The goal isn’t to eliminate discomfort; it’s to choose the kinds of
+        discomfort that make life richer and more rewarding over time.
+      </p>
+
+      <h2 class="reads-reflection-heading">Favorite Quotes</h2>
+      <blockquote class="reads-reflection-quote">
+        “The relentless pursuit of pleasure and avoidance of pain, leads to pain.”
+      </blockquote>
+      <blockquote class="reads-reflection-quote">
+        “Pressing on the pain side, resets our balance to the side of pleasure.”
+      </blockquote>
+    </div>
+  </div>
   <script>
     (() => {
-      const trigger = document.querySelector("[data-quote-trigger]");
-      const modal = document.querySelector("[data-quote-modal]");
-      if (!trigger || !modal) return;
+      const triggers = document.querySelectorAll("[data-quote-trigger]");
+      const modals = document.querySelectorAll("[data-quote-modal]");
+      if (!triggers.length || !modals.length) return;
 
-      const closeControls = modal.querySelectorAll("[data-quote-close]");
-
-      const closeModal = () => {
-        modal.hidden = true;
+      const closeModals = () => {
+        modals.forEach((modal) => {
+          modal.hidden = true;
+        });
         document.body.classList.remove("reads-quote-open");
       };
 
-      const openModal = () => {
+      const openModal = (modal) => {
+        closeModals();
         modal.hidden = false;
         document.body.classList.add("reads-quote-open");
       };
 
-      trigger.addEventListener("click", openModal);
-      closeControls.forEach((control) => {
-        control.addEventListener("click", closeModal);
+      triggers.forEach((trigger) => {
+        trigger.addEventListener("click", () => {
+          const modal = document.querySelector(`[data-quote-modal="${trigger.dataset.quoteTrigger}"]`);
+          if (modal) {
+            openModal(modal);
+          }
+        });
+      });
+
+      modals.forEach((modal) => {
+        const closeControls = modal.querySelectorAll("[data-quote-close]");
+        closeControls.forEach((control) => {
+          control.addEventListener("click", closeModals);
+        });
       });
 
       window.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && !modal.hidden) {
-          closeModal();
+        if (event.key === "Escape") {
+          closeModals();
         }
       });
     })();
