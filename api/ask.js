@@ -90,6 +90,9 @@ async function loadPrivateAppContext(req) {
       calendarEvents,
       tasks,
       notes,
+      substanceEntries,
+      substanceCravings,
+      substanceGoals,
       aiContextItems,
     ] = await Promise.all([
       loadPrivateTable(
@@ -119,6 +122,18 @@ async function loadPrivateAppContext(req) {
       loadPrivateTable(
         supabaseRest,
         "notes?select=id,title,body,source,updated_at&order=updated_at.desc&limit=80"
+      ),
+      loadPrivateTable(
+        supabaseRest,
+        "substance_entries?select=id,type,amount,context,feeling_before,feeling_after,notes,logged_at&order=logged_at.desc&limit=120"
+      ),
+      loadPrivateTable(
+        supabaseRest,
+        "substance_cravings?select=id,type,intensity,context,action,logged_at&order=logged_at.desc&limit=120"
+      ),
+      loadPrivateTable(
+        supabaseRest,
+        "substance_goals?select=id,category,goal,updated_at&order=category.asc"
       ),
       loadPrivateTable(
         supabaseRest,
@@ -194,6 +209,18 @@ ${formatBullets(tasks, (task) => `- ${task.status || "todo"} | ${task.priority |
 
 Notes:
 ${formatBullets(notes, (note) => `- ${note.title || "Untitled note"} | ${String(note.body || "").slice(0, 700)}`)}
+
+Substance tracker goals:
+${formatBullets(substanceGoals, (goal) => `- ${goal.category}: ${goal.goal || "No goal saved"}`)}
+
+Recent substance use logs:
+${formatBullets(substanceEntries, (entry) => {
+  const feelings = [entry.feeling_before ? `before: ${entry.feeling_before}` : "", entry.feeling_after ? `after: ${entry.feeling_after}` : ""].filter(Boolean).join("; ");
+  return `- ${entry.logged_at || "unknown date"} | ${entry.type}${entry.amount ? ` | amount: ${entry.amount}` : ""}${entry.context ? ` | context: ${entry.context}` : ""}${feelings ? ` | ${feelings}` : ""}${entry.notes ? ` | ${entry.notes}` : ""}`;
+})}
+
+Recent substance craving logs:
+${formatBullets(substanceCravings, (craving) => `- ${craving.logged_at || "unknown date"} | ${craving.type} | intensity ${craving.intensity || 0}/5${craving.context ? ` | context: ${craving.context}` : ""}${craving.action ? ` | action: ${craving.action}` : ""}`)}
 
 AI context items:
 ${formatBullets(aiContextItems, (item) => `- ${item.source_type} | ${item.title || "Untitled"} | importance ${item.importance || 0} | ${String(item.content || "").slice(0, 700)}`)}
