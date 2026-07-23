@@ -6,6 +6,15 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/Favicon32.png" />
 <title>Quentin Nichols</title>
   <meta name="description" content="This site brings together the projects, photographs, and ideas I’m building along the way." />
+  <script>
+    try {
+      if (!sessionStorage.getItem("qjn-home-intro-seen-v1")) {
+        document.documentElement.classList.add("qjn-intro-ready");
+      }
+    } catch (_error) {
+      document.documentElement.classList.add("qjn-intro-ready");
+    }
+  </script>
   <link rel="stylesheet" href="style.css" />
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-ESFM9WKBF9"></script>
@@ -18,6 +27,21 @@
   </script>
 </head>
 <body class="home-page">
+<div class="qjn-site-intro" aria-label="Welcome to Quentin Nichols">
+  <div class="qjn-site-intro-glow" aria-hidden="true"></div>
+  <div class="qjn-site-intro-content">
+    <p class="qjn-site-intro-kicker">Bly, Oregon</p>
+    <img class="qjn-site-intro-logo" src="/assets/NEWLOGO.png" alt="Quentin Nichols">
+    <div class="qjn-site-intro-rule" aria-hidden="true"></div>
+    <p class="qjn-site-intro-themes">
+      <span>Photography</span>
+      <span>Writing</span>
+      <span>Systems</span>
+    </p>
+  </div>
+  <button class="qjn-site-intro-skip" type="button">Skip intro</button>
+</div>
+
 <nav class="site-nav" aria-label="Site">
   <div class="nav-shell">
     <details class="nav-menu">
@@ -151,7 +175,7 @@
             and long-term build partnerships are delivered.
           </p>
           <div class="home-n3xra-actions">
-            <a href="https://n3xra.co" target="_blank" rel="noopener" class="home-n3xra-btn">Learn More</a>
+            <a href="https://n3xra.com" target="_blank" rel="noopener" class="home-n3xra-btn">Learn More</a>
             <a href="/projects/" class="home-n3xra-btn home-n3xra-btn--ghost">See Project Work</a>
           </div>
         </div>
@@ -160,6 +184,7 @@
   </section>
 </main>
 
+  <script src="/assets/site-intro.js"></script>
   <script src="/assets/nav.js"></script>
   <script src="/assets/home-hero.js"></script>
 </body>
