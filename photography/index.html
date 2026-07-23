@@ -50,116 +50,11 @@
                       </div>
         </header>
         <p class="qjn-sub">
-          Explore ongoing bodies of work, fine-art highlights, and booking options.
+          Places, people, and moments collected along the way.
         </p>
 
         <section class="qjn-blend-display" aria-label="Featured portrait and landscape photography">
           <div class="qjn-blend-grid"></div>
-        </section>
-
-        <section class="qjn-booking-strip qjn-booking-strip--inquiry js-inquiry-widget" aria-labelledby="photoInquiryTitle" data-endpoint="/api/project-inquiry">
-          <div class="qjn-booking-content qjn-booking-content--stacked">
-            <div>
-              <h2 class="qjn-booking-title" id="photoInquiryTitle">Work With Me</h2>
-              <p class="qjn-booking-sub">
-                If you want portraits, family photos, event coverage, or aerial work, send the details here and I’ll follow up.
-              </p>
-            </div>
-            <div class="qjn-booking-meta">
-              <span class="qjn-booking-badge">Portraits</span>
-              <span class="qjn-booking-badge">Families</span>
-              <span class="qjn-booking-badge">Events</span>
-              <span class="qjn-booking-badge">Aerial</span>
-            </div>
-          </div>
-
-          <div class="qjn-photo-cta-row" data-role="cta-row">
-            <button type="button" class="qjn-btn qjn-btn--light" data-role="open-form" aria-expanded="false" aria-controls="photoInquiryShell">
-              Start a Photography Inquiry
-            </button>
-          </div>
-
-          <div class="qjn-photo-inquiry-shell" id="photoInquiryShell" data-role="form-shell">
-            <form class="qjn-photo-form" novalidate data-role="form" data-submit-label="Submit Inquiry">
-              <div class="qjn-photo-form-grid">
-                <div class="qjn-photo-field">
-                  <label for="photoInquiryName">Name</label>
-                  <input id="photoInquiryName" name="name" type="text" autocomplete="name" placeholder="Your name" required data-role="first-input">
-                </div>
-                <div class="qjn-photo-field">
-                  <label for="photoInquiryEmail">Email</label>
-                  <input id="photoInquiryEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
-                </div>
-              </div>
-
-              <div class="qjn-photo-form-grid">
-                <div class="qjn-photo-field">
-                  <label for="photoInquirySession">Session Type</label>
-                  <select id="photoInquirySession" name="sessionType" class="qjn-photo-select">
-                    <option value="">Select a session type</option>
-                    <option value="Portrait Session">Portrait Session</option>
-                    <option value="Family Session">Family Session</option>
-                    <option value="Couples Session">Couples Session</option>
-                    <option value="Engagement Session">Engagement Session</option>
-                    <option value="Senior Photos">Senior Photos</option>
-                    <option value="Maternity Session">Maternity Session</option>
-                    <option value="Lifestyle Session">Lifestyle Session</option>
-                    <option value="Event Coverage">Event Coverage</option>
-                    <option value="Wedding Inquiry">Wedding Inquiry</option>
-                    <option value="Branding Session">Branding Session</option>
-                    <option value="Real Estate Photos">Real Estate Photos</option>
-                    <option value="Aerial / Drone Work">Aerial / Drone Work</option>
-                    <option value="Fine Art / Print Inquiry">Fine Art / Print Inquiry</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div class="qjn-photo-field">
-                  <label for="photoInquiryTiming">Preferred Date</label>
-                  <input id="photoInquiryTiming" name="preferredDate" type="date" class="qjn-photo-date-input">
-                </div>
-              </div>
-
-              <div class="qjn-photo-field">
-                <label for="photoInquiryTimingNotes">Timing Notes</label>
-                <input id="photoInquiryTimingNotes" name="timingNotes" type="text" placeholder="Sometime this fall, weekday evenings, flexible, etc.">
-              </div>
-
-              <div class="qjn-photo-field">
-                <label for="photoInquiryLocation">Location</label>
-                <input id="photoInquiryLocation" name="location" type="text" placeholder="City, venue, or general area">
-              </div>
-
-              <div class="qjn-photo-field">
-                <label for="photoInquiryDetails">Details</label>
-                <textarea id="photoInquiryDetails" name="details" placeholder="Tell me what you want photographed, where, and anything important to know." required></textarea>
-              </div>
-
-              <input type="hidden" name="inquiryType" value="photography">
-              <input type="hidden" name="source" value="Photography page">
-
-              <div class="qjn-photo-hp" aria-hidden="true">
-                <label for="photoInquiryWebsite">Website</label>
-                <input id="photoInquiryWebsite" name="website" type="text" tabindex="-1" autocomplete="off">
-              </div>
-
-              <p class="qjn-photo-status" data-role="status" aria-live="polite"></p>
-
-              <button type="submit" class="qjn-btn qjn-btn--light qjn-photo-submit" data-role="submit">
-                Submit Inquiry
-              </button>
-            </form>
-
-            <div class="qjn-photo-success" hidden data-role="success">
-              <h3>Submitted</h3>
-              <p>Your photography inquiry has been sent. You can also email or call directly if you want to follow up right away.</p>
-              <div class="qjn-photo-success-actions">
-                <a href="mailto:quentin@quentinnichols.com" class="qjn-btn qjn-btn--ghost">Email Quentin</a>
-                <a href="tel:+15419040421" class="qjn-btn qjn-btn--ghost">Call Quentin</a>
-                <a href="/contact/" class="qjn-btn qjn-btn--ghost">More Contact Info</a>
-                <button type="button" class="qjn-btn qjn-btn--ghost" data-role="reset">Submit Another</button>
-              </div>
-            </div>
-          </div>
         </section>
       </div>
     </section>
@@ -167,6 +62,5 @@
 
   <script src="/assets/nav.js"></script>
   <script src="/assets/photography-feed.js"></script>
-  <script src="/assets/inquiry-form.js"></script>
 </body>
 </html>

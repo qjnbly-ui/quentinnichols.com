@@ -9,7 +9,7 @@
   if (!summary || !panel || !spacer) return;
 
   const footerMarkup =
-    'Designed & Built by <a href="https://n3xra.co" target="_blank" rel="noopener">N3XRA</a>';
+    'Designed & Built by <a href="https://n3xra.com" target="_blank" rel="noopener">N3XRA</a>';
 
   const ensureSiteFooter = () => {
     const existingProjectsFooter = document.querySelector(".projects-footer p");
