@@ -1807,7 +1807,6 @@ html.qjn-intro-playing .qjn-site-intro {
   width: min(100%, 720px);
   height: auto;
   margin: 0 auto;
-  filter: blur(12px) brightness(1.2);
   opacity: 0;
   transform: scale(0.94);
   animation: qjn-intro-logo 1.25s cubic-bezier(0.16, 1, 0.3, 1) 0.55s forwards;
@@ -1883,12 +1882,10 @@ html.qjn-intro-playing .qjn-hero-simple {
 
 @keyframes qjn-intro-logo {
   from {
-    filter: blur(12px) brightness(1.2);
     opacity: 0;
     transform: scale(0.94);
   }
   to {
-    filter: blur(0) brightness(1.05);
     opacity: 1;
     transform: scale(1);
   }
