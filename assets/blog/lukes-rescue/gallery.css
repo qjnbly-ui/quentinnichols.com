@@ -7,3 +7,7 @@
 .rescue-photo-hold[data-playing] video { opacity: 1; }
 .rescue-photo-hold:focus-visible { outline: 2px solid currentColor; outline-offset: 6px; }
 @media (max-width: 600px) { .post-body .rescue-photo { width: 100%; max-width: 440px; margin: 2rem auto; } }
+
+.rescue-closing-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 2vw, 24px); margin: clamp(2.5rem, 6vw, 4rem) 0 0; }
+.rescue-closing-gallery img { display: block; width: 100%; height: auto; margin: 0; border: 0; border-radius: 0; }
+@media (max-width: 600px) { .rescue-closing-gallery { grid-template-columns: 1fr; gap: 20px; } }
