@@ -1,0 +1,9 @@
+/* Centered portraits keep their full composition throughout the story. */
+.post-body .rescue-photo { width: min(70%, 440px); margin: clamp(2rem, 5vw, 4rem) auto; padding: 0; }
+.post-body .post-signature { text-align: center; }
+.rescue-photo-hold { position: relative; display: block; width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; cursor: pointer; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.rescue-photo-hold img { display: block; width: 100%; height: auto; margin: 0; border: 0; border-radius: 0; }
+.rescue-photo-hold video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; pointer-events: none; }
+.rescue-photo-hold[data-playing] video { opacity: 1; }
+.rescue-photo-hold:focus-visible { outline: 2px solid currentColor; outline-offset: 6px; }
+@media (max-width: 600px) { .post-body .rescue-photo { width: 100%; max-width: 440px; margin: 2rem auto; } }
