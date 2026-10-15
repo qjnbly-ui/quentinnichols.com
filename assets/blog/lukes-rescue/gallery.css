@@ -17,3 +17,8 @@
 .rescue-carry-photos img { display: block; width: 100%; height: auto; margin: 0; border: 0; border-radius: 0; }
 .rescue-carry-gallery figcaption { margin-top: 1rem; font-size: .85em; line-height: 1.6; text-align: center; color: #aaa; }
 @media (max-width: 600px) { .rescue-carry-photos { grid-template-columns: 1fr; gap: 20px; } }
+
+.rescue-fundraiser { margin: clamp(2.5rem, 6vw, 4rem) auto 0; max-width: 480px; text-align: center; }
+.rescue-fundraiser .gfm-embed { width: 100%; }
+.rescue-fundraiser iframe { max-width: 100%; }
+.rescue-fundraiser p { font-size: .9em; }
