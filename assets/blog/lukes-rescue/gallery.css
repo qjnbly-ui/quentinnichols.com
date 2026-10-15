@@ -23,3 +23,5 @@
 .post-body .rescue-donate-button:hover { background: #242930; border-color: #f5f2ea; }
 .post-body .rescue-donate-button:focus-visible { outline: 2px solid #f5f2ea; outline-offset: 5px; }
 .post-body .rescue-donate-note { margin: 12px 0 0; font-size: .8rem; color: #aaa; }
+
+.rescue-photo figcaption { margin-top: 1rem; font-size: .85em; line-height: 1.6; text-align: center; color: #aaa; }
