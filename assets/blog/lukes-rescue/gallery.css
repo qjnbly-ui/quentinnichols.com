@@ -11,3 +11,9 @@
 .rescue-closing-gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 2vw, 24px); margin: clamp(2.5rem, 6vw, 4rem) 0 0; }
 .rescue-closing-gallery img { display: block; width: 100%; height: auto; margin: 0; border: 0; border-radius: 0; }
 @media (max-width: 600px) { .rescue-closing-gallery { grid-template-columns: 1fr; gap: 20px; } }
+
+.post-body .rescue-carry-gallery { margin: clamp(2rem, 5vw, 4rem) 0; }
+.rescue-carry-photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 2vw, 24px); align-items: start; }
+.rescue-carry-photos img { display: block; width: 100%; height: auto; margin: 0; border: 0; border-radius: 0; }
+.rescue-carry-gallery figcaption { margin-top: 1rem; font-size: .85em; line-height: 1.6; text-align: center; color: #aaa; }
+@media (max-width: 600px) { .rescue-carry-photos { grid-template-columns: 1fr; gap: 20px; } }
