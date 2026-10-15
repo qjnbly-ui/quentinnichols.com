@@ -18,7 +18,8 @@
 .rescue-carry-gallery figcaption { margin-top: 1rem; font-size: .85em; line-height: 1.6; text-align: center; color: #aaa; }
 @media (max-width: 600px) { .rescue-carry-photos { grid-template-columns: 1fr; gap: 20px; } }
 
-.rescue-fundraiser { margin: clamp(2.5rem, 6vw, 4rem) auto 0; max-width: 480px; text-align: center; }
-.rescue-fundraiser .gfm-embed { width: 100%; }
-.rescue-fundraiser iframe { max-width: 100%; }
-.rescue-fundraiser p { font-size: .9em; }
+ .rescue-fundraiser { margin: clamp(2.5rem, 6vw, 4rem) auto 0; text-align: center; }
+.post-body .rescue-donate-button { display: inline-flex; justify-content: center; align-items: center; min-height: 52px; max-width: 100%; box-sizing: border-box; padding: 14px 30px; border: 1px solid #777; border-radius: 6px; background: #16191d; color: #f5f2ea; font-size: 1rem; font-weight: 600; text-decoration: none; transition: background .2s, border-color .2s; }
+.post-body .rescue-donate-button:hover { background: #242930; border-color: #f5f2ea; }
+.post-body .rescue-donate-button:focus-visible { outline: 2px solid #f5f2ea; outline-offset: 5px; }
+.post-body .rescue-donate-note { margin: 12px 0 0; font-size: .8rem; color: #aaa; }
