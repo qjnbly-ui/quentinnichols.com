@@ -1,0 +1,3322 @@
+{
+  "images": [
+    {
+      "id": "25bbda5d9547f36de964",
+      "date": "2025-08-03T12:52:53Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 9969,
+      "height": 6644
+    },
+    {
+      "id": "85649d1bc5c4b8515d0f",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "9d2e5bfc8e4e32bbea2f",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.23,
+        "longitude": -121.7,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "f852544e5c734be5c223",
+      "date": "2025-06-24T20:22:14Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 2544,
+      "height": 3392
+    },
+    {
+      "id": "8c0ed574a0bf0316147d",
+      "date": "2026-01-17T18:04:21Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 6336,
+      "height": 9504
+    },
+    {
+      "id": "cb95ba4b451ed733b8c9",
+      "date": "2026-05-09T18:12:31Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Portland",
+        "latitude": 45.51,
+        "longitude": -122.67,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "64e1da81be867182f758",
+      "date": "2026-08-22T12:37:01Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.44\u00b0 N, 121.13\u00b0 W",
+        "latitude": 42.44,
+        "longitude": -121.13,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "2c655fb78efa4889204e",
+      "date": "2026-06-08T11:08:33Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.80\u00b0 N, 121.94\u00b0 W",
+        "latitude": 41.8,
+        "longitude": -121.94,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "d015ba4c90a168c7159e",
+      "date": "2025-05-09T19:14:05Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "c7cc772d004111a65db3",
+      "date": "2026-06-09T17:32:33Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.44,
+        "longitude": -121.2,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "6c7096544ddaa9b55327",
+      "date": "2022-08-29T17:46:24Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "19.72\u00b0 N, 155.06\u00b0 W",
+        "latitude": 19.72,
+        "longitude": -155.06,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "0a41bc2259f8b1803971",
+      "date": "2026-06-02T15:35:27Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.74\u00b0 N, 122.00\u00b0 W",
+        "latitude": 41.74,
+        "longitude": -122.0,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "c6ea1c6d80a2e7b87478",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "75c9ac8c49f175610bc8",
+      "date": "2025-05-17T14:48:51Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "61b7a72467df456e9842",
+      "date": "2025-10-01T21:24:55Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1616,
+      "height": 1080
+    },
+    {
+      "id": "54796015e1be1f2a523b",
+      "date": "2026-01-10T07:26:04Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1616,
+      "height": 1080
+    },
+    {
+      "id": "d1f21dfaa99c55285b74",
+      "date": "2026-04-25T10:47:42Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Jacksonville, OR",
+        "latitude": 42.29,
+        "longitude": -122.99,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "ac27caf92ed4407dc711",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 720,
+      "height": 960
+    },
+    {
+      "id": "e417c93ba1e2ac3c2d84",
+      "date": "2026-07-21T06:03:49Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "c84b64be47526e166bd9",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont National Forest",
+        "latitude": 42.4,
+        "longitude": -121.0,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "4b84eee3182c40b5ba1c",
+      "date": "2026-08-10T15:07:10Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bonanza, OR",
+        "latitude": 42.34,
+        "longitude": -121.42,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "6561191d2fe090e61838",
+      "date": "2026-08-26T09:37:00Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.4,
+        "longitude": -122.32,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "95118e2d5a988856f150",
+      "date": "2025-05-04T14:10:37Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "61377d69bab486505764",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.23,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "cfe120236c9c32e06d3c",
+      "date": "2026-07-17T11:30:46Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.92\u00b0 N, 121.54\u00b0 W",
+        "latitude": 41.92,
+        "longitude": -121.54,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "e04a2d8fb9524226ed17",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1542,
+      "height": 2048
+    },
+    {
+      "id": "db000f9f6cc88faf768b",
+      "date": "2026-10-10T08:43:00Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.5,
+        "longitude": -121.01,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "f66cd5f28a57834213b2",
+      "date": "2026-09-28T08:32:41Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.53,
+        "longitude": -121.6,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 2316,
+      "height": 3088
+    },
+    {
+      "id": "6bbe4b02d2642812f0f7",
+      "date": "2020-02-05T10:18:54Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "45.87\u00b0 S, 170.51\u00b0 E",
+        "latitude": -45.87,
+        "longitude": 170.51,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "85105e98794e87219043",
+      "date": "2023-01-02T14:35:52Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "04db4c9a1f7bf9fa4ba3",
+      "date": "2026-10-14T06:23:27Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.44,
+        "longitude": -121.18,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "ba262d305aab567ab1da",
+      "date": "2026-08-20T08:18:12Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.39,
+        "longitude": -122.34,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "e7efa5be76f862c1f3a8",
+      "date": "2026-07-26T08:29:39Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 5712,
+      "height": 4284
+    },
+    {
+      "id": "f8bf230ad83aefc087d2",
+      "date": "2026-10-10T08:56:14Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.5,
+        "longitude": -121.01,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "af3e6a27365417abe5e6",
+      "date": "2026-10-09T11:32:17Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.5,
+        "longitude": -121.54,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "573b2684a8d494dd55f4",
+      "date": "2026-07-17T10:53:09Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.92\u00b0 N, 121.54\u00b0 W",
+        "latitude": 41.92,
+        "longitude": -121.54,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "384d8a888c8018c5d814",
+      "date": "2026-08-26T09:32:07Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.4,
+        "longitude": -122.32,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "6491ce0051df8da96d62",
+      "date": "2025-05-09T19:13:59Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "4718c41c784f06d13e9b",
+      "date": "2026-06-01T14:47:50Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "0d9234e713aff5a07704",
+      "date": "2026-07-21T06:03:51Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "0f46fbe186e0e000d37d",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "30939844059cc3a560ed",
+      "date": "2026-08-21T10:10:12Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.4,
+        "longitude": -122.32,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "475fe092757687bca188",
+      "date": "2025-04-21T07:13:05Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.21,
+        "longitude": -121.73,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4000,
+      "height": 3000
+    },
+    {
+      "id": "28b46278cadeb439ced0",
+      "date": "2025-07-29T18:38:37Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "b015fd254df0e2760639",
+      "date": "2025-06-05T17:10:10Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 5477,
+      "height": 3651
+    },
+    {
+      "id": "6511458a344ebbc485f9",
+      "date": "2026-06-29T20:00:04Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "2d13c94a12c2be58ba81",
+      "date": "2025-08-01T17:44:33Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3240,
+      "height": 2160
+    },
+    {
+      "id": "de99c04a0c04dbe55b5d",
+      "date": "2026-09-30T15:07:38Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.45\u00b0 N, 121.49\u00b0 W",
+        "latitude": 42.45,
+        "longitude": -121.49,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "a64d38652c4ee0f507a7",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "9f342f4d3b36b01d687e",
+      "date": "2026-08-24T17:42:18Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "a7ef84f4629066019059",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.24,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "0fa23bf0676eefcd08e8",
+      "date": "2026-07-22T12:43:22Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.34\u00b0 N, 121.68\u00b0 W",
+        "latitude": 42.34,
+        "longitude": -121.68,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "465c2df77d2c38a4416a",
+      "date": "2026-07-21T09:45:46Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.22,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "69c6aa6ae7e4f3edcbf6",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "id": "4801fbb280a45c0018b5",
+      "date": "2026-07-11T12:37:37Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.45,
+        "longitude": -120.78,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "2708d1d88afe84643c14",
+      "date": "2026-08-05T12:45:29Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.19,
+        "longitude": -121.73,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "0ebeb4e885b3240d8a36",
+      "date": "2026-07-16T14:18:20Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.93\u00b0 N, 121.57\u00b0 W",
+        "latitude": 41.93,
+        "longitude": -121.57,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "5667d22c789595a46767",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "8671f569a5a588be422f",
+      "date": "2025-08-20T17:57:27Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "02a21607a177cd2d75c7",
+      "date": "2026-07-15T19:48:01Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.71,
+        "longitude": -121.19,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "e5ddbc4bddd5d483b6b4",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.17\u00b0 N, 121.71\u00b0 W",
+        "latitude": 42.17,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "bc9071b956bb53bb764a",
+      "date": "2026-07-12T22:03:09Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.47\u00b0 N, 121.00\u00b0 W",
+        "latitude": 42.47,
+        "longitude": -121.0,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "a244f56710250a1752dc",
+      "date": "2025-06-09T20:56:32Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3527,
+      "height": 1984
+    },
+    {
+      "id": "50fa001bc09efd57e896",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.17\u00b0 N, 121.72\u00b0 W",
+        "latitude": 42.17,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "08a38628d82da6a4f944",
+      "date": "2026-07-15T19:45:15Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.71,
+        "longitude": -121.19,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 5712,
+      "height": 4284
+    },
+    {
+      "id": "474663f4524712a71da6",
+      "date": "2026-07-20T13:07:06Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.22,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "6b72e27e3f979a969fe9",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "3a8128612ab0fb7ab141",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "7e5d59213e730615f534",
+      "date": "2026-10-10T08:56:16Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.5,
+        "longitude": -121.01,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "2f210a9f988eb7132e74",
+      "date": "2026-09-01T11:21:50Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.24\u00b0 N, 121.78\u00b0 W",
+        "latitude": 42.24,
+        "longitude": -121.78,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "db4a822f597fcbe8cd04",
+      "date": "2026-07-17T17:19:44Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.36,
+        "longitude": -121.4,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "e781b2581138e37ce45d",
+      "date": "2026-07-08T09:09:12Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.23\u00b0 N, 121.79\u00b0 W",
+        "latitude": 42.23,
+        "longitude": -121.79,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "852dc1667ed04a4da440",
+      "date": "2024-08-01T17:37:18Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 6000,
+      "height": 4000
+    },
+    {
+      "id": "bf6845e0731ee095eb3e",
+      "date": "2022-09-01T12:27:55Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "19.72\u00b0 N, 155.08\u00b0 W",
+        "latitude": 19.72,
+        "longitude": -155.08,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "c2ea350e7b3799a8e63b",
+      "date": "2025-03-31T19:18:32Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "9a431d7ccb3409217d92",
+      "date": "2026-06-04T08:06:48Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.97\u00b0 N, 121.91\u00b0 W",
+        "latitude": 41.97,
+        "longitude": -121.91,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "d4d454805b086b366163",
+      "date": "2026-07-16T09:35:36Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "e8004969213c48106f08",
+      "date": "2026-08-22T19:35:06Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont National Forest",
+        "latitude": 42.4,
+        "longitude": -120.99,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "f6760f8be0de28c33b1f",
+      "date": "2026-06-17T14:31:58Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.35\u00b0 N, 121.83\u00b0 W",
+        "latitude": 42.35,
+        "longitude": -121.83,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "1c15d023a043df5bf378",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1200,
+      "height": 1600
+    },
+    {
+      "id": "b28b2114848312f603af",
+      "date": "2026-08-04T11:08:38Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.19,
+        "longitude": -121.73,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "84b9d958e90d1b42d246",
+      "date": "2026-08-02T13:19:45Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "95c8a9bd46b341bd0592",
+      "date": "2024-02-07T18:28:50Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "57102f54ae883d3c8a12",
+      "date": "2026-10-17T12:29:16Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "4edab5a5eabae1dcffad",
+      "date": "2019-11-11T09:09:41Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "45.97\u00b0 S, 168.03\u00b0 E",
+        "latitude": -45.97,
+        "longitude": 168.03,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4032,
+      "height": 3024
+    },
+    {
+      "id": "fcf48fd507124c05cfb9",
+      "date": "2023-12-01T18:06:10Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.21,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "42162e2ecaceadd22e48",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "fb4d0b2e625a783c1eb6",
+      "date": "2026-06-03T14:13:17Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "e40ae9ecb9a59be2d211",
+      "date": "2024-03-03T19:23:08Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "41f921874f54280dca74",
+      "date": "2026-07-19T20:09:49Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "63ce3027e6e809485d5a",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 960,
+      "height": 1280
+    },
+    {
+      "id": "580328a7ba43adc651cc",
+      "date": "2022-08-28T08:37:34Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 4032,
+      "height": 3024
+    },
+    {
+      "id": "a56e22c3f109ac9c5112",
+      "date": "2026-10-17T13:20:22Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "7274b95dd378c730f0cb",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 2738,
+      "height": 1825
+    },
+    {
+      "id": "de2e38b1e133d755c2e8",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "e4c9d4d78bb2237b7be6",
+      "date": "2026-07-11T08:34:04Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 8064,
+      "height": 4536
+    },
+    {
+      "id": "897bdaf74d2eeb7d62c8",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.37\u00b0 N, 121.06\u00b0 W",
+        "latitude": 42.37,
+        "longitude": -121.06,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "4709ba85c196ef8571b4",
+      "date": "2026-07-16T09:10:31Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.99\u00b0 N, 121.56\u00b0 W",
+        "latitude": 41.99,
+        "longitude": -121.56,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "276c4ee329012dc0c449",
+      "date": "2025-08-01T17:27:22Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3240,
+      "height": 2160
+    },
+    {
+      "id": "57b7422d5c1dac7a48b8",
+      "date": "2026-09-02T18:36:38Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.21,
+        "longitude": -121.75,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3672,
+      "height": 4896
+    },
+    {
+      "id": "4135a3810b0c9acbf250",
+      "date": "2026-04-21T08:10:23Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "30833a29be1ff0c9f89c",
+      "date": "2026-07-22T19:04:11Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "0bac9d980986d9419c15",
+      "date": "2026-06-12T18:29:30Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "19f376e461d8bd02b039",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "e8ea8b7099ca1e0e3376",
+      "date": "2023-04-08T13:59:18Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1080,
+      "height": 1616
+    },
+    {
+      "id": "c9718ec8ab18bd803e75",
+      "date": "2026-08-21T10:13:25Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.4,
+        "longitude": -122.32,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "9c45e7d9cc4809ede0d6",
+      "date": "2025-12-26T12:23:41Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "dcced72f663f6824c6ec",
+      "date": "2026-08-01T10:02:38Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1616,
+      "height": 1080
+    },
+    {
+      "id": "f9005ef90a7985dcbfc4",
+      "date": "2023-12-01T18:05:49Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.21,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 2736,
+      "height": 3648
+    },
+    {
+      "id": "47651b3f3f171f0887d8",
+      "date": "2025-08-03T12:52:53Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 9317,
+      "height": 6210
+    },
+    {
+      "id": "c361ef25594bc2623f6c",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.47\u00b0 N, 122.11\u00b0 W",
+        "latitude": 42.47,
+        "longitude": -122.11,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "5bb521c2d062f034a432",
+      "date": "2023-04-19T13:45:02Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "38ceb9dd94dc2baf4d31",
+      "date": "2026-10-10T09:07:19Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.5,
+        "longitude": -121.01,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "dfc789d4c7e9f615a214",
+      "date": "2025-12-19T14:17:56Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.58\u00b0 N, 121.86\u00b0 W",
+        "latitude": 42.58,
+        "longitude": -121.86,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "9f57cde7a48a1341dc22",
+      "date": "2025-03-30T10:10:46Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "202f36456173b4639112",
+      "date": "2026-03-16T16:35:10Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "21ae104562b81275f4f2",
+      "date": "2025-12-05T17:29:54Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "8b5e4797ffed1d164124",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.61,
+        "longitude": -121.1,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "b2216a668a7a8fce442e",
+      "date": "2026-07-15T19:46:29Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.71,
+        "longitude": -121.19,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "1722a9adc9deaaf383e6",
+      "date": "2024-10-24T21:01:21Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "10cee403ff9cf503f65c",
+      "date": "2025-08-01T17:24:36Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3240,
+      "height": 2160
+    },
+    {
+      "id": "29de6e94ebc04d47ec93",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.21,
+        "longitude": -121.73,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "11343194a1efd34de78c",
+      "date": "2026-08-03T17:10:28Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "d9c477f6ef7f0038a219",
+      "date": "2026-07-20T20:16:47Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, OR",
+        "latitude": 42.41,
+        "longitude": -121.05,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 5712,
+      "height": 4284
+    },
+    {
+      "id": "baa56b46a0805143eba6",
+      "date": "2026-07-12T21:55:23Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.46\u00b0 N, 121.00\u00b0 W",
+        "latitude": 42.46,
+        "longitude": -121.0,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "e67bef36ec657e80a733",
+      "date": "2025-02-18T06:53:24Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.18,
+        "longitude": -121.64,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "bc8a9ec552ea827b2c64",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "0a280d2cdb7d1ef834c8",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3464,
+      "height": 4618
+    },
+    {
+      "id": "569bc2e54a3ac2a4b2e6",
+      "date": "2026-07-15T19:49:13Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.71,
+        "longitude": -121.19,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "7d69cf83a62e5681fc64",
+      "date": "2023-10-13T18:20:33Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "1c3bcbbfe25be8342fc7",
+      "date": "2026-10-13T16:52:57Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.25\u00b0 N, 121.79\u00b0 W",
+        "latitude": 42.25,
+        "longitude": -121.79,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "9e4fcba95380d625c927",
+      "date": "2026-08-03T17:11:22Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "fc9ccf36f5890e045939",
+      "date": "2026-10-10T09:07:25Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.5,
+        "longitude": -121.01,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "89654423899c11a90d8c",
+      "date": "2024-01-20T18:11:49Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, OR",
+        "latitude": 42.41,
+        "longitude": -121.05,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "83e963d9609ca431f009",
+      "date": "2026-08-27T09:02:10Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.46\u00b0 N, 122.11\u00b0 W",
+        "latitude": 42.46,
+        "longitude": -122.11,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "ebe14a95e3520ebb6148",
+      "date": "2025-08-01T17:28:53Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3240,
+      "height": 2160
+    },
+    {
+      "id": "246a1505b48fc92cedbc",
+      "date": "2026-04-02T19:15:21Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 2723,
+      "height": 3633
+    },
+    {
+      "id": "ae203f660b75acb7314b",
+      "date": "2024-04-01T15:45:34Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "633f3de7bdb2eb747141",
+      "date": "2020-02-07T18:59:48Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Raymonds Gap, New Zealand",
+        "latitude": -46.09,
+        "longitude": 167.92,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "84a60eeceac4477981c9",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1088,
+      "height": 1445
+    },
+    {
+      "id": "9ff6d638c2cc6236e08e",
+      "date": "2026-07-17T17:24:27Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.41\u00b0 N, 121.34\u00b0 W",
+        "latitude": 42.41,
+        "longitude": -121.34,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 2316,
+      "height": 3088
+    },
+    {
+      "id": "1502c578623ac3c6481e",
+      "date": "2026-08-21T10:41:05Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.4,
+        "longitude": -122.32,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "9826e8d41a1c51abf979",
+      "date": "2026-08-27T09:01:28Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.46\u00b0 N, 122.11\u00b0 W",
+        "latitude": 42.46,
+        "longitude": -122.11,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "5db111954e5e6011fb7d",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3500,
+      "height": 2490
+    },
+    {
+      "id": "bf4e7b7ce01c3bc7270a",
+      "date": "2026-07-11T10:46:19Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.23\u00b0 N, 120.86\u00b0 W",
+        "latitude": 42.23,
+        "longitude": -120.86,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 8064,
+      "height": 4536
+    },
+    {
+      "id": "a2b4fe9dbf647ba931c4",
+      "date": "2026-07-21T13:03:36Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.21,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "d1f0131bc7fa4ce6ec8d",
+      "date": "2026-05-05T16:47:13Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "7521be848101a001a68a",
+      "date": "2025-10-13T16:17:55Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "65702bc2caa4381dca92",
+      "date": "2026-07-15T19:50:41Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.71,
+        "longitude": -121.19,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "f4f6dcf3c8cbb3ec597f",
+      "date": "2023-04-08T13:22:51Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 876,
+      "height": 1309
+    },
+    {
+      "id": "d9e9c9ece64870846d2d",
+      "date": "2026-05-28T16:05:44Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 2778,
+      "height": 3705
+    },
+    {
+      "id": "6d33075e7e23305c69b2",
+      "date": "2026-06-30T16:51:13Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.44\u00b0 N, 121.28\u00b0 W",
+        "latitude": 42.44,
+        "longitude": -121.28,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "98057ae925ccd28bb728",
+      "date": "2026-06-12T22:00:45Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1320,
+      "height": 2868
+    },
+    {
+      "id": "871c0c6b12edac2768f0",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "a5f8a2c0539480a5bbe8",
+      "date": "2025-12-28T19:13:49Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "0c3de096c06a9a32dabb",
+      "date": "2026-07-06T15:39:49Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.22,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "b96141294d20cf671941",
+      "date": "2026-10-16T11:23:12Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.01\u00b0 N, 121.90\u00b0 W",
+        "latitude": 42.01,
+        "longitude": -121.9,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 5712,
+      "height": 4284
+    },
+    {
+      "id": "10d64e817f1e152d5ee6",
+      "date": "2026-03-02T17:37:18Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4000,
+      "height": 3000
+    },
+    {
+      "id": "b8a5e537b5fbefd6bb94",
+      "date": "2026-07-15T19:46:34Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.71,
+        "longitude": -121.19,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 5712,
+      "height": 4284
+    },
+    {
+      "id": "aa79cbd279262d4352b5",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.93\u00b0 N, 121.57\u00b0 W",
+        "latitude": 41.93,
+        "longitude": -121.57,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "a9c52af619f4c952b6d6",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.46,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "a19602bd4d9f42a57271",
+      "date": "2026-07-27T13:27:18Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.21,
+        "longitude": -121.73,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "aab824ca2da645864c5a",
+      "date": "2026-08-03T17:09:38Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "4d81dfd953c7d490caa4",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.34,
+        "longitude": -120.79,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "2dd341201b64ac6501d3",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "33a312b95d9ef5c934a3",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "c4f81a125270214b9c2b",
+      "date": "2026-07-21T21:50:22Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "c6e2decbe1693a00ce24",
+      "date": "2020-08-08T13:57:25Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 2160,
+      "height": 3840
+    },
+    {
+      "id": "862c99328523ae14e302",
+      "date": "2026-07-12T22:07:47Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.47\u00b0 N, 121.00\u00b0 W",
+        "latitude": 42.47,
+        "longitude": -121.0,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "fd44789ca5cdfc1e6a0b",
+      "date": "2026-07-27T06:15:52Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, OR",
+        "latitude": 42.41,
+        "longitude": -121.05,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "c03e53cd4074441eb801",
+      "date": "2026-09-06T15:57:57Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "5f5d91294604b6e42961",
+      "date": "2026-09-21T11:10:39Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.5,
+        "longitude": -121.52,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "fba33122ab45df39f22c",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 2208,
+      "height": 1656
+    },
+    {
+      "id": "0ad6e4354bff859f8b9e",
+      "date": "2026-02-17T18:00:00Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.31,
+        "longitude": -121.41,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "7117ffff89325c1d700e",
+      "date": "2026-07-15T19:47:46Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.71,
+        "longitude": -121.19,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 5712,
+      "height": 4284
+    },
+    {
+      "id": "89ecb18020fedc5b7f70",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.13\u00b0 N, 121.82\u00b0 W",
+        "latitude": 42.13,
+        "longitude": -121.82,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "dc2f72240273f217c264",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1080,
+      "height": 1920
+    },
+    {
+      "id": "aa7b673139849cd87242",
+      "date": "2026-08-27T09:01:19Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.47\u00b0 N, 122.11\u00b0 W",
+        "latitude": 42.47,
+        "longitude": -122.11,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "458db3b40c670ea3d1e6",
+      "date": "2024-02-03T18:51:30Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "5f76c6427d505fefb0e0",
+      "date": "2026-06-03T08:47:59Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.77\u00b0 N, 122.00\u00b0 W",
+        "latitude": 41.77,
+        "longitude": -122.0,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "7ff21001add4c679f1cb",
+      "date": "2025-09-14T09:02:23Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "dcf726bb93df6381d3dc",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.35\u00b0 N, 120.97\u00b0 W",
+        "latitude": 42.35,
+        "longitude": -120.97,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "d0791ae4de7da86d11e9",
+      "date": "2026-10-10T15:46:20Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 2666,
+      "height": 1499
+    },
+    {
+      "id": "658c72eeaab4d6ec7aa8",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "e09a1fd31bc12ce27d1e",
+      "date": "2026-10-15T18:23:04Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.37,
+        "longitude": -121.39,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "571105ca20263c601232",
+      "date": "2026-06-26T13:02:01Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1616,
+      "height": 1080
+    },
+    {
+      "id": "e85a07a9757cebe47f1f",
+      "date": "2023-12-01T18:05:40Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.21,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "55ba2d4e1dff3a9843f4",
+      "date": "2026-07-21T13:45:42Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.22,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "8ecb047c0d2a94842446",
+      "date": "2026-02-09T09:31:32Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Honolulu, HI",
+        "latitude": 21.27,
+        "longitude": -157.82,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 2729,
+      "height": 3639
+    },
+    {
+      "id": "eae2065f4f1e8904afd7",
+      "date": "2026-09-19T14:33:10Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1633,
+      "height": 2449
+    },
+    {
+      "id": "70e59de193e7cf9444b1",
+      "date": "2026-08-27T10:39:44Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.46\u00b0 N, 122.11\u00b0 W",
+        "latitude": 42.46,
+        "longitude": -122.11,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "6edab25d5165ef7108c1",
+      "date": "2026-08-09T18:36:38Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "efa8f92aaf8cb8b9a5d2",
+      "date": "2026-10-10T15:48:06Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 2666,
+      "height": 1499
+    },
+    {
+      "id": "a4b91a885726cd46a903",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "73a30b38fa6145bd05a7",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1085,
+      "height": 1450
+    },
+    {
+      "id": "26df759350236b779215",
+      "date": "2021-01-22T19:16:29Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.2,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 2252,
+      "height": 4000
+    },
+    {
+      "id": "2d77c99b5e0902fd0855",
+      "date": "2024-03-12T22:28:27Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "615963829bbd5f0e3be1",
+      "date": "2026-06-02T11:12:46Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.74\u00b0 N, 122.01\u00b0 W",
+        "latitude": 41.74,
+        "longitude": -122.01,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "f67796a5b1666c131ca3",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.33\u00b0 N, 121.72\u00b0 W",
+        "latitude": 42.33,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "36be4b35c96984cb0549",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "dbf1fdab47f1daaf92fc",
+      "date": "2026-08-13T07:49:25Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.18\u00b0 N, 121.74\u00b0 W",
+        "latitude": 42.18,
+        "longitude": -121.74,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "0d58fb5029997acce056",
+      "date": "2026-06-21T16:56:05Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "8e3193fa3c0e1d5ae85e",
+      "date": "2022-12-23T13:53:46Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 1080
+    },
+    {
+      "id": "33a9e4ab5f05b9dfbcc3",
+      "date": "2025-12-19T16:57:10Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "382ab75bda6abc7cd654",
+      "date": "2026-06-19T17:06:42Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "fa5b73612e4305597895",
+      "date": "2026-08-26T09:46:38Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.4,
+        "longitude": -122.32,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "cd4ffe4c5b162478a53d",
+      "date": "2026-09-17T09:02:24Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.19,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "1b334b4187adf55310b7",
+      "date": "2024-08-29T14:04:05Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "38.53\u00b0 N, 95.41\u00b0 W",
+        "latitude": 38.53,
+        "longitude": -95.41,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "557aef9049ff0cb2908f",
+      "date": "2025-09-07T17:26:59Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "5cde62e983b24efc45aa",
+      "date": "2026-06-17T11:20:44Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls, OR",
+        "latitude": 42.31,
+        "longitude": -121.8,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "345d5a9f935a25400791",
+      "date": "2025-10-16T16:41:05Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "74ff272b6ec25b4c19d3",
+      "date": "2025-08-01T17:31:34Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3240,
+      "height": 2160
+    },
+    {
+      "id": "89847499cf9af2ad2d51",
+      "date": "2026-08-31T07:55:18Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.43\u00b0 N, 122.05\u00b0 W",
+        "latitude": 42.43,
+        "longitude": -122.05,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "8d409d07d64f19e8876a",
+      "date": "2026-07-11T12:07:09Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.34,
+        "longitude": -120.79,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 8064,
+      "height": 4536
+    },
+    {
+      "id": "4ae3e14208ad51d56deb",
+      "date": "2026-07-15T20:21:40Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.46,
+        "longitude": -121.1,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "ff64cb9dca7e2a110399",
+      "date": "2026-09-04T06:29:34Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.39,
+        "longitude": -121.37,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "3c724f9c73187b515aba",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.18\u00b0 N, 121.72\u00b0 W",
+        "latitude": 42.18,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "aa2357f1fac1e5e431d9",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.47\u00b0 N, 121.00\u00b0 W",
+        "latitude": 42.47,
+        "longitude": -121.0,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "86cb786c80c15da11d29",
+      "date": "2026-05-05T16:52:56Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.43,
+        "longitude": -120.81,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "4585b8d6ff6cc2f4ca60",
+      "date": "2026-08-05T12:45:12Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.19,
+        "longitude": -121.73,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "838a202fb624a6f25453",
+      "date": "2026-07-15T20:20:01Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.47,
+        "longitude": -121.1,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "c5da8ad0a7826160da93",
+      "date": "2026-03-16T16:44:26Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "7eaa6d955da5a9ffdbdd",
+      "date": "2026-08-03T17:12:41Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "c77225632e18b0147d27",
+      "date": "2026-10-10T07:54:19Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.5,
+        "longitude": -121.01,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "b6e6f5d02878f6644795",
+      "date": "2025-08-02T19:40:00Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "cbb254f42c2e0bcee99a",
+      "date": "2026-01-17T18:04:06Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 6336,
+      "height": 9504
+    },
+    {
+      "id": "5db6117c02803d8f1f0e",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "4f80c5484257c0fbe9ed",
+      "date": "2025-09-18T05:37:38Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "2400355b9a80426d94b3",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "d0ab53db673e272f1349",
+      "date": "2022-08-27T17:14:30Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1616,
+      "height": 1080
+    },
+    {
+      "id": "d439cfa8a4c162b91769",
+      "date": "2026-08-20T08:18:29Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.39,
+        "longitude": -122.35,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "d929362cdc6905314161",
+      "date": "2025-01-02T18:21:16Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "c0c64a04d363d549b0e0",
+      "date": "2023-02-08T20:35:50Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "6be3d117819aaeb73075",
+      "date": "2026-06-03T15:51:56Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "41.74\u00b0 N, 122.00\u00b0 W",
+        "latitude": 41.74,
+        "longitude": -122.0,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "a9fddf73568f2569caf8",
+      "date": "2026-07-15T19:50:52Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.71,
+        "longitude": -121.19,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 5712,
+      "height": 4284
+    },
+    {
+      "id": "277e618e604991b61d78",
+      "date": "2026-08-21T08:05:04Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.4,
+        "longitude": -122.32,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "57371d42dfa1e3169521",
+      "date": "2026-07-11T12:37:40Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.45,
+        "longitude": -120.78,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "b443a271ab34d44c4fc7",
+      "date": "2026-07-11T12:37:45Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont-Winema National Forest",
+        "latitude": 42.45,
+        "longitude": -120.78,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "ac5d9c24cb74d7d5570a",
+      "date": "2026-07-15T20:05:15Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.61,
+        "longitude": -121.13,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "5115b7ca708489b79012",
+      "date": "2015-05-24T20:31:33Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Fremont National Forest",
+        "latitude": 42.38,
+        "longitude": -120.99,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4160,
+      "height": 2340
+    },
+    {
+      "id": "8f63e1450020c9cbfc99",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.22,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "62dd92f53a1083ff015d",
+      "date": "2026-07-21T09:33:22Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.22,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "9c04e8164b150fb94a4e",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.18,
+        "longitude": -121.64,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "990bb091f469f947bcba",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.24\u00b0 N, 121.79\u00b0 W",
+        "latitude": 42.24,
+        "longitude": -121.79,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "82a1fd31d54927e4fe1e",
+      "date": "2025-10-03T17:45:12Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1080,
+      "height": 1616
+    },
+    {
+      "id": "01f9d2aa0fdff0315196",
+      "date": "2026-07-21T09:48:58Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls",
+        "latitude": 42.22,
+        "longitude": -121.71,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "42b2a2bd34f2907d8365",
+      "date": "2025-08-01T17:29:33Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 3240,
+      "height": 2160
+    },
+    {
+      "id": "ce75a9116570a38f5f53",
+      "date": "2026-08-03T17:14:43Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "ec6016d003a1e194c0c9",
+      "date": "2024-05-06T19:15:32Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "0721446d9be35b112c27",
+      "date": "2026-04-03T06:37:03Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bonanza, OR",
+        "latitude": 42.32,
+        "longitude": -121.4,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "409496aa0ad0bec46039",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "b4a85ce7fe8b703038d5",
+      "date": "2026-07-15T06:55:10Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Altamont",
+        "latitude": 42.19,
+        "longitude": -121.7,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "047f20667a70b871457f",
+      "date": "2026-08-03T17:12:44Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "caf68c57dd3ce64ed64b",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "44.05\u00b0 N, 121.28\u00b0 W",
+        "latitude": 44.05,
+        "longitude": -121.28,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "d81df642ef1229e9cae9",
+      "date": "2026-10-06T14:47:25Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.45\u00b0 N, 121.48\u00b0 W",
+        "latitude": 42.45,
+        "longitude": -121.48,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "880b15e4f6de5b49c2fa",
+      "date": "2026-06-10T19:22:57Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "51f62466fae6016777b7",
+      "date": "2026-08-03T15:09:13Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.17\u00b0 N, 121.72\u00b0 W",
+        "latitude": 42.17,
+        "longitude": -121.72,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "d1dadf048a84d02a62b5",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.46\u00b0 N, 120.99\u00b0 W",
+        "latitude": 42.46,
+        "longitude": -120.99,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 1242,
+      "height": 2208
+    },
+    {
+      "id": "96eca00a1f99bef4a1e3",
+      "date": "2026-05-05T16:47:53Z",
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 2649,
+      "height": 3532
+    },
+    {
+      "id": "41229458e0ce05cd2ece",
+      "date": "2026-09-04T06:29:43Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.38,
+        "longitude": -121.37,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "41878483a40a17d74285",
+      "date": "2026-06-17T12:54:19Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Klamath Falls, OR",
+        "latitude": 42.31,
+        "longitude": -121.8,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "37eefd51f007eecbdc70",
+      "date": "2026-07-15T20:20:10Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Oregon",
+        "latitude": 42.47,
+        "longitude": -121.1,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "5312831cbacfef8e4f28",
+      "date": null,
+      "caption": "Moments from my phone",
+      "location": null,
+      "width": 1440,
+      "height": 2560
+    },
+    {
+      "id": "0791bcc92e80d67102bf",
+      "date": "2026-08-26T09:46:33Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Rogue River-Siskiyou National Forest",
+        "latitude": 42.4,
+        "longitude": -122.32,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 4284,
+      "height": 5712
+    },
+    {
+      "id": "4f861c0de3d93976b0e4",
+      "date": "2025-09-18T05:37:17Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3000,
+      "height": 4000
+    },
+    {
+      "id": "edd4962017814f0c581a",
+      "date": "2026-06-19T17:06:59Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "Bly, Oregon",
+        "latitude": 42.4,
+        "longitude": -121.04,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "id": "dfb3f6b358b130b075c5",
+      "date": "2026-09-29T15:56:37Z",
+      "caption": "Moments from my phone",
+      "location": {
+        "label": "42.11\u00b0 N, 121.76\u00b0 W",
+        "latitude": 42.11,
+        "longitude": -121.76,
+        "precision": "approximate",
+        "source": "photo_metadata"
+      },
+      "width": 5712,
+      "height": 4284
+    }
+  ]
+}

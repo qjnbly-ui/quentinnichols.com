@@ -1,0 +1,103 @@
+.moments-page { background: #080909; }
+.moments-main { width: min(1220px, calc(100% - 64px)); margin: 0 auto; }
+.moments-intro { max-width: 800px; padding: clamp(64px, 8vw, 120px) 0 64px; }
+.moments-eyebrow { font-size: 11px; letter-spacing: .23em; text-transform: uppercase; color: #b1c4d0; margin-bottom: 26px; }
+.moments-intro h1 { font-size: clamp(54px, 7vw, 96px); line-height: .98; font-weight: 500; letter-spacing: -.025em; margin-bottom: 30px; }
+.moments-intro h1 em { font-weight: 500; color: #cbd9df; }
+.moments-copy { max-width: 510px; font-size: 17px; line-height: 1.8; }
+.moments-note { font-family: var(--font-display); font-style: italic; font-size: 23px; color: #b7b4ad; margin-top: 24px; }
+.moments-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 0; border-top: 1px solid #ffffff26; }
+.moments-toolbar p { margin: 0; font-size: 12px; color: #c5c5bd; letter-spacing: .06em; }
+.moments-view-switch { display:flex; gap:6px; }
+.moments-view-switch button { border:1px solid #ffffff30; border-radius:4px; background:transparent; color:#b9c2bc; font:inherit; font-size:12px; padding:10px 14px; cursor:pointer; }
+.moments-view-switch button[aria-pressed="true"] { background:#d5e3da; color:#13241a; border-color:#d5e3da; }
+.moments-view-switch button:focus-visible { outline:2px solid #d9e8df; outline-offset:3px; }
+.moments-map-note { margin:14px 0 0; font-size:12px; color:#aebdb3; }
+#moments-map-panel { margin:0 0 32px; }
+#moments-map-panel[hidden],#moments-gallery[hidden] { display:none; }
+.moments-sort { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #b9bbb7; }
+.moments-sort[hidden] { display:none; }
+.moments-sort select { font: inherit; padding: 9px 10px; color: #eeeae1; background: #101211; border: 1px solid #ffffff30; border-radius: 4px; }
+.moments-gallery { columns: 3; column-gap: 22px; }
+.moment-card { display: block; width: 100%; break-inside: avoid; margin: 0 0 28px; padding: 0; border: 0; text-align: left; background: transparent; color: inherit; cursor: zoom-in; }
+.moment-card img { width: 100%; height: auto; display: block; border-radius: 3px; background: #181a18; transition: opacity .2s; }
+.moment-card img[hidden] { display: none; }
+.moment-card:hover img { opacity: .85; }
+.moment-card:focus-visible { outline: 2px solid #b1c4d0; outline-offset: 6px; }
+.moment-card .moment-meta { display: flex; justify-content: space-between; gap: 10px; padding: 12px 0 0; font-size: 11px; color: #b2b6b1; }
+.moment-card .moment-meta span { color: #d8d6ce; }
+#moments-status { font-size: 13px; color: #c1c9c6; }
+#moments-status:empty { display: none; }
+.moment-unavailable { display: block; padding: 36px 20px; background: #151816; color: #adb5af; font-size: 13px; }
+.moments-end { border-top: 1px solid #ffffff26; margin-top: 32px; padding: 32px 0 60px; display: flex; justify-content: space-between; gap: 20px; font-size: 12px; color: #b3b7b2; }
+.moments-end span { font-family: var(--font-display); font-size: 22px; font-style: italic; }
+#moment-viewer { position: fixed; inset: 0; width: 100vw; max-width: none; height: 100dvh; max-height: none; padding: 24px; border: 0; background: #080a09f7; color: #f5f2ea; }
+#moment-viewer::backdrop { background: #080a09; }
+.moment-controls { display: flex; justify-content: flex-end; gap: 12px; max-width: 1400px; margin: 0 auto 18px; }
+.moment-controls button { font: inherit; font-size: 13px; color: inherit; padding: 12px 18px; background: transparent; border: 1px solid #ffffff40; border-radius: 4px; cursor: pointer; }
+#moment-viewer figure { margin: 0; display: flex; flex-direction: column; align-items: center; height: calc(100% - 70px); gap: 16px; }
+#moment-image { display: block; width: auto; max-width: 100%; height: auto; min-height: 0; max-height: calc(100% - 40px); object-fit: contain; }
+#moment-caption { font-size: 13px; color: #c5c9c4; text-align: center; }
+#moment-viewer figcaption { text-align:center; }
+#moment-caption { margin:0 0 5px; }
+#moment-location { font-size:13px; color:#dce9df; margin:0 0 10px; }
+#moment-show-on-map { border:0; border-bottom:1px solid #b6cbbd; padding:4px 0; color:#dbe9df; background:none; font:inherit; font-size:12px; cursor:pointer; }
+#moment-show-on-map[hidden] { display:none; }
+#moment-viewer figure { height:calc(100% - 70px); }
+#moment-image { max-height:calc(100% - 110px); }
+@media(max-width:760px) { .moments-toolbar { flex-wrap:wrap; } .moments-view-switch { order:3; width:100%; } .moments-view-switch button { flex:1; } }
+body:has(#moment-viewer[open]) { overflow: hidden; }
+@media(max-width: 900px) { .moments-gallery { columns: 2; } }
+@media(max-width: 540px) { .moments-main { width: calc(100% - 36px); } .moments-gallery { columns: 1; } .moments-intro { padding-top: 54px; padding-bottom: 36px; } .moments-intro h1 { font-size: 60px; } .moments-copy { font-size: 16px; } .moments-sort label { font-size: 11px; } #moment-viewer { padding: 14px; } }
+@media(prefers-reduced-motion: reduce) { .moment-card img { transition: none; } }
+
+/* Website presentation: the reusable map inherits this site's quiet palette. */
+.moments-page { --moment-surface:#101111; --moment-ink:var(--text); }
+.moments-intro { max-width:none; padding:48px 0 28px; }
+.moments-intro h1 { font-size:clamp(32px,4vw,52px); line-height:1.1; margin:0; }
+.moments-intro h1 em { color:var(--muted); }
+.moments-toolbar { display:grid; grid-template-columns:1fr auto 1fr; gap:16px; min-height:76px; }
+.moments-toolbar #moments-count { font-size:11px; letter-spacing:0; }
+.moments-view-switch { justify-self:center; }
+.moments-view-switch button { min-width:82px; color:var(--muted); }
+.moments-view-switch button[aria-pressed="true"] { background:var(--text); color:#101111; border-color:var(--text); }
+.moments-sort { justify-self:end; }
+.moments-sort.is-map-view { visibility:hidden; pointer-events:none; }
+.moments-page .nx-photo-map { color:var(--text); background:var(--moment-surface); border-color:var(--surface-border); }
+.moments-page .nx-photo-map-layout { display:block; }
+.moments-page .nx-photo-map-places { display:none; }
+.moments-page .nx-photo-map-bar { background:var(--moment-surface); }
+.moments-page .nx-photo-map-bar button { color:var(--text); }
+.moments-page .nx-photo-pin,.moments-page .nx-photo-cluster { background:#252726; }
+.moments-page .nx-photo-map-canvas { height:clamp(420px,68vh,760px); }
+@media(max-width:760px) {
+ .moments-toolbar { grid-template-columns:1fr auto; }
+ .moments-view-switch { order:initial; width:auto; justify-self:end; }
+ .moments-sort { grid-column:1 / -1; height:34px; }
+ .moments-intro { padding:32px 0 24px; }
+ .moments-intro h1 { font-size:36px; }
+}
+
+.moments-page .moment-card .moment-meta { display:none; }
+
+.moments-intro { text-align:center; padding:28px 0 24px; }
+html:has(body.moments-map-active) { overflow:hidden; }
+body.moments-map-active { height:100dvh; min-height:0; overflow:hidden; }
+.moments-map-active .site-nav { flex:none; }
+.moments-map-active .moments-main { flex:1 1 0; min-height:0; display:flex; flex-direction:column; }
+.moments-map-active .moments-intro,.moments-map-active .moments-toolbar { flex:none; }
+.moments-map-active .moments-main>section { flex:1; min-height:0; display:flex; flex-direction:column; padding-bottom:12px; }
+.moments-map-active #moments-map-panel { flex:1; min-height:0; margin:0; }
+.moments-map-active [data-n3xra-photo-map],.moments-map-active .nx-photo-map { height:100%; min-height:0; }
+.moments-map-active .nx-photo-map { display:flex; flex-direction:column; }
+.moments-map-active .nx-photo-map-bar { flex:none; }
+.moments-map-active .nx-photo-map-layout { flex:1; min-height:0; display:flex; }
+.moments-map-active .nx-photo-map-surface { flex:1; min-height:0; }
+.moments-map-active .nx-photo-map-canvas { height:100%; min-height:0; }
+.moments-map-active .site-global-footer { padding:6px 12px 12px; }
+@media(max-height:560px) {
+ .moments-intro { padding:10px 0; }
+ .moments-intro h1 { font-size:28px; }
+ .moments-toolbar { min-height:56px; padding:8px 0; }
+ .moments-map-active .site-global-footer { display:none; }
+}

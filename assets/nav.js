@@ -40,6 +40,14 @@
     return cleaned.endsWith("/") ? cleaned : `${cleaned}/`;
   };
 
+  if (!panel.querySelector('a[href="/moments/"]')) {
+    const moments = document.createElement("a");
+    moments.href = "/moments/";
+    moments.textContent = "Moments";
+    const photography = panel.querySelector('a[href="/photography/"]');
+    if (photography) photography.after(moments); else panel.append(moments);
+  }
+
   const currentPath = normalizePath(window.location.pathname);
   panel.querySelectorAll("a[href]").forEach((link) => {
     const href = link.getAttribute("href");

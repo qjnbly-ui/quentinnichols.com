@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Moments from my phone | Quentin Nichols</title>
+  <meta name="description" content="The everyday side of life. Dogs, long roads, good company, and little things worth keeping — moments from Quentin’s phone.">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/Favicon32.png">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/assets/moments.css?v=20261019">
+</head>
+<body class="moments-page">
+  <nav class="site-nav" aria-label="Site">
+    <div class="nav-shell">
+      <details class="nav-menu">
+        <summary aria-label="Open menu"><span></span><span></span><span></span></summary>
+        <div class="nav-menu-panel">
+          <a href="/">Home</a>
+          <a href="/photography/">Photography</a>
+          <a href="/moments/">Moments</a>
+          <a href="/projects/">Projects</a>
+          <a href="/blog/">Blog</a>
+          <a href="/contact/">Contact</a>
+        </div>
+      </details>
+      <a class="nav-logo" href="/"><img src="/assets/NEWLOGO.png" alt="Quentin Nichols"></a>
+      <div class="nav-spacer" aria-hidden="true"></div>
+    </div>
+  </nav>
+  <main class="moments-main">
+    <header class="moments-intro">
+      <h1>Moments <em>from my phone.</em></h1>
+    </header>
+    <section aria-label="Photo journal">
+      <div class="moments-toolbar">
+        <p id="moments-count">From my camera roll</p>
+        <div class="moments-view-switch" role="group" aria-label="Browse moments">
+          <button type="button" id="show-moment-photos" aria-pressed="true">Photos</button>
+          <button type="button" id="show-moment-map" aria-pressed="false">Map</button>
+        </div>
+        <label class="moments-sort">View
+          <select id="moments-sort" aria-label="Photo order">
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+          </select>
+        </label>
+      </div>
+      <p id="moments-status" role="status">Opening the camera roll…</p>
+      <div id="moments-map-panel" hidden>
+        <div data-n3xra-photo-map data-map-config-url="/api/moments-map-config"></div>
+      </div>
+      <div id="moments-gallery" class="moments-gallery"></div>
+      <noscript><p>Enable JavaScript to browse this photo journal.</p></noscript>
+    </section>
+
+  </main>
+  <dialog id="moment-viewer" aria-label="Expanded moment">
+    <div class="moment-controls"><button type="button" id="moment-prev" aria-label="Previous photo">←</button><button type="button" id="moment-next" aria-label="Next photo">→</button><button type="button" id="moment-close" aria-label="Close photo">Close ×</button></div>
+    <figure><img id="moment-image" alt=""><figcaption><p id="moment-caption"></p><p id="moment-location"></p><button type="button" id="moment-show-on-map" hidden>Show on N3XRA Maps ↗</button></figcaption></figure>
+  </dialog>
+  <script src="/assets/nav.js"></script>
+  <script src="/assets/moments.js?v=20261019"></script>
+</body>
+</html>

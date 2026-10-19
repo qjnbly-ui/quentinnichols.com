@@ -1,0 +1,5 @@
+.access-switch { display:flex; gap:8px; margin:20px 0 28px; }
+.access-switch a { flex:1; display:flex; align-items:center; justify-content:center; text-align:center; padding:13px 10px; border:1px solid var(--surface-border-strong); border-radius:4px; color:var(--muted); text-decoration:none; font-size:12px; }
+.access-switch a[aria-current="page"] { color:#101111; background:var(--text); }
+.access-switch a:focus-visible { outline:2px solid var(--text); outline-offset:4px; }
+.portal-access-switch { justify-content:flex-start; max-width:480px; }
