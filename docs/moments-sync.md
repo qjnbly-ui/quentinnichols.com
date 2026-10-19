@@ -21,3 +21,7 @@ The canonical component and data helpers live in N3XRA `maps-app/src/components/
 Use a reviewed local export rather than private Google Photos image URLs, which are not reliable public website image sources. Accept only selected still images; exclude video and motion companions. Keep the source export intact and create metadata-free website copies. Verify every upload before publishing the feed. Register one asset and published version per still in the existing website assets system. Bulk publication must not generate per-file email or SMS review notifications.
 
 This initial collection was uploaded and published through the existing signed-in N3XRA administrator Files interface. Future import code must use an appropriately authorized server environment or the existing signed-in workflow. Never put service credentials or temporary upload capabilities in the website, repository, or public feed. Temporary import access must expire and be revoked when the import completes.
+
+## Travel additions — October 19, 2026
+
+Added 45 reviewed still photos from New Zealand, Hawaii, and North Carolina, plus restored the New Zealand meal photo after Quentin allowed drinks in New Zealand images. Smoking and text screenshots remain excluded. The reviewed metadata list now contains 313 photos; only assets still published in N3XRA are displayed. Duplicate-looking castle and plane views and a tilted tractor shot were left out. The default gallery order is a stable mix across dates and places; newest and oldest remain optional.

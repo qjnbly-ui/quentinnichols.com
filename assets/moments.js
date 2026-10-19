@@ -61,9 +61,11 @@
     locationLabel.textContent = located ? `${image.location.label}${image.location.source === 'estimated' ? ' · Estimated area' : image.location.precision === 'approximate' ? ' · Approximate area' : ''}` : 'Location not recorded';
     showOnMap.hidden = !located;
   }
+  // Stable mixing keeps places interspersed without jumping during feed refreshes.
+  const mixKey = id => { let hash = 2166136261; for (const char of id + 'phone') hash = Math.imul(hash ^ char.charCodeAt(0), 16777619); return hash >>> 0; };
   function render() {
     const activeId = dialog.open ? images[active]?.id : null;
-    images.sort((a,b) => !dated(a) ? (dated(b) ? 1 : a.id.localeCompare(b.id)) : !dated(b) ? -1 : sort.value === 'oldest' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
+    images.sort((a,b) => sort.value === 'mixed' ? mixKey(a.id) - mixKey(b.id) || a.id.localeCompare(b.id) : !dated(a) ? (dated(b) ? 1 : a.id.localeCompare(b.id)) : !dated(b) ? -1 : sort.value === 'oldest' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date));
     const fragment = document.createDocumentFragment();
     for (const [index, image] of images.entries()) {
       const button = document.createElement('button');

@@ -18,3 +18,6 @@ test('rejects private URLs and external destinations',async()=>{
 });
 test('fails closed when N3XRA is unavailable',async()=>{const res=response();await createHandler({fetcher:async()=>new Response('',{status:503})})({method:'GET'},res);assert.equal(res.statusCode,502);assert.equal(res.headers['Cache-Control'],'no-store');});
 test('rejects writes without contacting N3XRA',async()=>{const res=await invoke([], 'POST');assert.equal(res.statusCode,405);assert.equal(res.headers.Allow,'GET');});
+test('keeps landmark estimates distinct from recorded photo locations',async()=>{
+ const r=response();await createHandler({metadata:[{...metadata[0],location:{...metadata[0].location,source:'estimated'}}],fetcher:async()=>new Response(JSON.stringify({images:[asset]}))})({method:'GET'},r);assert.equal(r.body.images[0].location.source,'estimated');
+});

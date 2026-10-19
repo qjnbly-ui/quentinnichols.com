@@ -25,7 +25,7 @@ function createHandler({fetcher=fetch, metadata=reviewed}={}) {
         if(!asset)return [];
         const image={id:photo.id,caption:photo.caption,date:photo.date || null,image:asset.url,thumbnail:asset.url,width:photo.width,height:photo.height,location:null};
         const point=photo.location;
-        if(point && Number.isFinite(point.latitude) && Math.abs(point.latitude)<=90 && Number.isFinite(point.longitude) && Math.abs(point.longitude)<=180 && typeof point.label==='string')image.location={label:point.label,latitude:Number(point.latitude.toFixed(2)),longitude:Number(point.longitude.toFixed(2)),precision:'approximate',source:'photo_metadata'};
+        if(point && Number.isFinite(point.latitude) && Math.abs(point.latitude)<=90 && Number.isFinite(point.longitude) && Math.abs(point.longitude)<=180 && typeof point.label==='string')image.location={label:point.label,latitude:Number(point.latitude.toFixed(2)),longitude:Number(point.longitude.toFixed(2)),precision:'approximate',source:['photo_metadata','manual','estimated'].includes(point.source) ? point.source : 'photo_metadata'};
         return [image];
       });
       res.setHeader('Cache-Control','public, max-age=0, s-maxage=60');
