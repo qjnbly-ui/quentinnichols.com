@@ -1,0 +1,98 @@
+---
+import "../styles/site.css";
+import SiteFooter from "../components/SiteFooter.astro";
+import { navigation } from "../data/site";
+interface Props {
+  title: string;
+  description?: string;
+  image?: string;
+  type?: "website" | "article";
+  /** Full-screen opening under a transparent header (homepage and story posts). */
+  immersive?: boolean;
+}
+const {
+  title,
+  description = "Quentin Nichols, founder of N3XRA. Websites, software, and connected systems, built from Bly, Oregon.",
+  image = "/images/quentin-outdoors.webp",
+  type = "website",
+  immersive = false,
+} = Astro.props;
+const path = Astro.url.pathname;
+const isHome = path === "/";
+const bodyClass = isHome ? "home-page" : immersive ? "immersive-page" : "inner-page";
+const fullTitle = title === "Quentin Nichols" ? title : `${title} | Quentin Nichols`;
+const current = (href: string) => (path.startsWith(href) ? "page" : undefined);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={new URL(path, Astro.site)} />
+    <link rel="icon" href="/images/favicon.png" type="image/png" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={new URL(path, Astro.site)} />
+    <meta property="og:image" content={new URL(image, Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#050a12" />
+    <link rel="preload" href="/fonts/inter-400.ttf" as="font" type="font/ttf" crossorigin />
+    <script is:inline>
+      // Hide reveal targets only when scripting works; restore them if motion never starts.
+      document.documentElement.classList.add("js");
+      setTimeout(() => {
+        if (!window.__motion) document.documentElement.classList.remove("js");
+      }, 2500);
+    </script>
+    <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-ESFM9WKBF9"></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-ESFM9WKBF9");
+    </script>
+    <slot name="head" />
+  </head>
+  <body class={bodyClass}>
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="page-progress" aria-hidden="true"></div>
+    <header class="site-header">
+      <div class="wrap">
+        <a href="/" class="wordmark" aria-label="Quentin Nichols, home">
+          <img src="/images/quentin-logo.webp" sizes="132px" alt="" width="1455" height="341" />
+        </a>
+        <nav class="site-nav" aria-label="Main">
+          {navigation.map(([href, label]) => (
+            <a href={href} aria-current={current(href)}>{label}</a>
+          ))}
+        </nav>
+        <a class="button header-contact" href="/contact/" aria-current={current("/contact/")}>
+          Get in touch
+        </a>
+        <details class="mobile-nav">
+          <summary>Menu</summary>
+          <nav aria-label="Main">
+            {navigation.map(([href, label]) => (
+              <a href={href} aria-current={current(href)}>{label}</a>
+            ))}
+            <a href="/contact/" aria-current={current("/contact/")}>Contact</a>
+          </nav>
+        </details>
+      </div>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter />
+    <script>
+      import { initMotion } from "../lib/motion";
+      initMotion();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+---
+interface Props {
+  item: { slug: string; name: string; image: string };
+  href?: string;
+  class?: string;
+}
+const { item, href, class: className } = Astro.props;
+const isIcon = item.slug === "bearing";
+const Tag = href ? "a" : "div";
+---
+
+<Tag
+  class:list={["work-visual", { "work-visual--icon": isIcon }, className]}
+  href={href}
+  aria-label={href ? `Read about ${item.name}` : undefined}
+>
+  <img
+    src={item.image}
+    alt={href ? "" : `${item.name} ${isIcon ? "app icon" : "website"}`}
+    width={isIcon ? 1024 : 1100}
+    height={isIcon ? 1024 : 632}
+    loading="lazy"
+  />
+</Tag>

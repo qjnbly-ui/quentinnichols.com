@@ -1,0 +1,14 @@
+---
+import { tools } from "../data/site";
+---
+
+<div class="tools">
+  {tools.map((tool, index) => (
+    <a class="tool-card spotlight" href={tool.href} data-reveal style={`--d:${index}`}>
+      <p class="eyebrow">{tool.role}</p>
+      <h3>N3XRA {tool.name}</h3>
+      <p>{tool.text}</p>
+      <span class:list={["status", { "status--live": tool.live }]}>{tool.status}</span>
+    </a>
+  ))}
+</div>

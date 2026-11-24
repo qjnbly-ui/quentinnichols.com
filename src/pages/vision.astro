@@ -1,0 +1,60 @@
+---
+import Site from "../layouts/Site.astro";
+import Follow from "../components/Follow.astro";
+import Tools from "../components/Tools.astro";
+import { visionChapters } from "../data/site";
+---
+
+<Site
+  title="My vision for N3XRA"
+  description="Why I’m building N3XRA, how I got here, and where I want to take connected software next."
+>
+  <header class="page-head wrap">
+    <div class="vision-head">
+      <div>
+        <h1>My vision for N3XRA.</h1>
+        <p class="lead">
+          I want to make it easier for people to turn their ideas into useful technology. N3XRA is how I’m working
+          toward that.
+        </p>
+      </div>
+      <div class="emblem" aria-hidden="true">
+        <img src="/images/n3xra-emblem.webp" alt="" width="700" height="700" />
+        <span class="emblem-sweep"></span>
+      </div>
+    </div>
+  </header>
+
+  <section class="section wrap">
+    {visionChapters.map((chapter) => (
+      <div class="split">
+        <p class="eyebrow" data-reveal>{chapter.label}</p>
+        <div class="prose" data-reveal style="--d:1">
+          <h2>{chapter.title}</h2>
+          {chapter.body.map((paragraph) => <p>{paragraph}</p>)}
+          {chapter.link && (
+            <p>
+              <a class="text-link" href={chapter.link[1]}>{chapter.link[0]}</a>
+            </p>
+          )}
+        </div>
+      </div>
+    ))}
+    <div class="actions" data-reveal>
+      <a class="button" href="https://www.n3xra.com/">Visit N3XRA</a>
+      <a class="button button--ghost" href="/projects/">See the work</a>
+    </div>
+  </section>
+
+  <section class="section wrap" aria-labelledby="tools-title">
+    <div class="section-heading" data-reveal>
+      <h2 id="tools-title" class="runs-on">
+        This site runs on
+        <img src="/images/n3xra-wordmark-tight.webp" alt="N3XRA" width="1382" height="203" />
+      </h2>
+      <p>Improving these products for my own site makes them better for the businesses that use them too.</p>
+    </div>
+    <Tools />
+  </section>
+  <Follow />
+</Site>

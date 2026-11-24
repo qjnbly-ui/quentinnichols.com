@@ -1,0 +1,85 @@
+---
+import Site from "../layouts/Site.astro";
+import { getGallery } from "../data/gallery";
+import { gridSizes } from "../lib/images";
+import Lightbox from "../components/Lightbox.astro";
+const photos = getGallery();
+// quentinnichols.com in N3XRA; its photos live under this id in N3XRA website storage.
+const websiteId = import.meta.env.PUBLIC_N3XRA_WEBSITE_ID || "851e334c-2ed7-4c82-9690-27f9ff8792d4";
+const album = import.meta.env.PUBLIC_N3XRA_GALLERY_ALBUM || "";
+---
+
+<Site
+  title="Photography"
+  description="Photographs by Quentin Nichols, from Oregon and travels further afield."
+  image="/images/photo-0.webp"
+>
+  <header class="page-head wrap">
+    <h1>Photography</h1>
+    <div class="link-list">
+      <a class="text-link" href="/moments/">Moments from my phone</a>
+      <a class="text-link" href="/blog/?category=story-behind-the-photos">Stories behind the photos</a>
+      <a class="text-link" href="/contact/">Ask about photography</a>
+    </div>
+  </header>
+  <section class="section wrap" data-gallery data-website={websiteId} data-album={album} data-sizes={gridSizes}>
+    <div class="gallery">
+      {photos.map((photo, index) => (
+        <figure class="gallery-item">
+          <button type="button" data-photo={photo.large} data-alt={photo.alt} aria-label={`Expand photograph ${index + 1}`}>
+            <img
+              src={photo.src}
+              srcset={photo.srcset}
+              sizes={gridSizes}
+              alt={photo.alt}
+              loading={index < 6 ? "eager" : "lazy"}
+              decoding="async"
+            />
+          </button>
+        </figure>
+      ))}
+    </div>
+  </section>
+  <Lightbox />
+</Site>
+<script>
+  import { loadAlbum, type Album } from "../lib/website-gallery";
+  import { photoSources } from "../lib/images";
+  const root = document.querySelector<HTMLElement>("[data-gallery]")!;
+  const grid = root.querySelector<HTMLElement>(".gallery")!;
+
+  // When an N3XRA Website Gallery album is configured, it replaces the built-in list.
+  // The shared viewer (Lightbox.astro) picks up the new photos automatically.
+  function render(album: Album) {
+    if (!album.photos.length) return;
+    const figures = album.photos.map((photo, position) => {
+      const sources = photoSources(photo.url);
+      const alt = photo.alt || "Photograph by Quentin Nichols";
+      const figure = document.createElement("figure");
+      figure.className = "gallery-item";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.photo = sources.large;
+      button.dataset.alt = alt;
+      button.setAttribute("aria-label", `Expand photograph ${position + 1}`);
+      const img = document.createElement("img");
+      img.src = sources.src;
+      img.srcset = sources.srcset;
+      img.sizes = root.dataset.sizes || "";
+      img.alt = alt;
+      img.loading = position < 6 ? "eager" : "lazy";
+      img.decoding = "async";
+      button.append(img);
+      figure.append(button);
+      return figure;
+    });
+    grid.replaceChildren(...figures);
+  }
+  const album = root.dataset.album;
+  if (album)
+    loadAlbum(root.dataset.website || "", album)
+      .then(render)
+      .catch(() => {
+        /* The built-in gallery stays in place if N3XRA is unavailable. */
+      });
+</script>

@@ -1,0 +1,71 @@
+---
+import Site from "../layouts/Site.astro";
+import { socials } from "../data/site";
+---
+
+<Site title="Contact" description="How to reach Quentin Nichols about N3XRA, projects, photography, or just to say hello.">
+  <header class="page-head wrap">
+    <h1>Contact</h1>
+  </header>
+  <section class="section wrap contact-grid">
+    <div>
+      <div class="contact-line" data-reveal>
+        <p class="eyebrow">N3XRA &amp; project conversations</p>
+        <a data-contact-email="business" href="mailto:quentin@n3xra.com">quentin@n3xra.com</a>
+        <p>For websites, software, and things you want to build.</p>
+      </div>
+      <div class="contact-line" data-reveal style="--d:1">
+        <p class="eyebrow">Personal &amp; photography</p>
+        <a data-contact-email="personal" href="mailto:quentin@quentinnichols.com">quentin@quentinnichols.com</a>
+        <p>For personal messages and photography inquiries.</p>
+      </div>
+      <div class="contact-line" data-reveal style="--d:2">
+        <p class="eyebrow">NEX · N3XRA phone assistant</p>
+        <a data-contact-phone href="tel:+15416526840">(541) 652-6840</a>
+        <p>NEX can help with questions about N3XRA.</p>
+      </div>
+      <div class="link-list">
+        {socials.map((social) => <a class="text-link" href={social.href}>{social.label}</a>)}
+      </div>
+    </div>
+    <aside class="contact-card spotlight" data-reveal style="--d:1">
+      <p class="eyebrow">N3XRA Contact Card</p>
+      <h2>Keep my details.</h2>
+      <p>Save my contact information, find all my profiles, or share your details back with me.</p>
+      <a class="button" href="https://www.n3xra.com/card/quentin-nichols">Open my contact card</a>
+      <small>The details on this page come from my Contact Card, so they stay current.</small>
+      <hr />
+      <p>Looking to start a project?</p>
+      <a class="text-link" href="https://www.n3xra.com/website-request/">Tell N3XRA what you need</a>
+    </aside>
+  </section>
+</Site>
+<script>
+  // Refresh the published fallback details from Contact Card; keep them if the service is unavailable.
+  fetch("/api/public-contact")
+    .then(async (response) => {
+      if (!response.ok) return;
+      const card = (await response.json()).card;
+      if (!card) return;
+      const setEmail = (key: string, value: unknown) => {
+        if (typeof value !== "string" || !/^\S+@\S+\.\S+$/.test(value)) return;
+        const link = document.querySelector<HTMLAnchorElement>(`[data-contact-email="${key}"]`);
+        if (!link) return;
+        link.href = `mailto:${value}`;
+        link.textContent = value;
+      };
+      setEmail("business", card.email);
+      setEmail("personal", card.personalEmail);
+      if (typeof card.phone === "string" && /^\+[1-9]\d{6,14}$/.test(card.phone)) {
+        const link = document.querySelector<HTMLAnchorElement>("[data-contact-phone]");
+        if (!link) return;
+        link.href = `tel:${card.phone}`;
+        const digits = card.phone.replace(/\D/g, "");
+        link.textContent =
+          digits.length === 11 ? `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}` : card.phone;
+      }
+    })
+    .catch(() => {
+      /* Published fallback details remain usable during a service interruption. */
+    });
+</script>

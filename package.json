@@ -1,0 +1,15 @@
+{
+  "name": "quentin-nichols",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1",
+    "build": "astro build && node scripts/preserve-legacy.mjs && node scripts/optimize-images.mjs",
+    "preview": "astro preview --host 127.0.0.1",
+    "test": "node --test tests/rebuild/*.test.mjs"
+  },
+  "dependencies": {
+    "astro": "7.4.11",
+    "sharp": "0.35.5"
+  }
+}

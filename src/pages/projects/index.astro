@@ -1,0 +1,44 @@
+---
+import Site from "../../layouts/Site.astro";
+import WorkVisual from "../../components/WorkVisual.astro";
+import { work } from "../../data/site";
+// Bearing is an N3XRA product, so it sits inside the N3XRA entry rather than as its own feature.
+const bearing = work.find((item) => item.slug === "bearing")!;
+const featured = work.filter((item) => item !== bearing);
+---
+
+<Site title="Work" description="The company, products, and websites Quentin Nichols is building through N3XRA.">
+  <header class="page-head wrap">
+    <h1>Things I’ve built.</h1>
+  </header>
+  <section class="section wrap">
+    <div class="work-list">
+      {featured.map((item) => (
+        <article class="work-item" data-reveal>
+          <WorkVisual item={item} href={`/projects/${item.slug}/`} />
+          <div>
+            <p class="eyebrow">{item.category}</p>
+            <h2>{item.name}</h2>
+            <p>{item.summary}</p>
+            <div class="link-list">
+              <a class="text-link" href={`/projects/${item.slug}/`}>About the project</a>
+            </div>
+            {item.slug === "n3xra" && (
+              <a class="product-chip spotlight" href={`/projects/${bearing.slug}/`}>
+                <img src="/images/bearing-icon-small.png" alt="" width="256" height="256" loading="lazy" />
+                <span>
+                  <strong>Also from N3XRA: {bearing.name}</strong>
+                  <small>{bearing.category}</small>
+                </span>
+              </a>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+    <div class="notice" data-reveal>
+      <p>More websites and software live on the company site.</p>
+      <a class="text-link" href="https://www.n3xra.com/projects/">The N3XRA portfolio</a>
+    </div>
+  </section>
+</Site>

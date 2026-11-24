@@ -1,0 +1,89 @@
+---
+/**
+ * Writing: the newest entry as a large feature, then every entry as a photo card (the same card used for
+ * recommended reads), filterable by topic. Shares the journal entries' gradient and centered heading.
+ */
+import Site from "../../layouts/Site.astro";
+import EntryCard from "../../components/EntryCard.astro";
+import { getEntries } from "../../data/articles";
+const entries = getEntries();
+const [newest, ...rest] = entries;
+const topics = [...new Map(entries.map((entry) => [entry.slug, entry.category])).entries()];
+---
+
+<Site title="Writing" description="Writing by Quentin Nichols on building software, learning as he goes, and the experiences that shape how he sees things.">
+  <div class="journal">
+    <header class="post-head wrap writing-head">
+      <div class="post-heading">
+        <h1>Writing</h1>
+      </div>
+      <div class="filter-bar" role="group" aria-label="Filter writing by topic">
+        <button type="button" data-category="all" aria-pressed="true">All writing</button>
+        {topics.map(([slug, label]) => (
+          <button type="button" data-category={slug} aria-pressed="false">{label}</button>
+        ))}
+      </div>
+      <p class="sr-only" aria-live="polite" id="filter-status"></p>
+    </header>
+
+    <section class="wrap writing" aria-label="Entries">
+      {newest && (
+        <a class="story-feature writing-feature spotlight" href={newest.url} data-entry-category={newest.slug} data-reveal>
+          {newest.cover && <img src={newest.cover} sizes="(max-width: 1120px) 100vw, 1080px" alt="" fetchpriority="high" data-fallback={newest.coverFallback ?? undefined} />}
+          <div>
+            <p class="eyebrow">Newest entry</p>
+            <h2>{newest.title}</h2>
+            {newest.description && newest.description !== newest.title && <p>{newest.description}</p>}
+            <p class="writing-feature-meta">
+              {newest.category} · {newest.date}{newest.minutes && <> · {newest.minutes} min read</>}
+            </p>
+            <span class="button">Read the entry</span>
+          </div>
+        </a>
+      )}
+      <div class="reads writing-grid">
+        {rest.map((entry, index) => <EntryCard entry={entry} index={index} lazy={index > 5} />)}
+      </div>
+
+      <div class="subscribe-band writing-shelf" data-reveal>
+        <div>
+          <p class="eyebrow">Books &amp; ideas</p>
+          <h2>Recent reads &amp; reflections</h2>
+          <p>The books that have shaped how I think, and what I took from them.</p>
+        </div>
+        <a class="button" href="/blog/recent-reads/">See the reading shelf</a>
+      </div>
+    </section>
+  </div>
+</Site>
+<script>
+  // Topic filter: shows matching entries, remembers the choice in the address, and announces the count.
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>("[data-category]")];
+  const items = [...document.querySelectorAll<HTMLElement>("[data-entry-category]")];
+  const status = document.getElementById("filter-status");
+  function filter(category: string) {
+    const valid = buttons.some((button) => button.dataset.category === category) ? category : "all";
+    let count = 0;
+    items.forEach((item) => {
+      item.hidden = valid !== "all" && item.dataset.entryCategory !== valid;
+      if (!item.hidden) {
+        count++;
+        item.classList.add("in-view");
+      }
+    });
+    buttons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.category === valid)));
+    if (status) status.textContent = `${count} ${count === 1 ? "entry" : "entries"}`;
+  }
+  buttons.forEach((button) =>
+    button.addEventListener("click", () => {
+      const category = button.dataset.category || "all";
+      filter(category);
+      const url = new URL(location.href);
+      if (category === "all") url.searchParams.delete("category");
+      else url.searchParams.set("category", category);
+      history.replaceState(null, "", url);
+      button.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    }),
+  );
+  filter(new URLSearchParams(location.search).get("category") || "all");
+</script>

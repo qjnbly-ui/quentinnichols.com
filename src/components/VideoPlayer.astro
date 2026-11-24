@@ -1,0 +1,28 @@
+<dialog class="video-dialog" aria-label="Video player">
+  <button type="button" class="dialog-close" data-video-close>Close video</button>
+  <div data-video-mount></div>
+</dialog>
+<script>
+  // Loads the YouTube player only after a visitor chooses a video.
+  const dialog = document.querySelector<HTMLDialogElement>(".video-dialog");
+  const mount = dialog?.querySelector<HTMLElement>("[data-video-mount]");
+  document.querySelectorAll<HTMLButtonElement>("button[data-video]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const id = button.dataset.video || "";
+      if (!/^[\w-]{11}$/.test(id) || !dialog || !mount) return;
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+      iframe.title = button.dataset.title || "Video by Quentin Nichols";
+      iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+      iframe.allowFullscreen = true;
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
+      mount.replaceChildren(iframe);
+      dialog.showModal();
+    }),
+  );
+  dialog?.querySelector("[data-video-close]")?.addEventListener("click", () => dialog.close());
+  dialog?.addEventListener("close", () => mount?.replaceChildren());
+  dialog?.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+</script>

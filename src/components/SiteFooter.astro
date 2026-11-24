@@ -1,0 +1,62 @@
+---
+import { socials } from "../data/site";
+/* Laid out like the N3XRA footer: centered logo and line, link columns, social icons, then the credit. */
+const columns = [
+  {
+    title: "N3XRA",
+    links: [
+      ["My vision", "/vision/"],
+      ["Work", "/projects/"],
+      ["The company", "https://www.n3xra.com/"],
+      ["Start a project", "https://www.n3xra.com/website-request/"],
+    ],
+  },
+  {
+    title: "Explore",
+    links: [
+      ["Writing", "/blog/"],
+      ["Videos", "/videos/"],
+      ["Photography", "/photography/"],
+      ["About", "/about-me/"],
+    ],
+  },
+  {
+    title: "Connect",
+    links: [
+      ["Contact", "/contact/"],
+      ["Follow along", "/updates/"],
+      ["Privacy", "/privacy/"],
+      ["Sign in", "/login/"],
+    ],
+  },
+];
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="footer-logo" href="/" aria-label="Quentin Nichols, home">
+      <img src="/images/quentin-logo.webp" sizes="170px" alt="" width="1455" height="341" loading="lazy" />
+    </a>
+    <p class="footer-line">Founder of N3XRA. Building websites, software, and the connections behind them from Bly, Oregon.</p>
+    <div class="footer-columns">
+      {columns.map((column) => (
+        <nav aria-label={column.title}>
+          <h2>{column.title}</h2>
+          {column.links.map(([label, href]) => <a href={href}>{label}</a>)}
+        </nav>
+      ))}
+    </div>
+    <p class="footer-follow">Follow me on</p>
+    <div class="footer-socials">
+      {socials.map((social) => (
+        <a href={social.href} aria-label={`Quentin on ${social.label}`} title={social.label}>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d={social.icon} /></svg>
+        </a>
+      ))}
+    </div>
+    <div class="footer-legal">
+      <p>© {new Date().getFullYear()} Quentin Nichols. All rights reserved.</p>
+      <p>Designed &amp; Built by <a href="https://www.n3xra.com/">N3XRA</a></p>
+    </div>
+  </div>
+</footer>

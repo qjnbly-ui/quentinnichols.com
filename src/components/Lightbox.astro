@@ -1,0 +1,62 @@
+---
+/**
+ * Full-screen photo viewer shared by every gallery. Any button with `data-photo` (the large image URL)
+ * inside an element marked `data-gallery` opens it; Previous/Next and the arrow keys move through that
+ * gallery, and the photos either side are loaded ahead so moving feels instant. Works for photos added
+ * to the page later (the N3XRA album), because clicks are handled at the document.
+ */
+---
+
+<dialog class="lightbox" aria-label="Expanded photograph">
+  <div class="lightbox-toolbar">
+    <button type="button" data-photo-close>Close</button>
+    <div>
+      <button type="button" data-photo-previous>Previous</button>
+      <button type="button" data-photo-next>Next</button>
+    </div>
+  </div>
+  <figure>
+    <img alt="" />
+    <figcaption aria-live="polite"></figcaption>
+  </figure>
+</dialog>
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>(".lightbox")!;
+  const image = dialog.querySelector("img")!;
+  const counter = dialog.querySelector("figcaption")!;
+  let photos: HTMLElement[] = [];
+  let index = 0;
+
+  function show(value: number) {
+    if (!photos.length) return;
+    index = (value + photos.length) % photos.length;
+    const button = photos[index]!;
+    image.src = button.dataset.photo!;
+    image.alt = button.dataset.alt || button.querySelector("img")?.alt || "";
+    counter.textContent = `${index + 1} of ${photos.length}`;
+    for (const offset of [1, -1]) {
+      const neighbour = photos[(index + offset + photos.length) % photos.length];
+      if (neighbour?.dataset.photo) new Image().src = neighbour.dataset.photo;
+    }
+  }
+  document.addEventListener("click", (event) => {
+    const button = (event.target as Element).closest<HTMLElement>("[data-gallery] [data-photo]");
+    if (!button) return;
+    event.preventDefault();
+    photos = [...button.closest("[data-gallery]")!.querySelectorAll<HTMLElement>("[data-photo]")];
+    show(photos.indexOf(button));
+    dialog.showModal();
+  });
+  dialog.querySelector("[data-photo-close]")!.addEventListener("click", () => dialog.close());
+  dialog.querySelector("[data-photo-previous]")!.addEventListener("click", () => show(index - 1));
+  dialog.querySelector("[data-photo-next]")!.addEventListener("click", () => show(index + 1));
+  dialog.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      show(index + (event.key === "ArrowLeft" ? -1 : 1));
+    }
+  });
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+</script>

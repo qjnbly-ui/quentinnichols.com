@@ -1,0 +1,63 @@
+---
+/**
+ * Every journal entry uses this one layout: a centered heading (over the opening photo when the entry
+ * has one), one centered reading column on a single calm gradient, three recommended reads, and clear
+ * ways back to all writing or home.
+ */
+import Site from "../../../layouts/Site.astro";
+import Story from "../../../components/Story.astro";
+import PostHeading from "../../../components/PostHeading.astro";
+import RecommendedReads from "../../../components/RecommendedReads.astro";
+import { getArticles, getEntries, storyPhoto } from "../../../data/articles";
+import { recommend } from "../../../data/recommend";
+
+export function getStaticPaths() {
+  const articles = getArticles();
+  const entries = getEntries(articles);
+  return articles.map((post) => ({
+    params: { slug: post.route },
+    props: { post, reads: recommend(entries, post.url) },
+  }));
+}
+const { post, reads } = Astro.props;
+const hero = post.story?.hero;
+const photo = hero ? storyPhoto(post.route) : null;
+const heading = {
+  title: post.title,
+  category: post.category,
+  categorySlug: post.slug,
+  date: post.date,
+  minutes: post.minutes,
+};
+---
+
+<Site title={post.title} description={post.description} type="article" image={post.shareImage} immersive={!!hero}>
+  <Fragment slot="head">
+    {post.stylesheets.map((href) => <link rel="stylesheet" href={href} />)}
+  </Fragment>
+  <div class="journal">
+    {hero ? (
+      <header class="post-opening" data-opening>
+        <picture class="post-opening-photo" aria-hidden="true">
+          {photo && <source type="image/jpeg" srcset={photo.srcset} sizes="100vw" />}
+          <img src={hero.src} alt="" width={hero.width} height={hero.height} fetchpriority="high" />
+        </picture>
+        <div class="post-opening-shade" aria-hidden="true"></div>
+        <div class="wrap post-opening-heading">
+          <PostHeading {...heading} />
+        </div>
+        <span class="scroll-cue" aria-hidden="true"></span>
+      </header>
+    ) : (
+      <header class="post-head wrap">
+        <PostHeading {...heading} />
+      </header>
+    )}
+    {hero?.alt && <p class="sr-only">Opening photograph: {hero.alt}</p>}
+    <article class="journal-body wrap" aria-labelledby="post-title">
+      {post.story ? <Story story={post.story} /> : <Fragment set:html={post.content} />}
+    </article>
+    <RecommendedReads reads={reads} />
+  </div>
+  {post.scripts.map((src) => <script is:inline defer src={src} />)}
+</Site>

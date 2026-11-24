@@ -1,0 +1,33 @@
+---
+/** A video thumbnail that opens the on-page player (VideoPlayer.astro). */
+interface Props {
+  id: string;
+  title: string;
+  meta?: string;
+  feature?: boolean;
+}
+const { id, title, meta, feature = false } = Astro.props;
+---
+
+<button
+  type="button"
+  class:list={["film", { "film--feature": feature }]}
+  data-video={id}
+  data-title={title}
+  aria-label={`Play ${title}`}
+>
+  <span class="film-frame">
+    <img
+      src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+      alt=""
+      width="480"
+      height="360"
+      loading="lazy"
+    />
+    <span class="film-play" aria-hidden="true"></span>
+  </span>
+  <span>
+    <span class="film-title">{title}</span>
+    {meta && <span class="film-meta">{meta}</span>}
+  </span>
+</button>

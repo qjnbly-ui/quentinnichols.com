@@ -1,0 +1,32 @@
+---
+/** The centered heading every journal entry shares: where it lives, its title, and when it was written. */
+interface Props {
+  title: string;
+  category: string;
+  categorySlug: string;
+  date: string;
+  minutes: number;
+}
+const { title, category, categorySlug, date, minutes } = Astro.props;
+const words = title.split(" ");
+---
+
+<div class="post-heading">
+  <p class="eyebrow post-trail">
+    <a href="/blog/">Writing</a>
+    <span aria-hidden="true">·</span>
+    <a href={`/blog/?category=${categorySlug}`}>{category}</a>
+  </p>
+  <h1 id="post-title">
+    {words.map((word, index) => (
+      <>
+        <span style={`--i:${index}`}>{word}</span>{index < words.length - 1 && " "}
+      </>
+    ))}
+  </h1>
+  <p class="post-meta">
+    <span>By Quentin Nichols</span>
+    <time datetime={new Date(date).toISOString().slice(0, 10)}>{date}</time>
+    <span>{minutes} min read</span>
+  </p>
+</div>

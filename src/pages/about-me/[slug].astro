@@ -1,0 +1,71 @@
+---
+/**
+ * Photo galleries for chapters of the About timeline (Recreation Center, Guard School, New Zealand,
+ * Trees LLC, EMT), kept at their original addresses. Photos come from the original gallery pages.
+ */
+import { readdirSync, readFileSync } from "node:fs";
+import Site from "../../layouts/Site.astro";
+import Lightbox from "../../components/Lightbox.astro";
+
+/** Where each gallery's story sits on the About timeline, for the way back. */
+const timelineAnchor: Record<string, string> = {
+  rorc: "recreation-center",
+  "guard-school": "firefighting",
+  "new-zealand": "new-zealand",
+  "trees-llc": "tree-work",
+  emt: "emt",
+};
+
+export function getStaticPaths() {
+  return readdirSync("about-me", { withFileTypes: true })
+    .filter((dir) => dir.isDirectory())
+    .map((dir) => {
+      const html = readFileSync(`about-me/${dir.name}/index.html`, "utf8");
+      const title =
+        html
+          .match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1]
+          ?.replace(/<[^>]*>/g, "")
+          .trim() || "Photographs";
+      const photos = [...html.matchAll(/<img[^>]*src="([^"]+)"[^>]*alt="([^"]*)"[^>]*>/g)]
+        .filter((match) => !match[1]!.includes("LOGO"))
+        .map((match) => ({ src: match[1]!, alt: match[2]! }));
+      return { params: { slug: dir.name }, props: { title, photos, slug: dir.name } };
+    });
+}
+const { title, photos, slug } = Astro.props;
+const back = `/about-me/${timelineAnchor[slug] ? `#${timelineAnchor[slug]}` : ""}`;
+---
+
+<Site title={title} description={`Photographs from ${title}, part of Quentin Nichols’ story.`}>
+  <div class="journal">
+    <header class="post-head wrap">
+      <div class="post-heading">
+        <p class="eyebrow post-trail"><a href={back}>About me</a></p>
+        <h1>{title}</h1>
+        <p class="post-meta"><span>{photos.length} photographs</span></p>
+      </div>
+    </header>
+    <section class="wrap gallery-page" data-gallery>
+      <div class="gallery">
+        {photos.map((photo, index) => (
+          <figure class="gallery-item" data-reveal style={`--d:${index % 3}`}>
+            <button type="button" data-photo={photo.src} data-alt={photo.alt} aria-label={`Expand photograph ${index + 1}`}>
+              <img
+                src={photo.src}
+                sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1000px) 50vw, 360px"
+                alt={photo.alt}
+                loading={index < 6 ? "eager" : "lazy"}
+                decoding="async"
+              />
+            </button>
+          </figure>
+        ))}
+      </div>
+      <nav class="post-actions" aria-label="Leave this gallery">
+        <a class="button" href={back}>Back to my story</a>
+        <a class="button button--ghost" href="/photography/">Photography</a>
+      </nav>
+    </section>
+  </div>
+  <Lightbox />
+</Site>

@@ -1,0 +1,33 @@
+---
+import Site from "../../layouts/Site.astro";
+import WorkVisual from "../../components/WorkVisual.astro";
+import { work } from "../../data/site";
+export function getStaticPaths() {
+  return work.map((item) => ({ params: { slug: item.slug }, props: { item } }));
+}
+const { item } = Astro.props;
+---
+
+<Site title={item.name} description={item.summary} image={item.image}>
+  <header class="page-head wrap">
+    <h1>{item.name}</h1>
+  </header>
+  <section class="section wrap">
+    <WorkVisual item={item} class="work-detail-visual" />
+    <div class="split">
+      <p class="eyebrow">{item.category}</p>
+      <div class="prose">
+        <p>{item.summary}</p>
+        <p>{item.detail}</p>
+        <h2>Why this work matters to me.</h2>
+        <p>{item.reason}</p>
+        <div class="link-list">
+          {item.links.map(([label, href]) => (
+            <a class="text-link" href={href}>{label}</a>
+          ))}
+          <a class="text-link" href="/projects/">All work</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Site>

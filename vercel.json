@@ -29,6 +29,43 @@
       "source": "/projects/colechaseforjudge/index.html",
       "destination": "https://colechaseforjudge.com/",
       "permanent": true
+    },
+    {
+      "source": "/blog/post",
+      "destination": "/blog/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/post/",
+      "destination": "/blog/",
+      "permanent": true
+    }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": null,
+  "headers": [
+    {
+      "source": "/images/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
     }
   ]
 }

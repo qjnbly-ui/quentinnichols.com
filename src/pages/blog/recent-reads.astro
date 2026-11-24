@@ -1,0 +1,74 @@
+---
+/**
+ * Recent reads: a library of equal-size book covers you can browse like shelves (src/data/books.ts),
+ * the reflections written about them, and the way back to all writing. Shares the journal look.
+ */
+import { readFileSync } from "node:fs";
+import Site from "../../layouts/Site.astro";
+import EntryCard from "../../components/EntryCard.astro";
+import { books } from "../../data/books";
+import { getEntries } from "../../data/articles";
+// Quentin's own introduction, from the original page.
+const original = readFileSync(`${process.cwd()}/blog/recent-reads/index.html`, "utf8");
+const intro = [...original.matchAll(/<p class="reads-body">([\s\S]*?)<\/p>/g)].map((match) => match[1]!);
+const reflections = getEntries().filter((entry) => entry.slug === "book-reflections");
+const columns = 6;
+---
+
+<Site title="Recent reads" description="Books that have shaped how Quentin Nichols thinks and sees the world, and his reflections on them.">
+  <div class="journal">
+    <header class="post-head wrap">
+      <div class="post-heading">
+        <p class="eyebrow post-trail"><a href="/blog/">Writing</a></p>
+        <h1>Recent reads</h1>
+      </div>
+      <div class="reads-intro">
+        {intro.map((paragraph, index) => <p data-reveal style={`--d:${index}`} set:html={paragraph} />)}
+      </div>
+    </header>
+
+    <section class="wrap library-section" aria-labelledby="library-title">
+      <h2 id="library-title" class="sr-only">The shelf</h2>
+      <ul class="library">
+        {books.map((book, index) => {
+          const label = `${book.title} by ${book.author}`;
+          const inner = (
+            <>
+              <img src={book.cover} sizes="(max-width: 560px) 30vw, (max-width: 900px) 22vw, 170px" alt="" loading={index < 12 ? "eager" : "lazy"} decoding="async" />
+              <span class="book-title" aria-hidden="true">
+                <strong>{book.title}</strong>
+                {book.author}
+              </span>
+              {book.reflection && <span class="book-badge">Reflection</span>}
+            </>
+          );
+          return (
+            <li class="book" data-reveal style={`--d:${index % columns}`}>
+              {book.reflection ? (
+                <a href={book.reflection} aria-label={`${label}: read my reflection`}>{inner}</a>
+              ) : (
+                <div tabindex="0" role="img" aria-label={label}>{inner}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+
+    {reflections.length > 0 && (
+      <section class="post-end wrap" aria-labelledby="reflections-title">
+        <div class="post-end-heading" data-reveal>
+          <p class="eyebrow">What I took from them</p>
+          <h2 id="reflections-title">Book reflections</h2>
+        </div>
+        <div class="reads reads--pair">
+          {reflections.map((entry, index) => <EntryCard entry={entry} index={index} />)}
+        </div>
+        <nav class="post-actions" aria-label="Leave the reading shelf" data-reveal>
+          <a class="button" href="/blog/">All writing</a>
+          <a class="button button--ghost" href="/">Back to home</a>
+        </nav>
+      </section>
+    )}
+  </div>
+</Site>

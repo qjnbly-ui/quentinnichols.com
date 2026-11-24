@@ -1,0 +1,27 @@
+---
+/** The end of every journal entry: three recommended reads, then a clear way to all writing or home. */
+import EntryCard from "./EntryCard.astro";
+import type { Entry } from "../data/articles";
+interface Props {
+  reads: Entry[];
+}
+const { reads } = Astro.props;
+---
+
+<section class="post-end wrap" aria-labelledby="recommended-title">
+  {reads.length > 0 && (
+    <>
+      <div class="post-end-heading" data-reveal>
+        <p class="eyebrow">Keep reading</p>
+        <h2 id="recommended-title">Recommended reads</h2>
+      </div>
+      <div class="reads">
+        {reads.map((entry, index) => <EntryCard entry={entry} index={index} />)}
+      </div>
+    </>
+  )}
+  <nav class="post-actions" aria-label="Leave this entry" data-reveal>
+    <a class="button" href="/blog/">All writing</a>
+    <a class="button button--ghost" href="/">Back to home</a>
+  </nav>
+</section>

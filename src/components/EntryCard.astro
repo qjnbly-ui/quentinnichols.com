@@ -1,0 +1,51 @@
+---
+/**
+ * One journal entry as a card: photo, topic, title, date and reading time. Used by the Writing page
+ * and by the recommended reads at the end of every entry, so they always look the same.
+ * On phones it becomes a compact row with a small photo on the left.
+ */
+import type { Entry } from "../data/articles";
+interface Props {
+  entry: Entry;
+  /** Position in a list, for the staggered entrance. */
+  index?: number;
+  /** Lazy-load the photo (true for anything below the first screen). */
+  lazy?: boolean;
+}
+const { entry, index = 0, lazy = true } = Astro.props;
+---
+
+<a class="read-card spotlight" href={entry.url} data-reveal data-entry-category={entry.slug} style={`--d:${index % 3}`}>
+  <span class="read-photo">
+    {entry.cover ? (
+      <img
+        src={entry.cover}
+        sizes="(max-width: 860px) 104px, 340px"
+        alt=""
+        loading={lazy ? "lazy" : "eager"}
+        decoding="async"
+        data-fallback={entry.coverFallback ?? undefined}
+      />
+    ) : (
+      <img class="read-mark" src="/images/n3xra-emblem.webp" alt="" width="700" height="700" loading="lazy" />
+    )}
+  </span>
+  <span class="read-copy">
+    <span class="read-meta">{entry.category}</span>
+    <span class="read-title">{entry.title}</span>
+    <span class="read-date">
+      <time datetime={new Date(entry.date).toISOString().slice(0, 10)}>{entry.date}</time>
+      {entry.minutes && <> · {entry.minutes} min read</>}
+    </span>
+  </span>
+</a>
+<script>
+  // YouTube answers a missing full-HD thumbnail with a 120×90 placeholder rather than an error.
+  document.querySelectorAll<HTMLImageElement>("img[data-fallback]").forEach((image) => {
+    const check = () => {
+      if (image.naturalWidth && image.naturalWidth <= 120) image.src = image.dataset.fallback!;
+    };
+    if (image.complete) check();
+    else image.addEventListener("load", check, { once: true });
+  });
+</script>

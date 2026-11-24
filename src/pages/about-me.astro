@@ -1,0 +1,21 @@
+---
+import Site from "../layouts/Site.astro";
+import { getAbout } from "../data/about";
+const { overview, timeline } = getAbout();
+---
+
+<Site
+  title="About"
+  description="The life behind the work: Bly, the recreation center, New Zealand, tree work, firefighting, EMT training, travel, and starting N3XRA."
+  image="/images/quentin.webp"
+>
+  <header class="page-head wrap about-head">
+    <h1 data-reveal>About me</h1>
+    <div class="about-overview">
+      {overview.map((paragraph, index) => <p data-reveal style={`--d:${index + 1}`} set:html={paragraph} />)}
+    </div>
+  </header>
+  <section class="section wrap" aria-label="Timeline">
+    <div class="timeline" data-timeline set:html={timeline} />
+  </section>
+</Site>
